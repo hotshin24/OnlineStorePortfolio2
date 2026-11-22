@@ -206,7 +206,7 @@ for i, t in enumerate(T, 1):
             _vals = CODE_MAP.get((t['t'], p), [])
             _c = 'cv' + (' first' if vi == 1 else '') + (' last' if vi == len(_vals) else '')
             secs += (f'<tr class="{_c}"><td class="n">{i}-{k}-{vi}</td><td class="p">└ {pn(v[0])}</td><td>{ln1(v[1], v[2])}</td>'
-                     f'<td colspan="5">정렬 {v[4]}' + (f' · {il(v[3])}' if v[3] else '') + _related(t['t'], p, v[0]) + '</td>' + ('<td class="ck on">☑</td>' if '[확정' in v[3] else f'<td class="ck">{BOX}</td>') + f'<td class="memo">{_code_id(_vals, v[0])}</td></tr>')
+                     f'<td colspan="5">정렬 {v[4]}' + (f' · {il(v[3])}' if re.sub(r'\s*\[확정[^\]]*\]', '', v[3]).strip() else '') + _related(t['t'], p, v[0]) + '</td>' + ('<td class="ck on">☑</td>' if '[확정' in v[3] else f'<td class="ck">{BOX}</td>') + f'<td class="memo">{_code_id(_vals, v[0])}</td></tr>')
     secs += '</table>'
     if t['idx'] or t['check']:
         secs += '<h3>인덱스·제약 (제안)</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>메모</th></tr>'
