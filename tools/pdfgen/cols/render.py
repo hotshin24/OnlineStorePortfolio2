@@ -228,7 +228,7 @@ for k, (col, vals) in enumerate(CODES.items(), 1):
     codes += '</table>'
 
 body = ('<h1>회원 도메인 컬럼 정의서 (제안)</h1>'
-        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 (법률 검토 L1~L7 반영) · 테이블 20개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 모두 제안</div>'
+        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 (법률 검토 L1~L9 반영) · 테이블 20개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 모두 제안</div>'
         + NOTE + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('회원 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(tot_b, tot_s, tot_b + tot_s)

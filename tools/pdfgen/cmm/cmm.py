@@ -91,7 +91,7 @@ add('SANCTION_REASON','제재 사유','Sanction Reason','`MBR_SANCTION.SANCTION_
      ('PAYMENT_FRAUD','부정 결제','Payment Fraud','',[]),('COUPON_POINT_ABUSE','쿠폰·적립금 부정 사용','Coupon and Point Abuse','',[]),
      ('REVIEW_ABUSE','리뷰 부정 작성','Review Abuse','광고성·허위 리뷰',[]),('ABUSIVE_INQUIRY','고객센터 악성 문의','Abusive Inquiry','',[]),('OTHER','기타','Other','메모 필수',[])],'[제안: 값은 결정 항목 아님]')
 add('CONSENT_ITEM','동의 항목','Consent Item','`MBR_CONSENT_HIST.CONSENT_ITEM_CD`','Y',['필수 여부'],
-    [(c,k,e,d,['Y' if d.split('\x1e')[0]=='필수' else 'N']) for c,k,e,d,_ in from_codes('CONSENT_ITEM_CD')],'17-3, 38-10, 43-3, 법률 L7-1')
+    [(c,k,e,d,['Y' if d.split('\x1e')[0]=='필수' else 'N']) for c,k,e,d,_ in from_codes('CONSENT_ITEM_CD')],'17-3, 38-10, 43-3, 법률 L7-1, L9-1, L9 후속')
 add('CONSENT_PATH','동의 경로','Consent Path','`MBR_CONSENT_HIST.CONSENT_PATH_CD`','Y',[],from_codes('CONSENT_PATH_CD'),'17-2')
 add('BODY_REVIEW_DISCLOSURE','리뷰 체형 공개 범위','Review Body Information Disclosure','`MBR_MEMBER.BODY_REVIEW_DISCLOSURE_CD`','Y',[],from_codes('BODY_REVIEW_DISCLOSURE_CD'),'24-8')
 add('TOP_SIZE','평소 상의 사이즈','Usual Top Size','`MBR_MEMBER.USUAL_TOP_SIZE_CD`','N',[],[(s,s,s,'',[]) for s in ['XS','S','M','L','XL','XXL']],'24-9-3')
@@ -229,7 +229,7 @@ CMM_OWNED = {'SALES_CHANNEL','OPERATING_SYSTEM','BANK','CARD_COMPANY','SIDO','SI
 def nxt_block(last, start, cache=20): return start + ((last - start) // cache + 1) * cache
 GID, CID, CODEID = {}, {}, {}
 # 법률 검토(2026-11-22)로 나중에 추가한 코드: 기존 ID를 밀지 않고 V3 마이그레이션에서 끝 번호를 받는다
-LATE = [('PII_RETENTION_REASON', 'UNREFUNDED_DEPOSIT_CONTACT'), ('CONSENT_ITEM', 'ANALYTICS_OVERSEAS_TRANSFER')]
+LATE = [('PII_RETENTION_REASON', 'UNREFUNDED_DEPOSIT_CONTACT'), ('CONSENT_ITEM', 'ANALYTICS_OVERSEAS_TRANSFER'), ('CONSENT_ITEM', 'PRIVACY_USAGE_NOTICE')]
 g, c = 1001, 100001
 order = [x for x in G if x[0] in CMM_OWNED] + [x for x in G if x[0] not in CMM_OWNED]
 for k, x in enumerate(order):

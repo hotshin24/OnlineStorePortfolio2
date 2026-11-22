@@ -132,14 +132,17 @@ CONSENT = [
  ('REFUND_ACCOUNT_STORAGE','환불 계좌 보관','Refund Account Storage'),
 ]
 M += [
- ('TERMS_OF_SERVICE_VER','동의한 이용약관 버전','Agreed Terms of Service Version','VARCHAR2(20)','N','','','필수 동의. 약관이 바뀌어 다시 동의하면 갱신. 이력은 `MBR_CONSENT_HIST` (17-1 C).'),
- ('TERMS_OF_SERVICE_AGREED_AT','이용약관 동의 일시','Terms of Service Agreed At',TS,'N','','',''),
- ('PRIVACY_COLLECTION_VER','동의한 개인정보 수집·이용 안내 버전','Agreed Personal Information Collection Notice Version','VARCHAR2(20)','N','','','필수 동의.'),
- ('PRIVACY_COLLECTION_AGREED_AT','개인정보 수집·이용 동의 일시','Personal Information Collection Agreed At',TS,'N','','',''),
+ ('TERMS_OF_SERVICE_VER','동의한 이용약관 버전','Agreed Terms of Service Version','VARCHAR2(20)','N','','','유일한 필수 동의 (법률 L9-1). 약관이 바뀌어 다시 동의하면 갱신. 이력은 `MBR_CONSENT_HIST` (17-1 C). [확정 2026-11-22]'),
+ ('TERMS_OF_SERVICE_AGREED_AT','이용약관 동의 일시','Terms of Service Agreed At',TS,'N','','','[확정 2026-11-22]'),
+ ('PRIVACY_NOTICE_VER','확인한 개인정보 수집·이용 고지 버전','Confirmed Personal Information Collection Notice Version','VARCHAR2(20)','N','','','동의가 아니라 고지 확인. 가입·주문에 필요한 항목은 계약 이행 근거로 동의 없이 수집하고, 동의 항목과 구분해 고지한다 (법률 L9-1, 개인정보 보호법 15조 1항 4호·22조 3항). 고지가 바뀌어 회원이 확인하면 갱신하고 `MBR_CONSENT_HIST`에 `PRIVACY_NOTICE` 행을 남긴다. 결정 때 이름은 `PRIVACY_COLLECTION_VER` (17-3 변경). [확정 2026-11-22]'),
+ ('PRIVACY_NOTICE_CONFIRMED_AT','개인정보 수집·이용 고지 확인 일시','Personal Information Collection Notice Confirmed At',TS,'N','','','현재 고지 버전을 확인한 시각. 결정 때 이름은 `PRIVACY_COLLECTION_AGREED_AT` (법률 L9-1). [확정 2026-11-22]'),
 ]
 for p, ko, en in CONSENT:
     M.append(yn(f'{p}_AGREED_YN', f'{ko} 선택 동의 여부', f'{en} Consent Flag', 'N', '선택 동의 현재 상태. 바뀔 때마다 `MBR_CONSENT_HIST`에 1행 (17-2 B).'))
     M.append((f'{p}_AGREED_AT', f'{ko} 동의 또는 철회 일시', f'{en} Consent Changed At', TS, 'Y', '', '', '현재 상태가 된 시각. 광고성 수신 동의는 2년마다 재확인 안내에 쓴다.'))
+M.append(yn('PRIVACY_USAGE_NOTICE_REJECTED_YN','개인정보 이용·제공 내역 통지 거부 여부','Personal Information Usage Notice Rejected Flag','N','Y면 연 1회 개인정보 이용·제공 내역 통지에서 제외한다. 바뀔 때마다 `MBR_CONSENT_HIST`에 `PRIVACY_USAGE_NOTICE` 행 (법률 L9 후속, 개인정보 보호법 20조의2, 시행령 15조의3 2항 1호). [확정 2026-11-22]'))
+M.append(('PRIVACY_USAGE_NOTICE_SENT_AT','개인정보 이용·제공 내역 최근 통지 발송 일시','Personal Information Usage Notice Last Sent At',TS,'Y','','','연 1회 이상 통지(수집·이용 목적과 항목, 제공받은 제3자와 목적·항목)의 이행 증빙. 거부하지 않았고 이 값이 1년이 지난 회원을 배치가 통지 대상으로 뽑는다 (법률 L9 후속, 시행령 15조의3 3항·4항). [확정 2026-11-22]'))
+M.append(('ADVERTISING_CONSENT_RECONFIRM_NOTICE_SENT_AT','광고 수신 동의 재확인 안내 발송 일시','Advertising Consent Reconfirmation Notice Sent At',TS,'Y','','','2년마다 하는 광고 수신 동의 확인 안내를 보낸 시각. 채널별 동의일(`*_AGREED_AT`) 중 가장 이른 2년 기한 전에 한 번에 안내하고, 안내에는 전송자, 채널별 동의 사실과 날짜, 유지·철회 방법을 적는다. 회원이 응답하지 않아도 확인 의무 이행의 증빙이 되고, 같은 주기에 두 번 보내지 않게 한다 (법률 L9-3, 정보통신망법 50조 8항, 시행령 62조의3). [확정 2026-11-22]'))
 M += [
  yn('RESTOCK_NOTIFICATION_YN','재입고 알림 수신 여부','Restock Notification Reception Flag','Y','정보성 주제 (18-2).'),
  yn('PRICE_DROP_NOTIFICATION_YN','위시 상품 가격 인하 알림 수신 여부','Wishlist Price Drop Notification Reception Flag','N','광고성 주제. 이 값과 광고 동의가 모두 Y일 때만 발송 (18-2).'),
@@ -375,15 +378,16 @@ T.append(dict(
  cols=[
  ('CONSENT_HIST_ID','동의 이력 고유 식별 번호','Consent History Unique Identifier',ID,'N','','PK',''),
  ('MEMBER_ID','동의한 회원 식별 번호','Consenting Member Identifier',ID,'N','','FK → `MBR_MEMBER`',''),
- ('CONSENT_ITEM_CD','동의 항목 코드','Consent Item Code','VARCHAR2(40)','N','','CK (값 목록)','17-3의 11개 항목 (법률 L7-1로 1개 추가).'),
- ('AGREED_YN','동의 여부 (Y 동의, N 철회)','Agreed Flag (Y Agree, N Withdraw)',YN,'N','','CK (Y/N)',''),
+ ('CONSENT_ITEM_CD','동의 항목 코드','Consent Item Code','VARCHAR2(40)','N','','CK (값 목록)','17-3의 12개 항목: 필수 동의 1, 고지 확인 1, 통지 설정 1, 선택 동의 9 (법률 L7-1, L9-1, L9 후속).'),
+ ('AGREED_YN','동의 여부 (Y 동의, N 철회)','Agreed Flag (Y Agree, N Withdraw)',YN,'N','','CK (Y/N)','고지 확인 행(`PRIVACY_NOTICE`)은 항상 Y (법률 L9-1). 이용·제공 내역 통지 행(`PRIVACY_USAGE_NOTICE`)은 Y = 통지 받음, N = 거부 (법률 L9 후속).'),
  ('TERMS_VER','동의 당시 약관·안내 문서 버전','Terms or Notice Version at Consent','VARCHAR2(20)','Y','','',''),
  ('CONSENT_PATH_CD','동의 경로 코드','Consent Path Code','VARCHAR2(30)','N','','CK (값 목록)','가입, 마이페이지, 이벤트, 2년 재확인, 결제수단·계좌 등록, 관리자 대리.'),
  ('CHANNEL_CD','동의 판매 채널 코드','Consent Sales Channel Code','VARCHAR2(20)','Y','','CK (PC/MOBILE_WEB/APP)',''),
  ('CONSENT_CHANGED_AT','동의 또는 철회 일시','Consent Changed At',TS,'N','SYSTIMESTAMP','',''),
+ ('RESULT_NOTICE_SENT_AT','광고 수신 동의·철회 처리 결과 통지 발송 일시','Advertising Consent Result Notice Sent At',TS,'Y','','CK (테이블 수준)','광고 수신 항목(`ADVERTISING_SMS`, `ADVERTISING_EMAIL`, `ADVERTISING_PUSH`, `NIGHT_ADVERTISING`) 행만 채운다. 의사 표시일부터 14일 안에 전송자, 동의·거부·철회 사실과 날짜, 처리 결과를 알리고 발송 시각을 기록한다. 일 배치가 14일 안 미발송 행을 찾는다 (법률 L9-2, 정보통신망법 50조 7항, 시행령 62조의2). [확정 2026-11-22]'),
  ('REQUEST_IP','동의 요청 IP 주소','Consent Request IP Address','VARCHAR2(45)','Y','','','증빙용. 탈퇴 확정 시 NULL로 바꾸고, 동의·철회 사실은 5년 유지한다 (법률 L4).'),
  ],
- idx=['IX `IX_MBR_CONSENT_HIST_MEMBER_ID_CONSENT_ITEM_CD`'], check=[],
+ idx=['IX `IX_MBR_CONSENT_HIST_MEMBER_ID_CONSENT_ITEM_CD`'], check=['`CK_MBR_CONSENT_HIST_RESULT_NOTICE_SENT_AT`: 광고 수신 항목(`ADVERTISING_SMS`, `ADVERTISING_EMAIL`, `ADVERTISING_PUSH`, `NIGHT_ADVERTISING`)이 아니면 `RESULT_NOTICE_SENT_AT`은 NULL (법률 L9-2)'],
 ))
 
 # ---------------------------------------------------------------- 13
@@ -556,7 +560,7 @@ CODES = {
  'VERIFICATION_RESULT_CD': [('REQUESTED','요청','Requested','',1),('SUCCESS','성공','Success','',2),('FAIL','실패','Fail','',3),('CANCELED','고객 취소','Canceled','',4)],
  'CHANGE_REASON_CD (등급 이력)': [('JOIN','가입 첫 등급','Join','',1),('BATCH','월 배치 승급','Batch','',2),('MANUAL','관리자 수동 지정','Manual','',3),('MANUAL_EXPIRED','수동 등급 만료 복귀','Manual Expired','',4),('MERGE','계정 병합','Merge','',5)],
  'RESTRICTION_TYPE_CD': [('ORDER','주문','Order','',1),('COUPON_POINT','쿠폰·적립금 사용','Coupon and Point','',2),('REVIEW','리뷰 작성','Review','',3),('PAYMENT','결제','Payment','',4),('INQUIRY','문의 작성','Inquiry','',5),('ACCOUNT_SUSPENSION','전체 정지','Account Suspension','모든 기능 정지. 기간·사유는 이 제재 행에 두고, 회원 상태 `SUSPENDED`로 반영 [확정 2026-11-22]',6)],
- 'CONSENT_ITEM_CD': [('TERMS_OF_SERVICE','이용약관','Terms of Service','필수',1),('PRIVACY_COLLECTION','개인정보 수집·이용','Privacy Collection','필수',2)] + [(p, ko, en, '선택', i+3) for i, (p, ko, en) in enumerate(CONSENT)],
+ 'CONSENT_ITEM_CD': [('TERMS_OF_SERVICE','이용약관','Terms of Service','필수',1),('PRIVACY_NOTICE','개인정보 수집·이용 고지 확인','Personal Information Collection Notice Confirmation','고지 확인 (동의 아님). 계약 이행 근거라 철회 대상이 아니며 동의 여부는 항상 Y. 결정 때 코드는 `PRIVACY_COLLECTION` (법률 L9-1)',2),('PRIVACY_USAGE_NOTICE','개인정보 이용·제공 내역 통지','Personal Information Usage Notice','통지 설정 (동의 아님). 동의 여부 N = 통지 거부. 개인정보 보호법 20조의2 (법률 L9 후속)',3)] + [(p, ko, en, '선택', i+4) for i, (p, ko, en) in enumerate(CONSENT)],
  'CONSENT_PATH_CD': [('JOIN','가입','Join','',1),('MY_PAGE','마이페이지','My Page','',2),('EVENT','이벤트','Event','',3),('RECONFIRMATION','2년 재확인','Reconfirmation','',4),('REGISTRATION','계좌·결제수단 등록','Registration','',5),('ADMIN_PROXY','관리자 대리','Admin Proxy','',6),('WITHDRAWAL','탈퇴 처리','Withdrawal','',7)],
  'PREFERENCE_DIMENSION_CD': [('CATEGORY','카테고리','Category','`CATEGORY_ID` 사용',1),('STYLE_MOOD','스타일 무드','Style Mood','',2),('FIT','핏','Fit','상의·하의 구분은 코드값으로',3),('PRICE_RANGE','가격대','Price Range','',4)],
  'PREFERENCE_SOURCE_CD': [('EXPLICIT','고객 선택','Explicit','고정 점수 80',1),('INFERRED','행동 추론','Inferred','',2)],
