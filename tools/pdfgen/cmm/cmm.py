@@ -182,9 +182,9 @@ def desc_html(d):
     if '\x1e' not in d: return il(d)
     main, rel = d.split('\x1e')
     return il(main) + '<div class="rel"><div class="rh">관련 정보</div><ul>' + ''.join(f'<li>{il(x)}</li>' for x in rel.split('\x1f')) + '</ul></div>'
-def ln(ko, en): return f'{il(ko)}<br><span class="en">({il(en)})</span>'
+def ln(ko, en): return f'{il(ko)} <span class="en" style="display:inline-block">({il(en)})</span>'  # 한 줄에 들어가면 한 줄
 def pn(p): return html.escape(p).replace('_', '_<wbr>')
-B = '☐'; CKS = f'<td class="ck">{B}</td><td class="ck">{B}</td><td class="memo"></td>'
+B = '☐'; CKS = f'<td class="ck">{B}</td><td class="memo"></td>'
 CSS = """@page { size: A4 landscape; margin: 12mm 10mm; }
 body { font-family: 'Apple SD Gothic Neo', sans-serif; font-size: 8.4pt; color:#222; line-height:1.4; }
 h1 { font-size: 16pt; margin:0 0 4px; border-bottom: 3px solid #1f4e79; padding-bottom:6px; color:#1f4e79; }
@@ -206,22 +206,22 @@ code { font-family: Menlo, monospace; font-size:7.6pt; background:#f1f1f1; paddi
 .rel ul { margin:0; padding-left:12px; } .rel li { margin:0; font-size:7.8pt; color:#333; }"""
 body = ('<h1>공통코드 (CMM_CODE) — 회원 도메인 코드 (제안)</h1>'
         f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 · 테이블 이름 <code>CMM_CODE_GROUP</code>, <code>CMM_CODE</code>는 확정, 구조와 값은 모두 제안</div>'
-        '<div class="box"><b>검토 방법</b><br>· 모든 행에 확정·수정 칸이 있다. 1장은 T 번호, 2장은 <code>CODE_GROUP_ID</code>, 3장은 <code>CODE_ID</code>로 알려 주면 된다.<br>'
+        '<div class="box"><b>검토 방법</b><br>· 모든 행에 확정 칸과 메모 칸이 있다. 확정한 행은 확정 칸에 표시하고, 고칠 내용은 메모 칸에 적는다. 1장은 T 번호, 2장은 <code>CODE_GROUP_ID</code>, 3장은 <code>CODE_ID</code>로 알려 주면 된다.<br>'
         '· 코드 저장 방식 A (2026-11-22): 업무 테이블의 <code>_CD</code> 컬럼은 <code>CMM_CODE.CODE_CD</code> 문자열을 저장하고 FK는 걸지 않는다. CHECK 적용 그룹(CK=Y)은 값을 업무 컬럼 CHECK에도 나열한다.<br>'
         '· 노란 행 / 빨간 표시: 결정 항목에 없던 제안이거나 확인이 필요한 것.<br>· 정렬은 지시 규칙 8 (관련 그룹 → 중요도 순).</div>')
-conf = '<h2>확인이 필요한 사항</h2><table><tr><th>No</th><th>항목</th><th>내용</th><th>확정</th><th>수정</th><th>메모</th></tr>' + ''.join(
+conf = '<h2>확인이 필요한 사항</h2><table><tr><th>No</th><th>항목</th><th>내용</th><th>확정</th><th>메모</th></tr>' + ''.join(
     f'<tr class="cf"><td class="n">Q{k}</td><td>{il(a)}</td><td>{il(b)}</td>{CKS}</tr>' for k, (a, b) in enumerate(CONFIRM, 1)) + '</table>'
 body += conf
 # 1. 테이블 구조
 body += '<h2 class="g">1. 테이블 구조</h2>'
-COLG = '<colgroup><col style="width:4%"><col style="width:17%"><col style="width:16%"><col style="width:8.5%"><col style="width:3.5%"><col style="width:7%"><col style="width:9%"><col style="width:24%"><col style="width:3%"><col style="width:3%"><col style="width:5%"></colgroup>'
+COLG = '<colgroup><col style="width:4%"><col style="width:17%"><col style="width:18%"><col style="width:8.5%"><col style="width:3.5%"><col style="width:7%"><col style="width:9%"><col style="width:25%"><col style="width:3%"><col style="width:5%"></colgroup>'
 for ti, t in enumerate(TABLES, 1):
     body += f'<h2>1-{ti}. {t["t"]}</h2><table class="info"><tr><td>논리명</td><td>{ln(t["ko"], t["en"])}</td></tr><tr><td>설명</td><td>{il(t["desc"])}</td></tr><tr><td>PK·시퀀스</td><td>대리 PK <code>SEQ_{t["t"]}</code> · CACHE 20</td></tr><tr><td>삭제 방식</td><td>논리 삭제 (마스터). 사용 중인 코드는 삭제 대신 <code>USE_YN = N</code></td></tr></table>'
-    body += f'<table style="table-layout:fixed">{COLG}<tr><th>No</th><th>물리명</th><th>논리명</th><th>타입</th><th>NULL</th><th>기본값</th><th>제약</th><th>설명</th><th>확정</th><th>수정</th><th>메모</th></tr>'
+    body += f'<table style="table-layout:fixed">{COLG}<tr><th>No</th><th>물리명</th><th>논리명</th><th>타입</th><th>NULL</th><th>기본값</th><th>제약</th><th>설명</th><th>확정</th><th>메모</th></tr>'
     for k, (p, ko, en, ty, nl, df, ck, ds) in enumerate(t['cols'], 1):
         cls = ' class="sys"' if p.startswith(('CREATED', 'UPDATED', 'DELETED')) else (' class="cf"' if '[확인' in ds or '제안' in ds else '')
         body += f'<tr{cls}><td class="n">T{ti}-{k}</td><td class="p">{pn(p)}</td><td>{ln(ko, en)}</td><td class="ty">{il(ty)}</td><td class="n">{nl}</td><td class="ty">{il(df)}</td><td>{il(ck)}</td><td>{il(ds)}</td>{CKS}</tr>'
-    body += '</table><h3>인덱스·제약</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>수정</th><th>메모</th></tr>' + ''.join(
+    body += '</table><h3>인덱스·제약</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>메모</th></tr>' + ''.join(
         f'<tr><td class="n">T{ti}-X{k}</td><td>{il(x)}</td>{CKS}</tr>' for k, x in enumerate(t['idx'], 1)) + '</table>'
 # 2. 그룹 목록 (CMM_CODE_GROUP 행, DB 컬럼 그대로)
 CMM_OWNED = {'SALES_CHANNEL','OPERATING_SYSTEM','BANK','CARD_COMPANY','SIDO','SIGUNGU','PII_RETENTION_REASON'}
@@ -254,10 +254,10 @@ body += ('<div class="box"><b>ID 값은 가상 값이다</b> <span class="warn">
   f'· V1과 V2 사이에 DB를 재시작해 캐시 20개가 버려졌다고 가정해 번호가 건너뛴다 (그룹 {GID["PII_RETENTION_REASON"]} → {min(v for k, v in GID.items() if k not in CMM_OWNED)}). 시군구 약 250개도 V1에서 <code>CODE_ID</code>를 차지한다.<br>'
   f'· 법률 검토(2026-11-22)로 추가한 코드 {len(LATE)}개는 V3 마이그레이션으로 나중에 넣었다고 가정해, 기존 ID를 밀지 않고 {V3_START}부터 받는다: ' + ', '.join(f'<code>{k[1]}</code> {CODEID[k]}' for k in LATE) + '.<br>'
   f'· 결과: <code>CODE_GROUP_ID</code> 1001~{LAST_G}, <code>CODE_ID</code> 100001~{LAST_C}. 검토할 때는 이 ID로 알려 주면 된다.</div>')
-body += ('<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:15%"><col style="width:15%"><col style="width:6%"><col style="width:7%"><col style="width:12%"><col style="width:23%"><col style="width:4%"><col style="width:3%"><col style="width:3%"><col style="width:7%"></colgroup><tr>'
+body += ('<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:15%"><col style="width:17%"><col style="width:6%"><col style="width:7%"><col style="width:12%"><col style="width:24%"><col style="width:4%"><col style="width:3%"><col style="width:7%"></colgroup><tr>'
          + th('CODE_GROUP_ID','그룹 ID') + th('CODE_GROUP_CD','그룹 코드') + th('CODE_GROUP_NM','한글 이름 (영문 이름)') + th('OWNER_DOMAIN_CD','소유 도메인')
          + th('CHECK_CONSTRAINT_YN','CHECK 적용') + th('ATTR1~5_NM','추가 속성 의미') + th('CODE_GROUP_DESC','설명 (쓰는 컬럼)') + th('USE_YN','사용')
-         + '<th>확정</th><th>수정</th><th>메모</th></tr>')
+         + '<th>확정</th><th>메모</th></tr>')
 for gi, (gc, ko, en, cols, ck, attrs, vals, note) in enumerate(G, 1):
     body += (f'<tr><td class="n">{GID[gc]}</td><td class="p">{pn(gc)}</td><td>{ln(ko, en)}</td><td class="ty">{"CMM" if gc in CMM_OWNED else "MBR"}</td><td class="n">{ck}</td>'
              f'<td>{"<br>".join(f"ATTR{i+1}_NM: {il(x)}" for i, x in enumerate(attrs))}</td><td>{il(cols)}</td><td class="n">Y</td>{CKS}</tr>')
@@ -272,15 +272,15 @@ for gi, (gc, ko, en, cols, ck, attrs, vals, note) in enumerate(G, 1):
     body += f'<div style="page-break-inside:avoid"><h3>CODE_GROUP_ID {GID[gc]} · {gc} — {il(ko)} <span style="font-weight:400;color:#666">· CHECK {ck} · 근거 {il(note)}</span></h3>'
     if not vals:
         body += f'<p>{il(note)} · <code>CODE_ID</code> {CID[gc]}~{CID[gc]+249} 차지 (가정)</p></div>'; continue
-    body += ('<table style="table-layout:fixed"><colgroup><col style="width:6%"><col style="width:7%"><col style="width:16%"><col style="width:17%">' + f'<col style="width:{w}%">' + ''.join('<col style="width:8%">' for _ in attrs) +
-             '<col style="width:5%"><col style="width:4%"><col style="width:3%"><col style="width:3%"><col style="width:4%"></colgroup><tr>'
+    body += ('<table style="table-layout:fixed"><colgroup><col style="width:6%"><col style="width:7%"><col style="width:16%"><col style="width:18%">' + f'<col style="width:{w}%">' + ''.join('<col style="width:8%">' for _ in attrs) +
+             '<col style="width:5%"><col style="width:4%"><col style="width:3%"><col style="width:4%"></colgroup><tr>'
              + th('CODE_ID','코드 ID') + th('CODE_GROUP_ID','그룹 ID') + th('CODE_CD','코드 값') + th('CODE_NM','한글 이름 (영문 이름)') + th('CODE_DESC','설명')
-             + ''.join(th(f'ATTR{i+1}_VAL', a) for i, a in enumerate(attrs)) + th('SORT_SN','정렬') + th('USE_YN','사용') + '<th>확정</th><th>수정</th><th>메모</th></tr>')
+             + ''.join(th(f'ATTR{i+1}_VAL', a) for i, a in enumerate(attrs)) + th('SORT_SN','정렬') + th('USE_YN','사용') + '<th>확정</th><th>메모</th></tr>')
     for vi, (c, k, e, d, av) in enumerate(vals, 1):
         nv += 1
         cf = ' class="cf"' if '[' in note and ('제안' in note or '확인' in note) else ''
         body += (f'<tr{cf}><td class="n">{CODEID[(gc, c)]}</td><td class="n">{GID[gc]}</td><td class="p">{pn(c)}</td><td>{ln(k, e)}</td><td>{desc_html(d)}</td>'
-                 + ''.join(f'<td class="p">{pn(a)}</td>' if re.fullmatch(r'[A-Z_]+', a or '') else f'<td>{il(a)}</td>' for a in (av + [""] * nA)[:nA]) + f'<td class="n">{vi}</td><td class="n">Y</td>' + (f'<td class="ck on">☑</td><td class="ck">{B}</td><td class="memo"></td>' if '[확정' in d else CKS) + '</tr>')
+                 + ''.join(f'<td class="p">{pn(a)}</td>' if re.fullmatch(r'[A-Z_]+', a or '') else f'<td>{il(a)}</td>' for a in (av + [""] * nA)[:nA]) + f'<td class="n">{vi}</td><td class="n">Y</td>' + (f'<td class="ck on">☑</td><td class="memo"></td>' if '[확정' in d else CKS) + '</tr>')
     body += '</table></div>'
 body = body.replace('<div class="box"><b>검토 방법</b>', f'<div class="box">코드 그룹 {len(G)}개 · 코드 값 {{NV}}개 (시군구 제외)</div><div class="box"><b>검토 방법</b>', 1).replace('{NV}', str(nv))
 open(OUT, 'w', encoding='utf-8').write(f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>CMM_CODE 회원 도메인 코드</title><style>{CSS}</style></head><body>{body}</body></html>')
