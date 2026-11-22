@@ -18,11 +18,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 제외: 오프라인 매장, 외부몰 입점, 해외 판매.
   - 판매는 자사몰(PC, 모바일 웹, 앱)에서만 하고 원화(KRW)만 쓴다.
   - 외화는 생산·소싱(SCM)에서만 쓴다.
-- 진행 상황 (2026-11-21):
+- 진행 상황 (2026-11-22):
   - 선행 결정 17개와 공통 결정을 모두 확정했다.
   - 회원 도메인 결정 1~47번을 모두 확정했다 (`docs/pdf/회원결정/`).
     - 회원 도메인 테이블은 21개, 컬럼은 419개다 (2026-11-22 법률 L9 후속 3으로 `MBR_CONSENT` 추가).
-  - 다음 단계는 회원 도메인 테이블 이름 확정과 컬럼 상세 정의이고, 그다음 나머지 13개 도메인이다.
+  - 법률 검토 L1~L9와 L9 후속 1~3을 반영했다 (`docs/pdf/법률검토/`, 로컬 전용).
+  - 테이블 물리명은 확정했다. 지금은 회원 컬럼을 그룹 단위로 검토해 확정하는 중이다.
+    - 확정한 그룹: 본인 가입 정보. 약관·고지 그룹은 확정했으나 컬럼이 `MBR_CONSENT`로 옮겨져 새 테이블 컬럼의 확정 표시는 아직 정하지 않았다.
+  - 그다음은 나머지 13개 도메인이다.
 
 ## 작업 방식 (반드시 지킬 것)
 
@@ -263,7 +266,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## PDF 생성 방법
 
-0. `tools/pdfgen/`에 스크립트가 있는 문서는 `tools/pdfgen/build.sh <출력폴더> [--install]`로 만든다.
+### 스크립트가 있는 문서 (`tools/pdfgen/`, 자세한 내용은 `tools/pdfgen/README.md`)
+
+- `tools/pdfgen/build.sh <출력폴더> [--install]`로 만든다. `--install`은 `docs/pdf/`의 PDF 4개를 덮어쓴다.
+- 실행 순서: `cmm/cmm.py`가 `code_ids.json`(가상 CODE_ID)을 먼저 만들고 `cols/render.py`가 그것을 읽는다.
+- 코드 값을 중간에 추가하면 뒤 값의 CODE_ID가 밀린다. 새 값은 `cmm.py`의 `LATE` 목록에 넣어 기존 ID를 지키고, 생성 후 `code_ids.json`을 이전 것과 비교한다.
+- `--install`은 회원결정 변경 안내 쪽을 붙이지 않는다. `chgNN.pdf`를 커밋 `77b85b7`의 원본 PDF 앞에 `decision_change/merge.swift`로 붙인 뒤 덮어쓴다.
+- 검증: `swift tools/pdfgen/util/pdf2txt.swift <입력.pdf> <출력.txt>`(출력 경로 필수)로 텍스트를 뽑아 이전 PDF와 비교한다.
+- 스크립트 작성 규칙:
+  - `cols/data.py` 컬럼 설명 끝의 `[확정 YYYY-MM-DD]`는 정의서에서 ☑ 확정 표시로 렌더링된다. 사용자가 그룹을 확정하면 이 표시를 단다.
+  - 코드 값 행은 컬럼 이름으로 연결된다(CODE_MAP). 같은 `_CD` 컬럼을 가진 모든 테이블에 값 행이 나온다.
+  - `cols/related.py`의 코드 값별 관련 정보는 `{TABLE.COLUMN}` 자리표시자로 쓴다. 없는 컬럼이면 생성 때 오류가 난다.
+  - 테이블 그룹·컬럼 그룹 순서(규칙 8)는 `cols/order.py`에서 정한다. 테이블 수는 `len(T)`로 계산되므로 숫자를 직접 쓰지 않는다.
+
+### 스크립트가 없는 문서 (수동)
+
 1. HTML을 세션 스크래치패드에 작성한다.
    - 한글 폰트는 Apple SD Gothic Neo, 페이지는 A4 CSS로 맞춘다.
 2. Chrome headless로 PDF를 출력한다.
@@ -288,3 +305,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 사용자가 요청할 때만 커밋한다.
 - 첫 커밋 `d3d9ff9`를 `main`에 푸시했다 (2026-11-20).
 - `/export`로 저장한 대화 기록 `.txt`는 커밋하지 않았다. 사용자 확인 없이 올리지 않는다.
+- `docs/pdf/법률/`, `docs/pdf/법률검토/`는 절대 커밋하지 않는다 (사용자 지시). 이 폴더와 txt가 추적되지 않은 채 있으므로 스테이징은 `git add -u`로 한다 (새 파일은 경로를 지정해 따로 추가).
+- 푸시: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin main`
+- 커밋 메시지는 한국어로 쓰고 끝에 `Co-Authored-By` 줄을 붙인다.
