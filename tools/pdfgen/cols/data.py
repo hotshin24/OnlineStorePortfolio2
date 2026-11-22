@@ -131,18 +131,7 @@ CONSENT = [
  ('ANALYTICS_OVERSEAS_TRANSFER','행동 분석 정보 국외 이전','Overseas Transfer of Behavior Analytics Data'),
  ('REFUND_ACCOUNT_STORAGE','환불 계좌 보관','Refund Account Storage'),
 ]
-M += [
- ('TERMS_OF_SERVICE_VER','동의한 이용약관 버전','Agreed Terms of Service Version','VARCHAR2(20)','N','','','유일한 필수 동의 (법률 L9-1). 약관이 바뀌어 다시 동의하면 갱신. 이력은 `MBR_CONSENT_HIST` (17-1 C). [확정 2026-11-22]'),
- ('TERMS_OF_SERVICE_AGREED_AT','이용약관 동의 일시','Terms of Service Agreed At',TS,'N','','','[확정 2026-11-22]'),
- ('PRIVACY_NOTICE_VER','확인한 개인정보 수집·이용 고지 버전','Confirmed Personal Information Collection Notice Version','VARCHAR2(20)','N','','','동의가 아니라 고지 확인. 가입·주문에 필요한 항목은 계약 이행 근거로 동의 없이 수집하고, 동의 항목과 구분해 고지한다 (법률 L9-1, 개인정보 보호법 15조 1항 4호·22조 3항). 고지가 바뀌어 회원이 확인하면 갱신하고 `MBR_CONSENT_HIST`에 `PRIVACY_NOTICE` 행을 남긴다. 결정 때 이름은 `PRIVACY_COLLECTION_VER` (17-3 변경). [확정 2026-11-22]'),
- ('PRIVACY_NOTICE_CONFIRMED_AT','개인정보 수집·이용 고지 확인 일시','Personal Information Collection Notice Confirmed At',TS,'N','','','현재 고지 버전을 확인한 시각. 결정 때 이름은 `PRIVACY_COLLECTION_AGREED_AT` (법률 L9-1). [확정 2026-11-22]'),
-]
-for p, ko, en in CONSENT:
-    M.append(yn(f'{p}_AGREED_YN', f'{ko} 선택 동의 여부', f'{en} Consent Flag', 'N', '선택 동의 현재 상태. 바뀔 때마다 `MBR_CONSENT_HIST`에 1행 (17-2 B).'))
-    M.append((f'{p}_AGREED_AT', f'{ko} 동의 또는 철회 일시', f'{en} Consent Changed At', TS, 'Y', '', '', '현재 상태가 된 시각. 광고성 수신 동의는 2년마다 재확인 안내에 쓴다.'))
-M.append(yn('PRIVACY_USAGE_NOTICE_REJECTED_YN','개인정보 이용·제공 내역 통지 거부 여부','Personal Information Usage Notice Rejected Flag','N','Y면 연 1회 개인정보 이용·제공 내역 통지에서 제외한다. 바뀔 때마다 `MBR_CONSENT_HIST`에 `PRIVACY_USAGE_NOTICE` 행 (법률 L9 후속, 개인정보 보호법 20조의2, 시행령 15조의3 2항 1호). [확정 2026-11-22]'))
-M.append(('PRIVACY_USAGE_NOTICE_SENT_AT','개인정보 이용·제공 내역 최근 통지 발송 일시','Personal Information Usage Notice Last Sent At',TS,'Y','','','연 1회 이상 통지(수집·이용 목적과 항목, 제공받은 제3자와 목적·항목)의 이행 증빙. 거부하지 않았고 이 값이 1년이 지난 회원을 배치가 통지 대상으로 뽑는다 (법률 L9 후속, 시행령 15조의3 3항·4항). [확정 2026-11-22]'))
-M.append(('ADVERTISING_CONSENT_RECONFIRM_NOTICE_SENT_AT','광고 수신 동의 재확인 안내 발송 일시','Advertising Consent Reconfirmation Notice Sent At',TS,'Y','','','2년마다 하는 광고 수신 동의 확인 안내를 보낸 시각. 채널별 동의일(`*_AGREED_AT`) 중 가장 이른 2년 기한 전에 한 번에 안내하고, 안내에는 전송자, 채널별 동의 사실과 날짜, 유지·철회 방법을 적는다. 회원이 응답하지 않아도 확인 의무 이행의 증빙이 되고, 같은 주기에 두 번 보내지 않게 한다 (법률 L9-3, 정보통신망법 50조 8항, 시행령 62조의3). [확정 2026-11-22]'))
+# 동의 컬럼 25개는 `MBR_CONSENT`로 옮김 (17-1 변경, 법률 L9 후속 3 C)
 M += [
  yn('RESTOCK_NOTIFICATION_YN','재입고 알림 수신 여부','Restock Notification Reception Flag','Y','정보성 주제 (18-2).'),
  yn('PRICE_DROP_NOTIFICATION_YN','위시 상품 가격 인하 알림 수신 여부','Wishlist Price Drop Notification Reception Flag','N','광고성 주제. 이 값과 광고 동의가 모두 Y일 때만 발송 (18-2).'),
@@ -201,7 +190,7 @@ M += [
 ]
 T.append(dict(
  t='MBR_MEMBER', ko='회원 기본 정보 및 회원 단위 설정·캐시', en='Member Master with Member-Level Settings and Caches',
- desc='회원 1명당 1행. 계정 상태, 암호화 개인정보, 유형·등급, 실적·제재 캐시, 동의 현재값, 알림 설정, 유입, 체형, 휴면·탈퇴, 결제·환불 기본값을 담는다. 탈퇴하면 행은 남기고 개인정보를 NULL로 바꾼다 (27-5).',
+ desc='회원 1명당 1행. 계정 상태, 암호화 개인정보, 유형·등급, 실적·제재 캐시, 알림 설정, 유입, 체형, 휴면·탈퇴, 결제·환불 기본값을 담는다. 탈퇴하면 행은 남기고 개인정보를 NULL로 바꾼다 (27-5).',
  basis='1~47 전반', pk='대리 PK `SEQ_MBR_MEMBER` (가입 시 먼저 채번)', cache=20, delete='상태 코드 (`WITHDRAWN`) + 개인정보 NULL. 물리 삭제 없음', part='없음', keep='개인정보와 분석용 식별자는 탈퇴 시 NULL, CI 해시는 6개월 후 NULL, 통계 컬럼과 외부 분석 삭제 요청·완료 확인 일시는 계속 유지', ldel=False, pii=True,
  cols=M,
  idx=['UK `UK_MBR_MEMBER_MEMBER_NO`, `UK_MBR_MEMBER_EMAIL_HASH`, `UK_MBR_MEMBER_MOBILE_PHONE_NUMBER_HASH`, `UK_MBR_MEMBER_CI_HASH`, `UK_MBR_MEMBER_NICKNAME_NM`, `UK_MBR_MEMBER_ANALYTICS_IDENTIFIER_VAL`', 'IX `IX_MBR_MEMBER_MEMBER_NAME_BIRTH_DATE_HASH` (관리자 이름·생년월일 검색) [확정 2026-11-22]',
@@ -370,10 +359,29 @@ T.append(dict(
  idx=['IX `IX_MBR_SANCTION_MEMBER_ID_SANCTION_END_AT`', 'IX `IX_MBR_SANCTION_SANCTION_END_AT` (종료 캐시 갱신 배치)'], check=['`RELEASED_AT`이 있으면 `RELEASE_REASON_DESC` 필수', '`RELEASED_AT`, `RELEASED_BY_TYPE_CD`, `RELEASED_BY`는 모두 채우거나 모두 NULL [확정 2026-11-22]'],
 ))
 
+# ---------------------------------------------------------------- 12-0 MBR_CONSENT (법률 L9 후속 3)
+T.append(dict(
+ t='MBR_CONSENT', ko='회원 약관·개인정보·광고 동의 현재 상태', en='Member Current Consent Status',
+ desc='회원 × 동의 항목마다 1행. 가입할 때 12개 항목 행을 모두 만든다. 바뀔 때마다 같은 트랜잭션에서 `MBR_CONSENT_HIST`에 1행을 남긴다 (17-1 변경, 법률 L9 후속 3 C).',
+ basis='17-1 변경, 17-2, 법률 L9 후속 3', pk='대리 PK `SEQ_MBR_CONSENT` + UK', cache=20, delete='물리 삭제. 탈퇴 확정 때 12행 삭제 (증빙은 `MBR_CONSENT_HIST`에 5년)', part='없음', keep='-', ldel=False, pii=False,
+ cols=[
+ ('CONSENT_ID','회원 동의 고유 식별 번호','Member Consent Unique Identifier',ID,'N','','PK',''),
+ ('MEMBER_ID','동의 주체 회원 식별 번호','Consenting Member Identifier',ID,'N','','FK → `MBR_MEMBER`, UK',''),
+ ('CONSENT_ITEM_CD','동의 항목 코드','Consent Item Code','VARCHAR2(40)','N','','CK (값 목록), UK','12개 항목: 필수 동의 1, 고지 확인 1, 통지 설정 1, 선택 동의 9.'),
+ ('AGREED_YN','현재 동의 여부','Current Agreed Flag',YN,'N','','CK (Y/N), CK (테이블 수준)','동의하지 않은 선택 항목은 N. 이용약관·수집·이용 고지 행은 항상 Y. 이용·제공 내역 통지 행은 Y = 통지 받음(가입 때 기본값), N = 거부 (개인정보 보호법 20조의2, 시행령 15조의3 2항 1호).'),
+ ('TERMS_VER','현재 동의·확인한 약관·안내 문서 버전','Currently Agreed Terms or Notice Version','VARCHAR2(20)','Y','','CK (테이블 수준)','이용약관·수집·이용 고지 행은 필수. 문서가 바뀌어 다시 동의·확인하면 갱신 (17-1 C, 법률 L9-1).'),
+ ('CONSENT_CHANGED_AT','동의 상태 최종 변경 일시','Consent Status Last Changed At',TS,'N','SYSTIMESTAMP','','마지막으로 동의·철회·재확인한 시각. 광고 수신 4개 항목의 2년 재확인 기한은 이 값으로 계산한다 (정보통신망법 50조 8항).'),
+ ('NOTICE_SENT_AT','안내·통지 최근 발송 일시','Notice Last Sent At',TS,'Y','','CK (테이블 수준)','이용·제공 내역 통지 행: 연 1회 통지 발송 시각. 거부하지 않았고 이 값이 1년이 지난 행을 배치가 통지 대상으로 뽑는다 (법률 L9 후속, 시행령 15조의3). 광고 수신 4개 행: 2년 재확인 안내 발송 시각. 채널별 기한 중 가장 이른 기한 전에 한 번에 안내하고 4행에 같은 시각을 쓴다 (법률 L9-3, 시행령 62조의3). 다른 항목은 NULL.'),
+ ],
+ idx=['UK `UK_MBR_CONSENT_MEMBER_ID_CONSENT_ITEM_CD` (MEMBER_ID, CONSENT_ITEM_CD)', 'IX `IX_MBR_CONSENT_CONSENT_ITEM_CD_AGREED_YN` (광고 발송·통지 대상 추출)'],
+ check=['`CK_MBR_CONSENT_AGREED_YN`: `TERMS_OF_SERVICE`, `PRIVACY_NOTICE` 행은 `AGREED_YN` = Y이고 `TERMS_VER` NOT NULL',
+        '`CK_MBR_CONSENT_NOTICE_SENT_AT`: `PRIVACY_USAGE_NOTICE`와 광고 수신 4개 항목(`ADVERTISING_SMS`, `ADVERTISING_EMAIL`, `ADVERTISING_PUSH`, `NIGHT_ADVERTISING`)이 아니면 `NOTICE_SENT_AT`은 NULL'],
+))
+
 # ---------------------------------------------------------------- 12 MBR_CONSENT_HIST
 T.append(dict(
  t='MBR_CONSENT_HIST', ko='회원 약관·개인정보·광고 동의 및 철회 이력', en='Member Consent and Withdrawal History',
- desc='동의·철회할 때마다 1행 (17-2 B). 현재 상태는 회원 테이블 컬럼에 있다.',
+ desc='동의·철회할 때마다 1행 (17-2 B). 현재 상태는 `MBR_CONSENT`에 있다 (법률 L9 후속 3).',
  basis='17, 28-13', pk='대리 PK `SEQ_MBR_CONSENT_HIST`', cache=100, delete='이력: 탈퇴 후 5년 뒤 나눠서 DELETE (28-13 C)', part='[확인 필요] (행별 기한이라 파티션 제거 대상 아님)', keep='탈퇴 후 5년. 요청 IP는 탈퇴 확정 시 NULL (법률 L4)', ldel=False, pii=False,
  cols=[
  ('CONSENT_HIST_ID','동의 이력 고유 식별 번호','Consent History Unique Identifier',ID,'N','','PK',''),

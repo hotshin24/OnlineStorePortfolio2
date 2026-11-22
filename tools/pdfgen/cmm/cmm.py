@@ -90,7 +90,7 @@ add('SANCTION_REASON','제재 사유','Sanction Reason','`MBR_SANCTION.SANCTION_
     [('RETURN_ABUSE','반품 남용','Return Abuse','12-4 후보 확정',[]),('PAYMENT_FAILURE_REPEATED','결제 연속 실패','Repeated Payment Failure','46-2 자동 제한 (처리자 SYSTEM)',[]),
      ('PAYMENT_FRAUD','부정 결제','Payment Fraud','',[]),('COUPON_POINT_ABUSE','쿠폰·적립금 부정 사용','Coupon and Point Abuse','',[]),
      ('REVIEW_ABUSE','리뷰 부정 작성','Review Abuse','광고성·허위 리뷰',[]),('ABUSIVE_INQUIRY','고객센터 악성 문의','Abusive Inquiry','',[]),('OTHER','기타','Other','메모 필수',[])],'[제안: 값은 결정 항목 아님]')
-add('CONSENT_ITEM','동의 항목','Consent Item','`MBR_CONSENT_HIST.CONSENT_ITEM_CD`','Y',['필수 여부'],
+add('CONSENT_ITEM','동의 항목','Consent Item','`MBR_CONSENT.CONSENT_ITEM_CD`, `MBR_CONSENT_HIST.CONSENT_ITEM_CD`','Y',['필수 여부'],
     [(c,k,e,d,['Y' if d.split('\x1e')[0]=='필수' else 'N']) for c,k,e,d,_ in from_codes('CONSENT_ITEM_CD')],'17-3, 38-10, 43-3, 법률 L7-1, L9-1, L9 후속')
 add('CONSENT_PATH','동의 경로','Consent Path','`MBR_CONSENT_HIST.CONSENT_PATH_CD`','Y',[],from_codes('CONSENT_PATH_CD'),'17-2')
 add('BODY_REVIEW_DISCLOSURE','리뷰 체형 공개 범위','Review Body Information Disclosure','`MBR_MEMBER.BODY_REVIEW_DISCLOSURE_CD`','Y',[],from_codes('BODY_REVIEW_DISCLOSURE_CD'),'24-8')
