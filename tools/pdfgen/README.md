@@ -16,7 +16,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 4개를 덮어�
 | `cols/` | `data.py` 테이블·컬럼·코드 값 (단일 출처)<br>`order.py` 테이블·컬럼 그룹 순서 (규칙 8)<br>`related.py` 코드 값별 관련 정보<br>`render.py` 렌더러 | `회원_테이블이름_확정.pdf`, `회원_컬럼정의서_검토용.pdf` |
 | `cmm/` | `cmm.py` (`cols/data.py`의 코드를 읽음) | `공통코드_CMM_CODE_회원도메인.pdf`, `code_ids.json` (가상 CODE_ID) |
 | `policy/` | `content.py` 조문 내용<br>`render.py` 렌더러 | `회원도메인_정책명세.pdf` |
-| `decision_change/` | `chg.py` 변경 안내 쪽<br>`merge.swift` PDF 앞에 쪽 붙이기 | 회원결정 28·31·39·47번의 첫 쪽 |
+| `decision_change/` | `chg.py` 변경 안내 쪽<br>`merge.swift` PDF 앞에 쪽 붙이기 | 회원결정 17·28·31·39·47번의 첫 쪽 |
 | `util/` | `pdf2txt.swift` PDF 텍스트 추출 (검증용) | |
 
 - 실행 순서가 중요하다. `cmm.py`가 만든 `code_ids.json`을 `cols/render.py`가 읽는다.
@@ -24,7 +24,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 4개를 덮어�
 
 ## 회원결정 변경 안내 쪽
 
-`docs/pdf/회원결정/`의 28·31·39·47번에는 변경 안내 쪽이 이미 붙어 있다. 다시 만들 때는 원본(커밋 `77b85b7`의 PDF)에 붙인다.
+`docs/pdf/회원결정/`의 17·28·31·39·47번에는 변경 안내 쪽이 이미 붙어 있다. 다시 만들 때는 원본(커밋 `77b85b7`의 PDF)에 붙인다.
 
 ```bash
 git show 77b85b7:"docs/pdf/회원결정/회원결정_28_개인정보보유기간과파기.pdf" > /tmp/orig28.pdf

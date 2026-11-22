@@ -53,9 +53,10 @@ T.append(dict(
 M = []
 M += [
  ('MEMBER_ID','회원 고유 식별 번호','Member Unique Identifier',ID,'N','','PK','회원을 식별하는 대리 키. 가입할 때 시퀀스로 먼저 받아 생성자 컬럼에도 본인 ID로 기록한다 (선행 결정 8). [확정 2026-11-22]'),
- ('MEMBER_NO','고객 노출용 공개 회원 번호','Public Member Number for Customer Display','VARCHAR2(11)','N','','UK, CK (`M` + 숫자 10자리)','고객센터·영수증·URL에 쓰는 번호. `M` + 랜덤 숫자 10자리. UK 충돌 시 다시 생성 (5-2). 탈퇴 후에도 남는 재사용 금지 값 (28-1). [확정 2026-11-22]'),
- ('ANALYTICS_IDENTIFIER_VAL','외부 분석 도구 연계용 무작위 회원 식별 값','Random Member Identifier Value for External Analytics','VARCHAR2(36)','Y','','UK','외부 분석 도구에 보내는 무작위 값 (UUID). 내부 PK를 노출하지 않으려고 둔다 (선행 결정 12-4). 탈퇴 확정 시 NULL (법률 L1-1, 28-6 변경). 그래서 NULL 허용으로 바꿨다. [확정 2026-11-22]'),
+ ('MEMBER_NO','고객 노출용 공개 회원 번호','Public Member Number for Customer Display','VARCHAR2(11)','N','','UK, CK (`M` + 숫자 10자리)','고객센터·영수증·URL에 쓰는 번호. `M` + 랜덤 숫자 10자리. UK 충돌 시 다시 생성 (5-2). 탈퇴 후에도 남는 재사용 금지 값 (28-1). URL에 쓸 때는 로그인한 본인의 번호인지 반드시 검사한다. 번호를 추측하기 어렵다는 것만으로는 접근 통제가 되지 않는다 (안전성 확보조치 기준 6조 3항, 법률 L7-3). [확정 2026-11-22]'),
+ ('ANALYTICS_IDENTIFIER_VAL','외부 분석 도구 연계용 무작위 회원 식별 값','Random Member Identifier Value for External Analytics','VARCHAR2(36)','Y','','UK','외부 분석 도구에 보내는 무작위 값 (UUID). 내부 PK를 노출하지 않으려고 둔다 (선행 결정 12-4). 탈퇴 확정 시 NULL (법률 L1-1, 28-6 변경). 그래서 NULL 허용으로 바꿨다. 행동 분석 국외 이전에 동의하지 않은 회원도 값은 만들되 외부로 보내지 않는다 (법률 L7-1). [확정 2026-11-22]'),
  ('ANALYTICS_DATA_DELETION_REQUESTED_AT','외부 분석 도구 데이터 삭제 요청 일시','External Analytics Data Deletion Requested At',TS,'Y','','','탈퇴 확정 배치가 외부 분석 도구의 삭제 API 호출에 성공한 시각. 처리 증빙이라 탈퇴 후에도 남긴다 (법률 L1-3).'),
+ ('ANALYTICS_DATA_DELETION_CONFIRMED_AT','외부 분석 도구 데이터 삭제 완료 확인 일시','External Analytics Data Deletion Confirmed At',TS,'Y','','','외부 도구에서 삭제가 끝난 것을 배치가 확인한 시각. 파기 증빙이라 탈퇴 후에도 남긴다. 맞춤형 광고 플랫폼의 요청·완료 컬럼(18-7, 18-8)과 같은 방식 (법률 L7-2, 개인정보 보호법 21조·26조 4항).'),
  ('MEMBER_STATUS_CD','회원 계정 상태 코드','Member Account Status Code','VARCHAR2(30)','N',"'ACTIVE'",'CK (값 목록)','회원 상태. 허용 전이는 애플리케이션이 관리하고 DB는 값만 제한 (10-1, 10-3). 바뀔 때마다 `SYS_STATUS_HIST`에 기록. 전체 정지 중 휴면 조건이 되면 휴면 우선: `DORMANT`로 바꾸고, 휴면 해제 때 유효한 전체 정지 행이 있으면 `ACTIVE`가 아니라 `SUSPENDED`로 되돌린다 [확정 2026-11-22].'),
  ('MEMBER_STATUS_CHANGED_AT','회원 계정 상태 최종 변경 일시','Member Account Status Last Changed At',TS,'N','SYSTIMESTAMP','','상태가 마지막으로 바뀐 시각. 휴면 전환·탈퇴 유예 계산과 화면 표시에 쓴다. [확정 2026-11-22: 제안 수용]'),
  ('JOINED_AT','회원 가입 완료 일시','Member Joined At',TS,'N','','','본인인증까지 마쳐 가입이 완료된 시각 (4-2). 시스템 컬럼 `CREATED_AT`과 분리한 업무 일시라 데이터 이관 때도 값을 유지한다. 가입 기간 통계, 가입 쿠폰, 등급 산정에 쓴다. [확정 2026-11-22]'),
@@ -127,6 +128,7 @@ CONSENT = [
  ('NIGHT_ADVERTISING','야간(21시~8시) 광고성 정보 수신','Night-Time Advertising Reception'),
  ('BODY_INFORMATION','체형 정보 수집·이용','Body Information Collection'),
  ('ADVERTISING_PLATFORM_SHARE','맞춤형 광고를 위한 개인정보 제3자 제공','Third-Party Provision for Personalized Advertising'),
+ ('ANALYTICS_OVERSEAS_TRANSFER','행동 분석 정보 국외 이전','Overseas Transfer of Behavior Analytics Data'),
  ('REFUND_ACCOUNT_STORAGE','환불 계좌 보관','Refund Account Storage'),
 ]
 M += [
@@ -197,7 +199,7 @@ M += [
 T.append(dict(
  t='MBR_MEMBER', ko='회원 기본 정보 및 회원 단위 설정·캐시', en='Member Master with Member-Level Settings and Caches',
  desc='회원 1명당 1행. 계정 상태, 암호화 개인정보, 유형·등급, 실적·제재 캐시, 동의 현재값, 알림 설정, 유입, 체형, 휴면·탈퇴, 결제·환불 기본값을 담는다. 탈퇴하면 행은 남기고 개인정보를 NULL로 바꾼다 (27-5).',
- basis='1~47 전반', pk='대리 PK `SEQ_MBR_MEMBER` (가입 시 먼저 채번)', cache=20, delete='상태 코드 (`WITHDRAWN`) + 개인정보 NULL. 물리 삭제 없음', part='없음', keep='개인정보와 분석용 식별자는 탈퇴 시 NULL, CI 해시는 6개월 후 NULL, 통계 컬럼과 외부 분석 삭제 요청 일시는 계속 유지', ldel=False, pii=True,
+ basis='1~47 전반', pk='대리 PK `SEQ_MBR_MEMBER` (가입 시 먼저 채번)', cache=20, delete='상태 코드 (`WITHDRAWN`) + 개인정보 NULL. 물리 삭제 없음', part='없음', keep='개인정보와 분석용 식별자는 탈퇴 시 NULL, CI 해시는 6개월 후 NULL, 통계 컬럼과 외부 분석 삭제 요청·완료 확인 일시는 계속 유지', ldel=False, pii=True,
  cols=M,
  idx=['UK `UK_MBR_MEMBER_MEMBER_NO`, `UK_MBR_MEMBER_EMAIL_HASH`, `UK_MBR_MEMBER_MOBILE_PHONE_NUMBER_HASH`, `UK_MBR_MEMBER_CI_HASH`, `UK_MBR_MEMBER_NICKNAME_NM`, `UK_MBR_MEMBER_ANALYTICS_IDENTIFIER_VAL`', 'IX `IX_MBR_MEMBER_MEMBER_NAME_BIRTH_DATE_HASH` (관리자 이름·생년월일 검색) [확정 2026-11-22]',
       'IX `IX_MBR_MEMBER_GRADE_ID`, `IX_MBR_MEMBER_LAST_LOGIN_AT` (휴면 배치), `IX_MBR_MEMBER_BIRTH_MONTH_DAY_VAL` (생일 쿠폰), `IX_MBR_MEMBER_MEMBER_STATUS_CD`, `IX_MBR_MEMBER_WITHDRAWAL_SCHEDULED_DT`'],
@@ -373,7 +375,7 @@ T.append(dict(
  cols=[
  ('CONSENT_HIST_ID','동의 이력 고유 식별 번호','Consent History Unique Identifier',ID,'N','','PK',''),
  ('MEMBER_ID','동의한 회원 식별 번호','Consenting Member Identifier',ID,'N','','FK → `MBR_MEMBER`',''),
- ('CONSENT_ITEM_CD','동의 항목 코드','Consent Item Code','VARCHAR2(40)','N','','CK (값 목록)','17-3의 10개 항목.'),
+ ('CONSENT_ITEM_CD','동의 항목 코드','Consent Item Code','VARCHAR2(40)','N','','CK (값 목록)','17-3의 11개 항목 (법률 L7-1로 1개 추가).'),
  ('AGREED_YN','동의 여부 (Y 동의, N 철회)','Agreed Flag (Y Agree, N Withdraw)',YN,'N','','CK (Y/N)',''),
  ('TERMS_VER','동의 당시 약관·안내 문서 버전','Terms or Notice Version at Consent','VARCHAR2(20)','Y','','',''),
  ('CONSENT_PATH_CD','동의 경로 코드','Consent Path Code','VARCHAR2(30)','N','','CK (값 목록)','가입, 마이페이지, 이벤트, 2년 재확인, 결제수단·계좌 등록, 관리자 대리.'),

@@ -91,7 +91,7 @@ add('SANCTION_REASON','제재 사유','Sanction Reason','`MBR_SANCTION.SANCTION_
      ('PAYMENT_FRAUD','부정 결제','Payment Fraud','',[]),('COUPON_POINT_ABUSE','쿠폰·적립금 부정 사용','Coupon and Point Abuse','',[]),
      ('REVIEW_ABUSE','리뷰 부정 작성','Review Abuse','광고성·허위 리뷰',[]),('ABUSIVE_INQUIRY','고객센터 악성 문의','Abusive Inquiry','',[]),('OTHER','기타','Other','메모 필수',[])],'[제안: 값은 결정 항목 아님]')
 add('CONSENT_ITEM','동의 항목','Consent Item','`MBR_CONSENT_HIST.CONSENT_ITEM_CD`','Y',['필수 여부'],
-    [(c,k,e,d,['Y' if d.split('\x1e')[0]=='필수' else 'N']) for c,k,e,d,_ in from_codes('CONSENT_ITEM_CD')],'17-3, 38-10, 43-3')
+    [(c,k,e,d,['Y' if d.split('\x1e')[0]=='필수' else 'N']) for c,k,e,d,_ in from_codes('CONSENT_ITEM_CD')],'17-3, 38-10, 43-3, 법률 L7-1')
 add('CONSENT_PATH','동의 경로','Consent Path','`MBR_CONSENT_HIST.CONSENT_PATH_CD`','Y',[],from_codes('CONSENT_PATH_CD'),'17-2')
 add('BODY_REVIEW_DISCLOSURE','리뷰 체형 공개 범위','Review Body Information Disclosure','`MBR_MEMBER.BODY_REVIEW_DISCLOSURE_CD`','Y',[],from_codes('BODY_REVIEW_DISCLOSURE_CD'),'24-8')
 add('TOP_SIZE','평소 상의 사이즈','Usual Top Size','`MBR_MEMBER.USUAL_TOP_SIZE_CD`','N',[],[(s,s,s,'',[]) for s in ['XS','S','M','L','XL','XXL']],'24-9-3')
@@ -227,15 +227,24 @@ for ti, t in enumerate(TABLES, 1):
 CMM_OWNED = {'SALES_CHANNEL','OPERATING_SYSTEM','BANK','CARD_COMPANY','SIDO','SIGUNGU','PII_RETENTION_REASON'}
 # 가상 ID: V1(공통 소유 그룹) → DB 재시작으로 캐시 20 버림 → V2(회원 그룹) 순으로 적재했다고 가정
 def nxt_block(last, start, cache=20): return start + ((last - start) // cache + 1) * cache
-GID, CID = {}, {}
+GID, CID, CODEID = {}, {}, {}
+# 법률 검토(2026-11-22)로 나중에 추가한 코드: 기존 ID를 밀지 않고 V3 마이그레이션에서 끝 번호를 받는다
+LATE = [('PII_RETENTION_REASON', 'UNREFUNDED_DEPOSIT_CONTACT'), ('CONSENT_ITEM', 'ANALYTICS_OVERSEAS_TRANSFER')]
 g, c = 1001, 100001
 order = [x for x in G if x[0] in CMM_OWNED] + [x for x in G if x[0] not in CMM_OWNED]
 for k, x in enumerate(order):
     if k == len([y for y in G if y[0] in CMM_OWNED]):
         g = nxt_block(g - 1, 1001); c = nxt_block(c - 1, 100001)
     GID[x[0]] = g; g += 1
-    n = 250 if x[0] == 'SIGUNGU' else len(x[6])
-    CID[x[0]] = c; c += n
+    CID[x[0]] = c
+    if x[0] == 'SIGUNGU': c += 250; continue
+    for v in x[6]:
+        if (x[0], v[0]) in LATE: continue
+        CODEID[(x[0], v[0])] = c; c += 1
+V3_START = nxt_block(c - 1, 100001)
+c = V3_START
+for key in LATE:
+    CODEID[key] = c; c += 1
 LAST_G, LAST_C = g - 1, c - 1
 def th(p, ko): return f'<th><span class="pc">{pn(p)}</span><br><span class="en">{il(ko)}</span></th>'
 body += '<h2 class="g t">2. 회원 도메인 코드 그룹 (CMM_CODE_GROUP 행)</h2>'
@@ -243,6 +252,7 @@ body += ('<div class="box"><b>ID 값은 가상 값이다</b> <span class="warn">
   '· 시퀀스 시작값: <code>SEQ_CMM_CODE_GROUP</code> START WITH 1001, <code>SEQ_CMM_CODE</code> START WITH 100001 (START WITH는 결정 항목이 아니었다). INCREMENT BY 1, CACHE 20 (선행 결정 1).<br>'
   '· 적재 순서: Flyway V1이 여러 도메인 공통 그룹(<code>OWNER_DOMAIN_CD = CMM</code>) 7개를 먼저 넣고, V2가 회원 그룹 34개를 넣는다. 그래서 ID 순서는 문서 순서(규칙 8)와 다르다.<br>'
   f'· V1과 V2 사이에 DB를 재시작해 캐시 20개가 버려졌다고 가정해 번호가 건너뛴다 (그룹 {GID["PII_RETENTION_REASON"]} → {min(v for k, v in GID.items() if k not in CMM_OWNED)}). 시군구 약 250개도 V1에서 <code>CODE_ID</code>를 차지한다.<br>'
+  f'· 법률 검토(2026-11-22)로 추가한 코드 {len(LATE)}개는 V3 마이그레이션으로 나중에 넣었다고 가정해, 기존 ID를 밀지 않고 {V3_START}부터 받는다: ' + ', '.join(f'<code>{k[1]}</code> {CODEID[k]}' for k in LATE) + '.<br>'
   f'· 결과: <code>CODE_GROUP_ID</code> 1001~{LAST_G}, <code>CODE_ID</code> 100001~{LAST_C}. 검토할 때는 이 ID로 알려 주면 된다.</div>')
 body += ('<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:15%"><col style="width:15%"><col style="width:6%"><col style="width:7%"><col style="width:12%"><col style="width:23%"><col style="width:4%"><col style="width:3%"><col style="width:3%"><col style="width:7%"></colgroup><tr>'
          + th('CODE_GROUP_ID','그룹 ID') + th('CODE_GROUP_CD','그룹 코드') + th('CODE_GROUP_NM','한글 이름 (영문 이름)') + th('OWNER_DOMAIN_CD','소유 도메인')
@@ -269,12 +279,12 @@ for gi, (gc, ko, en, cols, ck, attrs, vals, note) in enumerate(G, 1):
     for vi, (c, k, e, d, av) in enumerate(vals, 1):
         nv += 1
         cf = ' class="cf"' if '[' in note and ('제안' in note or '확인' in note) else ''
-        body += (f'<tr{cf}><td class="n">{CID[gc]+vi-1}</td><td class="n">{GID[gc]}</td><td class="p">{pn(c)}</td><td>{ln(k, e)}</td><td>{desc_html(d)}</td>'
+        body += (f'<tr{cf}><td class="n">{CODEID[(gc, c)]}</td><td class="n">{GID[gc]}</td><td class="p">{pn(c)}</td><td>{ln(k, e)}</td><td>{desc_html(d)}</td>'
                  + ''.join(f'<td class="p">{pn(a)}</td>' if re.fullmatch(r'[A-Z_]+', a or '') else f'<td>{il(a)}</td>' for a in (av + [""] * nA)[:nA]) + f'<td class="n">{vi}</td><td class="n">Y</td>' + (f'<td class="ck on">☑</td><td class="ck">{B}</td><td class="memo"></td>' if '[확정' in d else CKS) + '</tr>')
     body += '</table></div>'
 body = body.replace('<div class="box"><b>검토 방법</b>', f'<div class="box">코드 그룹 {len(G)}개 · 코드 값 {{NV}}개 (시군구 제외)</div><div class="box"><b>검토 방법</b>', 1).replace('{NV}', str(nv))
 open(OUT, 'w', encoding='utf-8').write(f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>CMM_CODE 회원 도메인 코드</title><style>{CSS}</style></head><body>{body}</body></html>')
 print(len(G), nv)
 import json
-json.dump({gc: {'gid': GID[gc], 'codes': {v[0]: CID[gc] + i for i, v in enumerate(vals)}} for gc, ko, en, cols, ck, attrs, vals, note in G},
+json.dump({gc: {'gid': GID[gc], 'codes': {v[0]: CODEID[(gc, v[0])] for v in vals}} for gc, ko, en, cols, ck, attrs, vals, note in G},
           open(os.path.join(os.path.dirname(OUT), 'code_ids.json'), 'w'), ensure_ascii=False)

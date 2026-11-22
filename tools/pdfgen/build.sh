@@ -11,9 +11,9 @@ CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 python3 "$HERE/cmm/cmm.py" "$OUT/cmm.html"          # code_ids.json도 만든다 (컬럼정의서가 읽음)
 python3 "$HERE/cols/render.py" "$OUT"               # names.html, columns.html
 python3 "$HERE/policy/render.py" "$OUT/policy.html"
-python3 "$HERE/decision_change/chg.py" "$OUT"       # chg28/31/39/47.html
+python3 "$HERE/decision_change/chg.py" "$OUT"       # chg17/28/31/39/47.html
 
-for n in cmm names columns policy chg28 chg31 chg39 chg47; do
+for n in cmm names columns policy chg17 chg28 chg31 chg39 chg47; do
   "$CHROME" --headless=new --disable-gpu --no-pdf-header-footer --user-data-dir="$OUT/chrome-profile" \
     --print-to-pdf="$OUT/$n.pdf" "file://$OUT/$n.html" >/dev/null 2>&1
   echo "$n.pdf $(grep -a -E -c '/Type /Page($|[^s])' "$OUT/$n.pdf")쪽"
