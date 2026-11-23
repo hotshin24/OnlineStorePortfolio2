@@ -19,6 +19,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 | `rules/` | `rules.py` 지시 규칙 1~8 (정렬 예시는 `cols/order.py`에서 읽음) | `DB설계_지시규칙_1-8.pdf` |
 | `policy/` | `content.py` 조문 내용<br>`render.py` 렌더러 | `회원도메인_정책명세.pdf` |
 | `decision_change/` | `chg.py` 변경 안내 쪽<br>`merge.swift` PDF 앞에 쪽 붙이기 | 회원결정 3·8·10·12·13·17·20·21·22·25·26·27·28·30·31·32·35·39·43·47번, 선행결정 3·5·14번의 첫 쪽 |
+| `erd/` | `erd.py` ERD 생성 (`cols/data.py`·`order.py`를 읽음, `build.sh`와 별도 실행) | `docs/mmd/회원_MBR_ERD.mmd`, `docs/mmd/회원_MBR_관계요약.mmd`, `docs/drawio/전체_ERD.drawio` |
 | `util/` | `pdf2txt.swift` PDF 텍스트 추출 (검증용) | |
 
 - 실행 순서가 중요하다. `cmm.py`가 만든 `code_ids.json`을 `cols/render.py`가 읽는다.
@@ -45,3 +46,19 @@ swift tools/pdfgen/util/pdf2txt.swift 이전.pdf 이전.txt
 ## 저장소에 없는 생성 스크립트
 
 선행결정, 회원결정 1~47번 본문, 설계패턴, 후보테이블, 용어집, 법률검토 PDF의 생성 스크립트는 여기 없다. 지시규칙은 2026-11-22에 PDF 내용을 바탕으로 `rules/`에 새로 만들었다. 앞의 문서들은 세션 임시 폴더에서 만들었고, 그 폴더가 지워져서 최종본을 확인할 수 없다. 법률검토 PDF는 저장소에 올리지 않는 문서다. L10~L12는 로컬 전용 `docs/pdf/법률검토/_src/`에 생성 스크립트가 있다 (`build.sh`).
+
+## ERD (mmd, drawio)
+
+컬럼이 바뀌면 다시 만든다. `build.sh`에는 들어 있지 않다.
+
+```bash
+python3 tools/pdfgen/erd/erd.py
+```
+
+- mmd 2개: 컬럼 포함판(업무 컬럼만, 공통 컬럼 생략)과 관계 요약판(테이블과 관계만).
+- drawio 1개 파일 (규칙 6: 전체 ERD 1개 파일, 도메인별 페이지): 페이지 "회원 (MBR) 관계 요약"(배치는 `summary_positions()`에서 직접 정함), "회원 (MBR)"(컬럼 포함, 그룹별 열 배치).
+- 다른 도메인 FK 대상은 회색 점선 상자의 후보 이름으로만 그린다 (`EXT_NOTE`). 다른 도메인을 설계하면 페이지를 추가한다.
+- 검증: mmd는 mermaid-cli로 렌더링해 문법을 확인한다. drawio는 데스크톱 앱 CLI로 PNG를 뽑아 본다 (페이지 번호는 1부터).
+  ```bash
+  "/Applications/draw.io.app/Contents/MacOS/draw.io" --export --format png --page-index 1 --scale 0.6 --output <출력.png> docs/drawio/전체_ERD.drawio
+  ```

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 상태
 
-- 자체 브랜드 패션 온라인몰의 **DB 설계 단계**다. 애플리케이션 코드, 빌드, 테스트는 아직 없다.
+- 자체 브랜드 패션 온라인몰의 **DB 설계 단계**다. 애플리케이션 코드와 테스트는 아직 없다. 산출 문서(PDF, ERD)를 만드는 `tools/pdfgen`이 이 저장소의 빌드다.
 - 회사 전제:
   - 2020년 런칭, 연매출 4,700억 원.
   - 생산은 국내와 해외에서 한다.
@@ -24,8 +24,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - 회원 도메인 테이블은 24개, 컬럼은 484개다. 컬럼 변경 내역은 컬럼 검토 결정 C-1~C-99(`회원_컬럼검토_결정.pdf`)에 있다.
   - 법률 검토 L1~L9와 L9 후속 1~3, L10(만 14~18세 미성년 회원의 구매, 컬럼 검토 C-82~C-90과 같은 결정), L11(개인정보 컬럼 암호화 범위, 컬럼 검토 C-72~C-74·C-77~C-79와 같은 결정, 후속 보완: 운영 DB 직접 조회 통제), L12(법정대리인 동의의 범위와 증빙, 컬럼 검토 C-93~C-96과 같은 결정, L10-5·L10-8 변경)를 반영했다 (L10~L12는 2026-11-23) (`docs/pdf/법률검토/`, 로컬 전용).
   - 테이블 물리명은 확정했다. 지금은 회원 컬럼을 그룹 단위로 검토해 확정하는 중이다.
-    - 확정한 그룹: 회원 가입 정보 (2026-11-23 본인 가입 정보에서 이름 변경), 로그인·인증 상태 (2026-11-23, 7개), 회원 유형·특수 자격 (2026-11-23, 18개, `CONFIRMED_GROUPS`). 약관·고지 그룹은 확정했으나 컬럼이 `MBR_CONSENT`로 옮겨져 새 테이블 컬럼의 확정 표시는 아직 정하지 않았다.
+    - 확정한 그룹: 회원 가입 정보 (2026-11-23 본인 가입 정보에서 이름 변경), 로그인·인증 상태 (2026-11-23, 7개), 회원 유형·특수 자격 (2026-11-23, 18개, `CONFIRMED_GROUPS`). 약관·고지 그룹은 확정했으나 컬럼이 `MBR_CONSENT`로 옮겨졌다. `MBR_CONSENT`·`MBR_CONSENT_HIST`의 확정 표시(`CONFIRMED_GROUPS`)는 사용자가 두 테이블을 검토한 뒤 정한다 (2026-11-23 보류).
   - 그다음은 나머지 13개 도메인이다.
+
+## 자주 쓰는 명령 (저장소 루트에서)
+
+자세한 내용은 아래 "PDF 생성 방법"과 `tools/pdfgen/README.md`.
+
+- PDF 빌드·설치: `bash tools/pdfgen/build.sh <출력폴더> --install` (빌드 전 `code_ids.json`을 복사해 두고 빌드 뒤 `cmp`).
+- 변경 안내 쪽 다시 붙이기: "PDF 생성 방법"의 반복문 (`--install` 뒤 매번).
+- ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 2개, drawio 1개).
+- 법률검토 L10~L12 (로컬 전용): `bash docs/pdf/법률검토/_src/build.sh <작업폴더>`.
+- 검증: `swift tools/pdfgen/util/pdf2txt.swift <pdf> <txt>`로 이전 PDF와 텍스트 비교. 작업 뒤 `._*` 파일 삭제.
+
+## 문서 생성 데이터 흐름
+
+- 원본: `tools/pdfgen/cols/data.py`(테이블·컬럼·코드 값)와 `cols/order.py`(규칙 8 순서, `CONFIRMED_GROUPS` 확정 그룹).
+- `cmm/cmm.py`가 공통코드 PDF와 `code_ids.json`(가상 CODE_ID)을 만들고, `cols/render.py`가 그것을 읽어 테이블 이름·컬럼정의서 PDF를 만든다.
+- `col_decision/col_decision.py`(컬럼 검토 결정 C-n)를 결정 기록 PDF와 법률검토 L10~L12 생성 스크립트(`docs/pdf/법률검토/_src/`)가 함께 읽는다.
+- `policy/`(정책명세), `rules/`(지시 규칙, 정렬 예시는 `order.py`), `decision_change/chg.py`(변경 안내 쪽, 원본 커밋 PDF 앞에 `merge.swift`로 붙임).
+- `erd/erd.py`도 `data.py`와 `order.py`를 읽는다.
+- 그래서 결정 하나를 바꾸면: `data.py`·`col_decision.py`(필요하면 `policy/content.py`, `chg.py`, `cmm.py`)를 고치고 → `build.sh --install` → 변경 안내 쪽 다시 붙이기 → `erd.py` → (법률 결정과 같은 C-n이면) 법률검토 빌드.
 
 ## 작업 방식 (반드시 지킬 것)
 
@@ -80,7 +99,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
        - 업무 흐름은 이용 흐름으로도 해석한다. 가입 뒤에도 바뀌는 동의 그룹은 그 동의로 제어하는 설정 바로 앞에 둔다 (2026-11-22, 법률 L9 후속). 이후 동의 컬럼은 `MBR_CONSENT`로 옮겨 회원 테이블에는 동의 그룹이 없다 (L9 후속 3).
      - 문서·ERD는 규칙 8 순서를 따르고, DDL(Flyway) 생성 순서는 FK 순서를 따른다 (8-D A).
 
-## 확정된 공통 결정 (2026-11-21 기준)
+## 확정된 공통 결정 (2026-11-21 확정, 이후 변경은 본문에 표시)
 
 항목별 선택지와 결정 과정은 `docs/pdf/선행결정/`의 PDF 17개에 있다.
 
@@ -256,7 +275,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `전체도메인_설계패턴_개요.pdf`
 - `docs/pdf/지시규칙/`: 지시 규칙 1~8의 예시판 (`DB설계_지시규칙_1-8.pdf`, 2026-11-22 기준: 논리명 표기, 코드 저장 방식·값 목록 표기, 확정 표시, 8-C 해석 보완 반영).
 - `docs/pdf/후보테이블/`: 후보 테이블 목록 (2026-11-21 기준 89개). 이름은 5개만 확정이고 나머지는 후보다.
-  - 회원 도메인 결정(10개 → 21개)은 아직 반영하지 않았다.
+  - 회원 도메인 확정 테이블 24개는 반영하지 않았다 (회원 테이블은 `docs/pdf/테이블_컬럼/회원/`이 기준).
 - `docs/pdf/용어집/`: DB 용어집 (`DB용어집.pdf`). PK·FK·UK·CK·IX 등 약어와 용어 27개의 뜻과 프로젝트 규칙.
 - `docs/pdf/테이블_컬럼/`: 테이블·컬럼 정의서.
   - `회원/`: 테이블 이름 확정본, 컬럼정의서 검토본 (2026-11-23, 테이블 24개, 컬럼 484개), 컬럼 검토 결정 C-1~C-99 (`회원_컬럼검토_결정.pdf`, 선택지·답변 기록).
@@ -267,6 +286,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 다른 문서(정책명세, 회원결정 17·28·31·39·47번 변경 안내 쪽)가 이 경로를 참조한다.
   - `_src/`: L10~L12 생성 스크립트와 L1~L9 원본(13쪽, 스크립트 없음). 다시 만드는 방법은 아래 "PDF 생성 방법".
 - `docs/db/`: 공통 설계 규칙(`00_conventions.md`)과 ERD 개요(`01_erd_overview.md`).
+- `docs/mmd/`, `docs/drawio/`: 회원 도메인 ERD (2026-11-23). `tools/pdfgen/erd/erd.py`가 만든다.
+  - mmd: `회원_MBR_ERD.mmd`(업무 컬럼 포함, 공통 컬럼 생략), `회원_MBR_관계요약.mmd`(테이블과 관계만).
+  - drawio: `전체_ERD.drawio` 1개 파일에 도메인별 페이지 (지금은 "회원 (MBR) 관계 요약", "회원 (MBR)"). 다른 도메인 테이블은 FK 대상만 후보 이름으로 표시한다.
 - `tools/pdfgen/`: PDF 생성 스크립트. 대상과 사용법은 아래 "PDF 생성 방법"과 `tools/pdfgen/README.md`.
   - 선행결정, 회원결정 본문, 설계패턴, 후보테이블, 용어집, 법률검토 L1~L9의 생성 스크립트는 없다.
 
@@ -328,9 +350,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. 쪽수를 확인한다 (`/Type /Page` 개수). `qlmanage -t`로 썸네일을 만들어 한글이 제대로 나오는지 본다.
 4. 작업 폴더는 exFAT 외장 드라이브다. 렌더링 후 생기는 `._*` 파일을 지운다.
    - `find -delete`는 `._*` 파일끼리 경합해 오류가 날 수 있으니 `-exec rm -f {} +`를 쓴다.
-5. 참고: mmd·drawio CLI는 설치되어 있지 않다.
-   - mmd는 `npx @mermaid-js/mermaid-cli`로 변환한다.
-   - drawio는 XML을 직접 작성한다.
+5. 참고: ERD(mmd, drawio)는 수동으로 만들지 않고 `python3 tools/pdfgen/erd/erd.py`로 만든다. 컬럼을 고치면 PDF와 함께 다시 실행한다.
+   - mmd 렌더링 확인: mermaid-cli는 전역 설치되어 있지 않다. 스크래치패드에 `npm i @mermaid-js/mermaid-cli`로 설치하고 puppeteer 설정의 `executablePath`를 Chrome으로 지정해 쓴다.
+   - drawio 렌더링 확인: draw.io 데스크톱 앱(2026-11-23 설치)의 CLI `"/Applications/draw.io.app/Contents/MacOS/draw.io" --export --format png --page-index <1부터> --output <png> <파일>`.
 
 ## Git
 
@@ -340,7 +362,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 인증은 `gh auth git-credential`로 한다.
   - 전역 git 설정은 다른 계정이라 쓰지 않는다.
 - 사용자가 요청할 때만 커밋한다.
-- 첫 커밋 `d3d9ff9`를 `main`에 푸시했다 (2026-11-20).
 - `/export`로 저장한 대화 기록 `.txt`는 커밋하지 않았다. 사용자 확인 없이 올리지 않는다.
 - `docs/pdf/법률/`, `docs/pdf/법률검토/`는 절대 커밋하지 않는다 (사용자 지시). 이 폴더와 txt가 추적되지 않은 채 있으므로 스테이징은 `git add -u`로 한다 (새 파일은 경로를 지정해 따로 추가).
 - 푸시: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin main`
