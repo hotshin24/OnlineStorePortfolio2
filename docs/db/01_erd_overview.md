@@ -92,7 +92,7 @@ erDiagram
     ORD_ORDER_ITEM ||--o| RVW_REVIEW : "주문 상품 1건당 리뷰 1개"
 ```
 
-- 주문: 주문자 스냅샷(암호화), 비회원 비밀번호 해시, 주문자 휴대폰 HMAC 해시, 판매 채널 + OS, UTM 컬럼.
+- 주문: 주문자 스냅샷(휴대폰·상세 주소 등 일부 암호화, 이름·도로명/지번 주소는 평문 + TDE (선행 5-1 변경, 회원 컬럼 검토 C-72). 범위는 주문 도메인에서 정함), 비회원 비밀번호 해시, 주문자 휴대폰 HMAC 해시, 판매 채널 + OS, UTM 컬럼.
 - 장바구니: `MEMBER_ID`와 비회원 장바구니 키 중 정확히 하나 (CHECK).
 
 ### 2-3. 관리자 권한 (16번)
@@ -115,7 +115,7 @@ erDiagram
 |---|---|
 | 범용 (확정) | `SYS_STATUS_HIST`, `SYS_PII_ARCHIVE`, `SYS_RESERVED_KEY` |
 | 감사 로그 (용도별) | `SYS_PII_ACCESS_LOG`, `SYS_ADMIN_ACTION_LOG`, `SYS_DATA_CHANGE_LOG` |
-| Redis 대체 | `SYS_VERIFICATION_CODE`, `SYS_IDEMPOTENCY_KEY`, `MBR_REFRESH_TOKEN`, `MBR_RECENT_VIEW` |
+| Redis 대체 | `SYS_VERIFICATION_CODE`, `SYS_IDEMPOTENCY_KEY`, `MBR_REFRESH_TOKEN`, `MBR_RECENTLY_VIEWED_ITEM` |
 | 앱·분석·외부 업체 | `SYS_APP_VERSION`, `SYS_SEARCH_KEYWORD_LOG`, `SYS_EXTERNAL_VENDOR` |
 | 외부 연동 로그 | `PAY_PG_INTERFACE_LOG`, `DLV_COURIER_INTERFACE_LOG`, `MBR_IDENTITY_VERIFICATION_LOG` |
 | 알림 | `NTF_SEND_HIST` |

@@ -138,7 +138,7 @@ for i, t in enumerate(T, 1):
              f'<td>{il(t["desc"])}</td><td class="n">{len(full_cols(t))}</td><td class="ck">{BOX}</td><td class="memo"></td></tr>')
 total = sum(len(full_cols(t)) for t in T)
 body = ('<h1>회원 도메인 테이블 이름 (확정)</h1>'
-        '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 (법률 검토 반영) · 물리명은 B-1~B-14 결정으로 확정 · 논리명과 설명은 제안 (확인 칸으로 검토)</div>'
+        '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-23 (법률 검토·컬럼 검토 반영) · 물리명은 B-1~B-14 결정과 이후 추가 결정으로 확정 · 논리명과 설명은 제안 (확인 칸으로 검토)</div>'
         f'<div class="box">물리명 {len(T)}개는 확정했다. 논리명(한글, 괄호에 영문)과 설명은 이 문서에서 처음 제안하는 것이라 아직 후보다. '
         '확정한 행은 <b>확정</b> 칸에 표시하고, 고칠 내용은 메모 칸에 적는다.</div>'
         + rows + f'</table><p><b>합계: 테이블 {len(T)}개, 컬럼 {total}개</b></p>')
@@ -150,7 +150,8 @@ B = [('B-1','로그인 계정','A','MBR_LOGIN_ACCOUNT'),('B-2','배송지','B','
      ('B-14','나머지 7개','A (제안대로)','MBR_MEMBER, MBR_REFRESH_TOKEN, MBR_DEVICE, MBR_GRADE, MBR_TAG, MBR_PREFERENCE, MBR_PROFILE_IMAGE'),
      ('L9 후속 3-1','동의 현재 상태 (2026-11-22 추가)','A','MBR_CONSENT'),
      ('C-20','가입 유입 경로 (2026-11-23 회원 테이블에서 분리)','A (후보 이름 그대로)','MBR_JOIN_ATTRIBUTION'),
-     ('C-52','소셜 로그인 연결·해제·실패 로그 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_SOCIAL_LOGIN_LOG')]
+     ('C-52','소셜 로그인 연결·해제·실패 로그 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_SOCIAL_LOGIN_LOG'),
+     ('C-88','미성년 회원 법정대리인 구매 동의 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_LEGAL_GUARDIAN_CONSENT')]
 body += '<h2>이름 결정 기록</h2><table><tr><th>질문</th><th>대상</th><th>선택</th><th>확정 이름</th></tr>' + ''.join(
     f'<tr><td>{a}</td><td>{b}</td><td>{c}</td><td class="p">{d}</td></tr>' for a, b, c, d in B) + '</table>'
 body += ('<h2>공통 사항</h2><ul><li>모든 이름은 128바이트 이내. 가장 긴 것은 <code>MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT</code>(34바이트), <code>MBR_ADVERTISING_PLATFORM_SHARE_HIST</code>(35바이트).</li>'
@@ -239,7 +240,7 @@ for k, (col, vals) in enumerate(CODES.items(), 1):
     codes += '</table>'
 
 body = ('<h1>회원 도메인 컬럼 정의서 (제안)</h1>'
-        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 (법률 검토 L1~L12 반영) · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 모두 제안</div>'
+        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-23 (법률 검토 L1~L12, 컬럼 검토 C-1~C-99 반영) · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 그룹별 검토 중 (확정한 그룹은 확정 칸 ☑, 나머지는 제안)</div>'
         + NOTE + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('회원 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(tot_b, tot_s, tot_b + tot_s)
