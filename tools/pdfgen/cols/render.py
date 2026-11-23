@@ -2,7 +2,7 @@ import sys, os, re, html
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data import T, CODES, CONFIRM, TS
 OUT = sys.argv[1]; os.makedirs(OUT, exist_ok=True)
-from order import TABLE_GROUPS, COL_GROUPS
+from order import TABLE_GROUPS, COL_GROUPS, REF_BEFORE, CONFIRMED_GROUPS
 _by = {t['t']: t for t in T}
 _order = [n for g, ns in TABLE_GROUPS for n in ns]
 assert sorted(_order) == sorted(_by), set(_by) ^ set(_order)
@@ -48,6 +48,7 @@ td.n { text-align:center; color:#666; white-space:nowrap; }
 td.p { font-family: Menlo, monospace; font-size:7.6pt; overflow-wrap:anywhere; }
 .en { color:#555; } .ok { color:#1a7f37; font-weight:600; } td.ck.on { color:#1a7f37; }
 td.ty { font-family: Menlo, monospace; font-size:7.6pt; white-space:nowrap; }
+td.wr { overflow-wrap:anywhere; }
 td.ck { text-align:center; width:26px; font-size:11pt; color:#888; }
 td.memo { width:90px; } .colspec td.memo { white-space:nowrap; }
 tr.sys td { background:#f6f6f6; color:#555; }
@@ -64,6 +65,9 @@ tr.cv td.p { padding-left:14px; }
 tr.grp td { background:#dde7f3; font-weight:700; color:#1f4e79; }
 .colspec tr.grp td { background:#e2f0e6; color:#1d5e3a; border-top:2px solid #3f8f5f; }
 tr.cf td { background:#fff6e0; }
+tr.ref td { background:#f7f5ee; font-size:7.8pt; border-top:2px dashed #a08a3c; border-bottom:2px dashed #a08a3c; }
+tr.ref td:first-child { border-left:4px solid #a08a3c; color:#7a6420; font-weight:700; }
+tr.ref ul { margin:2px 0 0; padding-left:14px; } tr.ref li { margin:1px 0; }
 .info td:first-child { width:110px; background:#f3f6fa; font-weight:600; }
 code { font-family: Menlo, monospace; font-size:7.6pt; background:#f1f1f1; padding:0 2px; }
 .box { border:1px solid #c9d6e6; background:#f6f9fc; padding:6px 10px; margin:6px 0; }
@@ -85,7 +89,7 @@ def _code_id(vals, code):
     keys = [v[0] for v in vals]
     for g in _IDS.values():
         if list(g['codes']) == keys:
-            return f'<span class="ty">CODE_ID {g["codes"][code]}</span>'
+            return f'<span class="ty">{g["codes"][code]}</span>'
     raise KeyError(keys)
 def ln(ko, en):
     return f'{il(ko)}<br><span class="en">({il(en)})</span>'
@@ -144,17 +148,19 @@ B = [('B-1','로그인 계정','A','MBR_LOGIN_ACCOUNT'),('B-2','배송지','B','
      ('B-9','임직원 할인 한도','B','MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT'),('B-10','등급 이력','B','MBR_MEMBER_GRADE_CHANGE_HIST'),
      ('B-11','계정 병합 이력','B','MBR_ACCOUNT_MERGE_HIST'),('B-12','동의 이력','A','MBR_CONSENT_HIST'),('B-13','본인인증 로그','A','MBR_IDENTITY_VERIFICATION_LOG'),
      ('B-14','나머지 7개','A (제안대로)','MBR_MEMBER, MBR_REFRESH_TOKEN, MBR_DEVICE, MBR_GRADE, MBR_TAG, MBR_PREFERENCE, MBR_PROFILE_IMAGE'),
-     ('L9 후속 3-1','동의 현재 상태 (2026-11-22 추가)','A','MBR_CONSENT')]
+     ('L9 후속 3-1','동의 현재 상태 (2026-11-22 추가)','A','MBR_CONSENT'),
+     ('C-20','가입 유입 경로 (2026-11-23 회원 테이블에서 분리)','A (후보 이름 그대로)','MBR_JOIN_ATTRIBUTION'),
+     ('C-52','소셜 로그인 연결·해제·실패 로그 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_SOCIAL_LOGIN_LOG')]
 body += '<h2>이름 결정 기록</h2><table><tr><th>질문</th><th>대상</th><th>선택</th><th>확정 이름</th></tr>' + ''.join(
     f'<tr><td>{a}</td><td>{b}</td><td>{c}</td><td class="p">{d}</td></tr>' for a, b, c, d in B) + '</table>'
 body += ('<h2>공통 사항</h2><ul><li>모든 이름은 128바이트 이내. 가장 긴 것은 <code>MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT</code>(34바이트), <code>MBR_ADVERTISING_PLATFORM_SHARE_HIST</code>(35바이트).</li>'
-         '<li>시퀀스는 <code>SEQ_{테이블}</code>. 복합 PK인 <code>MBR_MEMBER_TAG</code>, <code>MBR_WISHLIST_ITEM</code>, <code>MBR_RECENTLY_VIEWED_ITEM</code>은 시퀀스 없음.</li>'
+         '<li>시퀀스는 <code>SEQ_{테이블}</code>. 복합 PK인 <code>MBR_MEMBER_TAG</code>, <code>MBR_WISHLIST_ITEM</code>, <code>MBR_RECENTLY_VIEWED_ITEM</code>과 회원 PK를 공유하는 <code>MBR_JOIN_ATTRIBUTION</code>(C-21)은 시퀀스 없음.</li>'
          '<li>표 순서는 지시 규칙 8: 테이블을 관련 그룹으로 모으고, 그룹은 업무 흐름 순, 그룹 안은 중요도 순 (그룹 구성은 제안). DDL 생성 순서는 FK 순서로 따로 정한다 (8-D).</li><li>B-7 C는 PK 컬럼 이름에 약어 <code>AD</code>가 들어가 재확인했고, 풀어 쓴 C로 확정.</li></ul>')
 open(os.path.join(OUT, 'names.html'), 'w').write(page('회원 도메인 테이블 이름', body))
 
 # ---------------- 2. 컬럼 정의 PDF
 NOTE = ('<div class="box"><b>검토 방법</b><br>'
-        '· 모든 컬럼은 <b>제안</b>이다. 확정한 컬럼은 <b>확정</b> 칸에 표시하고, 고칠 내용은 메모 칸에 적는다. 코드 값 행의 메모 칸에는 공통코드 <code>CODE_ID</code>를 미리 적어 두었다.<br>'
+        '· 모든 컬럼은 <b>제안</b>이다. 확정한 컬럼은 <b>확정</b> 칸에 표시하고, 고칠 내용은 메모 칸에 적는다. 코드 값 행의 메모 칸에는 공통코드 <code>CODE_ID</code> 값(숫자)을 미리 적어 두었다.<br>'
         '· 노란 행: 결정 항목에 없던 제안 컬럼이거나 확인이 필요한 컬럼 (설명에 빨간 표시).<br>'
         '· 회색 행: 공통 컬럼 (시스템 6개, 논리 삭제 3개, 개인정보 보유 4개). 선행 결정으로 정해져 있다.<br>'
         '· NULL 칸: N = NOT NULL, Y = NULL 허용. 파기 대상 개인정보 컬럼은 선행 결정 7에 따라 NULL 허용.<br>'
@@ -191,7 +197,7 @@ for i, t in enumerate(T, 1):
     secs += '<table class="info">' + f'<tr><td>논리명</td><td>{ln1(t["ko"], t["en"])}</td></tr>' + ''.join(f'<tr><td>{a}</td><td>{il(b)}</td></tr>' for a, b in [
         ('설명', t['desc']), ('근거 결정', t['basis']),
         ('PK·시퀀스', f"{t['pk']} · CACHE {t['cache']}"), ('삭제 방식', t['delete']), ('파티션', t['part']), ('보유 기간', t['keep'])]) + '</table>'
-    secs += ('<table style="table-layout:fixed"><colgroup><col style="width:4%"><col style="width:17%"><col style="width:17%"><col style="width:8.5%"><col style="width:3.5%"><col style="width:6%"><col style="width:9%"><col style="width:22%"><col style="width:3%"><col style="width:10%"></colgroup>'
+    secs += ('<table style="table-layout:fixed"><colgroup><col style="width:4%"><col style="width:15%"><col style="width:15%"><col style="width:8%"><col style="width:3%"><col style="width:4.5%"><col style="width:7.5%"><col style="width:34%"><col style="width:3%"><col style="width:6%"></colgroup>'
              '<tr><th>No</th><th>물리명</th><th>논리명</th><th>타입</th><th>NULL</th><th>기본값</th><th>제약</th><th>설명</th>'
              '<th>확정</th><th>메모</th></tr>')
     prev = None
@@ -199,15 +205,19 @@ for i, t in enumerate(T, 1):
         g = t['grp_of'].get(p, '공통 컬럼 (규칙 1, 8-A: 개인정보 보유 → 시스템 → 논리 삭제)') if kind == 'b' else '공통 컬럼 (규칙 1, 8-A: 개인정보 보유 → 시스템 → 논리 삭제)'
         if g != prev:
             secs += f'<tr class="grp"><td colspan="10">{il(g)}</td></tr>'; prev = g
+        if (t['t'], p) in REF_BEFORE:
+            _rt, _rl = REF_BEFORE[(t['t'], p)]
+            _sub = lambda s_: re.sub(r'\{([A-Z_]+)\.([A-Z_]+)\}', lambda m: _fmt(m.group(1), m.group(2), t['t']), s_)
+            secs += (f'<tr class="ref"><td class="n">참고</td><td colspan="9"><b>{il(_sub(_rt))}</b><ul>' + ''.join(f'<li>{il(_sub(x))}</li>' for x in _rl) + '</ul></td></tr>')
         if (t['t'], p) in CODE_MAP: ds = (ds + ' ' if ds else '') + '값 목록은 아래 행.'
         cls = ' class="sys"' if kind == 's' else (' class="cf"' if re.search(r'\[(확인 필요|제안: 결정)', ds + ck + en) or '[확인' in ck else '')
         secs += (f'<tr{cls}><td class="n">{i}-{k}</td><td class="p">{pn(p)}</td><td>{ln1(ko, en)}</td><td class="ty">{il(ty)}</td>'
-                 f'<td class="n">{nl}</td><td class="ty">{il(df)}</td><td>{il(ck)}</td><td>{il(ds)}</td>' + (f'<td class="ck on">☑</td>' if '[확정' in ds else f'<td class="ck">{BOX}</td>') + '<td class="memo"></td></tr>')
+                 f'<td class="n">{nl}</td><td class="p">{il(df)}</td><td class="wr">{il(ck)}</td><td>{il(ds)}</td>' + (f'<td class="ck on">☑</td>' if '[확정' in ds or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS) else f'<td class="ck">{BOX}</td>') + '<td class="memo"></td></tr>')
         for vi, v in enumerate(CODE_MAP.get((t['t'], p), []), 1):
             _vals = CODE_MAP.get((t['t'], p), [])
             _c = 'cv' + (' first' if vi == 1 else '') + (' last' if vi == len(_vals) else '')
             secs += (f'<tr class="{_c}"><td class="n">{i}-{k}-{vi}</td><td class="p">└ {pn(v[0])}</td><td>{ln1(v[1], v[2])}</td>'
-                     f'<td colspan="5">정렬 {v[4]}' + (f' · {il(v[3])}' if re.sub(r'\s*\[확정[^\]]*\]', '', v[3]).strip() else '') + _related(t['t'], p, v[0]) + '</td>' + ('<td class="ck on">☑</td>' if '[확정' in v[3] else f'<td class="ck">{BOX}</td>') + f'<td class="memo">{_code_id(_vals, v[0])}</td></tr>')
+                     f'<td colspan="5">정렬 {v[4]}' + (f' · {il(v[3])}' if re.sub(r'\s*\[확정[^\]]*\]', '', v[3]).strip() else '') + _related(t['t'], p, v[0]) + '</td>' + ('<td class="ck on">☑</td>' if '[확정' in v[3] or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS) else f'<td class="ck">{BOX}</td>') + f'<td class="memo">{_code_id(_vals, v[0])}</td></tr>')
     secs += '</table>'
     if t['idx'] or t['check']:
         secs += '<h3>인덱스·제약 (제안)</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>메모</th></tr>'
@@ -229,7 +239,7 @@ for k, (col, vals) in enumerate(CODES.items(), 1):
     codes += '</table>'
 
 body = ('<h1>회원 도메인 컬럼 정의서 (제안)</h1>'
-        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 (법률 검토 L1~L9 반영) · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 모두 제안</div>'
+        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-22 (법률 검토 L1~L12 반영) · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 모두 제안</div>'
         + NOTE + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('회원 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(tot_b, tot_s, tot_b + tot_s)

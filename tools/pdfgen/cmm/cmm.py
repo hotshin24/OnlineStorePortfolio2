@@ -70,18 +70,24 @@ add('GENDER','성별','Gender','`MBR_MEMBER.GENDER_CD`','Y',[],from_codes('GENDE
 add('MOBILE_CARRIER','휴대폰 통신사','Mobile Carrier','`MBR_MEMBER.MOBILE_CARRIER_CD`','N',['모회선 통신사'],
     [(c0,k,e,dd,[{'SKT_MVNO':'SKT','KT_MVNO':'KT','LG_UPLUS_MVNO':'LG_UPLUS'}.get(c0,'')]) for c0,k,e,dd,_ in from_codes('MOBILE_CARRIER_CD')],
     '2026-11-22 컬럼 추가 결정. 본인인증 업체 결과 기준')
-add('AGE_GROUP','5년 단위 연령대','Five-Year Age Group','`MBR_MEMBER.AGE_GROUP_CD`','N',['최소 나이','최대 나이'],
-    [(c0,k,e,dd,[c0.split('_')[1], '' if c0.endswith('OVER') else c0.split('_')[2]]) for c0,k,e,dd,_ in from_codes('AGE_GROUP_CD')],'25-2. 일 배치가 생년월일로 계산')
-add('SALES_CHANNEL','판매 채널','Sales Channel','`MBR_MEMBER.JOIN_CHANNEL_CD`, `LAST_LOGIN_CHANNEL_CD`, `MBR_DEVICE.CHANNEL_CD`, `MBR_CONSENT_HIST.CHANNEL_CD`','Y',[],
+add('AGE_GROUP','5년 단위 연령대','Five-Year Age Group','`MBR_JOIN_ATTRIBUTION.JOIN_AGE_GROUP_CD`','N',['최소 나이','최대 나이'],
+    [(c0,k,e,dd,[c0.split('_')[1], '' if c0.endswith('OVER') else c0.split('_')[2]]) for c0,k,e,dd,_ in from_codes('JOIN_AGE_GROUP_CD')],'25-2 변경, C-81. 가입 때 한 번 계산 (갱신 없음)')
+add('SALES_CHANNEL','판매 채널','Sales Channel','`MBR_JOIN_ATTRIBUTION.JOIN_CHANNEL_CD`, `MBR_MEMBER.LAST_LOGIN_CHANNEL_CD`, `MBR_DEVICE.CHANNEL_CD`, `MBR_CONSENT_HIST.CHANNEL_CD`','Y',[],
     from_codes('LAST_LOGIN_CHANNEL_CD / JOIN_CHANNEL_CD / CHANNEL_CD'),'선행 10. 여러 도메인 공통 (소유 `CMM`)')
-add('OPERATING_SYSTEM','기기 운영체제','Device Operating System','`MBR_MEMBER.JOIN_OS_CD`, `MBR_DEVICE.OS_CD`','N',[],
+add('OPERATING_SYSTEM','기기 운영체제','Device Operating System','`MBR_JOIN_ATTRIBUTION.JOIN_OS_CD`, `MBR_DEVICE.OS_CD`','N',[],
     [('IOS','iOS','iOS','',[]),('ANDROID','안드로이드','Android','',[]),('WINDOWS','윈도우','Windows','',[]),('MACOS','macOS','macOS','',[]),('OTHER','기타','Other','리눅스 등',[])],'선행 10. 여러 도메인 공통 (소유 `CMM`)')
-add('LOGIN_TYPE','로그인 수단 유형','Login Method Type','`MBR_LOGIN_ACCOUNT.LOGIN_TYPE_CD`','Y',[],from_codes('LOGIN_TYPE_CD'),'2, 3-2')
+add('LOGIN_TYPE','로그인 수단 유형','Login Method Type','`MBR_LOGIN_ACCOUNT.LOGIN_TYPE_CD`, `MBR_SOCIAL_LOGIN_LOG.LOGIN_TYPE_CD`, `MBR_JOIN_ATTRIBUTION.JOIN_LOGIN_TYPE_CD`','Y',[],from_codes('LOGIN_TYPE_CD / JOIN_LOGIN_TYPE_CD'),'2, 3-2')
+add('DELIVERY_PLACE','수령 장소','Delivery Place','`MBR_DELIVERY_ADDRESS.DELIVERY_PLACE_CD`','Y',[],from_codes('DELIVERY_PLACE_CD'),'컬럼 검토 C-60')
+add('SOCIAL_LOGIN_EVENT_TYPE','소셜 로그인 이벤트 유형','Social Login Event Type','`MBR_SOCIAL_LOGIN_LOG.SOCIAL_LOGIN_EVENT_TYPE_CD`','Y',[],from_codes('SOCIAL_LOGIN_EVENT_TYPE_CD'),'컬럼 검토 C-52')
+add('LEGAL_GUARDIAN_RELATION','법정대리인 관계','Legal Guardian Relation','`MBR_LEGAL_GUARDIAN_CONSENT.LEGAL_GUARDIAN_RELATION_CD`','Y',[],from_codes('LEGAL_GUARDIAN_RELATION_CD'),'컬럼 검토 C-87')
+add('LEGAL_GUARDIAN_CONSENT_END_REASON','법정대리인 동의 종료 사유','Legal Guardian Consent End Reason','`MBR_LEGAL_GUARDIAN_CONSENT.CONSENT_END_REASON_CD`','Y',[],from_codes('CONSENT_END_REASON_CD'),'컬럼 검토 C-88')
+add('SOCIAL_LOGIN_EVENT_RESULT','소셜 로그인 이벤트 결과','Social Login Event Result','`MBR_SOCIAL_LOGIN_LOG.SOCIAL_LOGIN_EVENT_RESULT_CD`','Y',[],from_codes('SOCIAL_LOGIN_EVENT_RESULT_CD'),'컬럼 검토 C-52')
 add('TOKEN_REVOCATION_REASON','리프레시 토큰 폐기 사유','Refresh Token Revocation Reason','`MBR_REFRESH_TOKEN.REVOCATION_REASON_CD`','Y',[],from_codes('REVOCATION_REASON_CD'),'7-3')
 add('IDENTITY_VERIFICATION_PURPOSE','본인인증 요청 목적','Identity Verification Purpose','`MBR_IDENTITY_VERIFICATION_LOG.VERIFICATION_PURPOSE_CD`','Y',[],from_codes('VERIFICATION_PURPOSE_CD'),'4-2, 30')
 add('IDENTITY_VERIFICATION_METHOD','본인인증 수단','Identity Verification Method','`MBR_IDENTITY_VERIFICATION_LOG.VERIFICATION_METHOD_CD`','Y',[],from_codes('VERIFICATION_METHOD_CD'),'선행 13-2')
 add('IDENTITY_VERIFICATION_RESULT','본인인증 결과','Identity Verification Result','`MBR_IDENTITY_VERIFICATION_LOG.VERIFICATION_RESULT_CD`','Y',[],from_codes('VERIFICATION_RESULT_CD'),'')
 add('QUALIFICATION_TYPE','특수 자격 유형','Special Qualification Type','`MBR_MEMBER.QUALIFICATION_APPLICATION_TYPE_CD`','Y',[],from_codes('QUALIFICATION_APPLICATION_TYPE_CD'),'32-2')
+add('INFLUENCER_SNS_CHANNEL','인플루언서 SNS 채널','Influencer SNS Channel','`MBR_MEMBER.INFLUENCER_SNS_CHANNEL_CD`','Y',[],from_codes('INFLUENCER_SNS_CHANNEL_CD'),'컬럼 검토 C-40')
 add('QUALIFICATION_APPROVAL_STATUS','특수 자격 승인 상태','Special Qualification Approval Status','`MBR_MEMBER.QUALIFICATION_APPROVAL_STATUS_CD`','Y',[],from_codes('QUALIFICATION_APPROVAL_STATUS_CD'),'32-2')
 add('GRADE_CHANGE_REASON','등급 변경 사유','Grade Change Reason','`MBR_MEMBER_GRADE_CHANGE_HIST.CHANGE_REASON_CD`','Y',[],from_codes('CHANGE_REASON_CD (등급 이력)'),'35-4, 35-5')
 add('SANCTION_RESTRICTION_TYPE','제재 제한 기능','Sanction Restricted Function','`MBR_SANCTION.RESTRICTION_TYPE_CD`','Y',['회원 캐시 컬럼'],
@@ -143,6 +149,7 @@ add('PII_RETENTION_REASON','개인정보 보유 사유','Personal Information Re
      ('CONSENT_HISTORY','동의 이력','Consent History','요청 IP는 탈퇴 확정 시 NULL (법률 L4)',['60','탈퇴 확정일']),('PII_ACCESS_LOG','개인정보 접속 기록','PII Access Log','',['36','기록일']),
      ('ADMIN_ACTION_LOG','관리자 작업 로그','Administrator Action Log','',['36','기록일']),('DATA_CHANGE_LOG','데이터 변경 이력','Data Change Log','',['36','기록일']),
      ('EXTERNAL_INTERFACE_LOG','외부 연동 로그','External Interface Log','본인인증 로그 포함',['12','기록일']),('SEARCH_LOG','검색어 원본 로그','Search Keyword Log','',['12','기록일']),
+     ('LEGAL_GUARDIAN_CONSENT','법정대리인 동의 증빙','Legal Guardian Consent Proof','이름·요청 IP는 기산일에 NULL, CI 해시·관계·일시·안내문 버전만 보관 (C-89, C-93). 파기 예정일은 기산일 + 60개월과 성년 도달일 + 36개월(민법 146조 취소권 행사 기간) 중 늦은 날이다. 탈퇴로 끝나면 생년월일이 지워지기 전에 탈퇴 확정 때 계산해 채운다 (C-96)',['60','성년 도달일 또는 탈퇴 확정일']),
      ('REFUND_ACCOUNT_SNAPSHOT','클레임 환불 계좌 마스킹 값','Refund Account Masked Snapshot','',['60','환불 완료일']),
      ('UNREFUNDED_DEPOSIT_CONTACT','미반환 예치금 반환 연락처','Unrefunded Deposit Contact','반환이 끝나면 즉시 파기 (법률 L2-4)',['0','반환 완료일'])],'선행 7, 28-2, 28-8~28-16, 26-3, 43-4, 법률 L2-4. 도메인마다 추가')
 add('MEMBER_POLICY','회원 정책 기준값','Member Policy Threshold','배치·애플리케이션 판단 로직 (컬럼 없음)','N',['기준값','단위'],
@@ -150,6 +157,7 @@ add('MEMBER_POLICY','회원 정책 기준값','Member Policy Threshold','배치�
      ('WITHDRAWAL_GRACE_PERIOD','탈퇴 철회 유예','Withdrawal Grace Period','',['7','일']),('PASSWORD_CHANGE_NOTICE_CYCLE','비밀번호 변경 안내 주기','Password Change Notice Cycle','',['90','일']),
      ('LOGIN_FAIL_LOCK_COUNT','로그인 잠금 실패 횟수','Login Fail Lock Count','',['5','회 [확인 필요: 결정 항목 없음]']),
      ('PAYMENT_PIN_LOCK_COUNT','결제 PIN 잠금 실패 횟수','Payment PIN Lock Count','',['5','회']),
+     ('DELIVERY_ADDRESS_MAX_COUNT','회원당 배송지 최대 개수','Max Delivery Addresses per Member','애플리케이션이 등록 때 검사 (C-64) [확정 2026-11-23]',['20','개']),
      ('PAYMENT_FAIL_WINDOW','결제 실패 집계 시간','Payment Failure Window','',['1','시간']),('PAYMENT_FAIL_LIMIT','결제 실패 허용 횟수','Payment Failure Limit','',['5','회']),
      ('PAYMENT_RESTRICTION_PERIOD','결제 자동 제한 기간','Payment Restriction Period','',['24','시간']),
      ('RETURN_ABUSE_RATE','반품 남용 검토 반품률','Return Abuse Review Rate','',['[미정]','%']),
@@ -229,9 +237,15 @@ CMM_OWNED = {'SALES_CHANNEL','OPERATING_SYSTEM','BANK','CARD_COMPANY','SIDO','SI
 def nxt_block(last, start, cache=20): return start + ((last - start) // cache + 1) * cache
 GID, CID, CODEID = {}, {}, {}
 # 법률 검토(2026-11-22)로 나중에 추가한 코드: 기존 ID를 밀지 않고 V3 마이그레이션에서 끝 번호를 받는다
-LATE = [('PII_RETENTION_REASON', 'UNREFUNDED_DEPOSIT_CONTACT'), ('CONSENT_ITEM', 'ANALYTICS_OVERSEAS_TRANSFER'), ('CONSENT_ITEM', 'PRIVACY_USAGE_NOTICE')]
+LATE = [('PII_RETENTION_REASON', 'UNREFUNDED_DEPOSIT_CONTACT'), ('CONSENT_ITEM', 'ANALYTICS_OVERSEAS_TRANSFER'), ('CONSENT_ITEM', 'PRIVACY_USAGE_NOTICE'), ('IDENTITY_VERIFICATION_PURPOSE', 'UPDATE_IDENTITY_INFO'), ('REFUND_ACCOUNT_VERIFICATION_RESULT', 'REVERIFICATION_REQUIRED'), ('QUALIFICATION_APPROVAL_STATUS', 'REVOKED'), ('QUALIFICATION_APPROVAL_STATUS', 'CANCELED'), ('MEMBER_POLICY', 'DELIVERY_ADDRESS_MAX_COUNT'), ('SOCIAL_LOGIN_EVENT_TYPE', 'TOKEN_REVOKE_CANCEL'), ('IDENTITY_VERIFICATION_PURPOSE', 'LEGAL_GUARDIAN_CONSENT'), ('IDENTITY_VERIFICATION_PURPOSE', 'GUEST_ORDER_CHECKOUT'), ('PII_RETENTION_REASON', 'LEGAL_GUARDIAN_CONSENT')]
+RETIRED = {('QUALIFICATION_TYPE', 'EMPLOYEE')}  # 2026-11-23 C-41: 값은 지웠지만 기존 CODE_ID가 밀리지 않게 번호를 비워 둔다
 g, c = 1001, 100001
-order = [x for x in G if x[0] in CMM_OWNED] + [x for x in G if x[0] not in CMM_OWNED]
+LATE_GROUPS = {'INFLUENCER_SNS_CHANNEL'}  # 2026-11-23 C-40: 그룹째 V3로 추가 (기존 그룹 ID·코드 ID를 밀지 않음)
+LATE_GROUPS2 = ['SOCIAL_LOGIN_EVENT_TYPE', 'SOCIAL_LOGIN_EVENT_RESULT', 'DELIVERY_PLACE']  # DELIVERY_PLACE는 C-60
+LATE_LAST = [('MEMBER_POLICY', 'DELIVERY_ADDRESS_MAX_COUNT'), ('SOCIAL_LOGIN_EVENT_TYPE', 'TOKEN_REVOKE_CANCEL'), ('IDENTITY_VERIFICATION_PURPOSE', 'LEGAL_GUARDIAN_CONSENT'), ('IDENTITY_VERIFICATION_PURPOSE', 'GUEST_ORDER_CHECKOUT'), ('PII_RETENTION_REASON', 'LEGAL_GUARDIAN_CONSENT')]  # C-85·C-87·C-89
+LATE_GROUPS3 = ['LEGAL_GUARDIAN_RELATION', 'LEGAL_GUARDIAN_CONSENT_END_REASON']  # C-87·C-88: LATE_LAST 뒤에 그룹째 추가
+# 위 LATE_LAST: C-64: C-60 그룹 뒤 번호, C-69: 그 뒤  # 2026-11-23 C-52: C-43 값보다 나중에 그룹째 추가
+order = [x for x in G if x[0] in CMM_OWNED] + [x for x in G if x[0] not in CMM_OWNED and x[0] not in LATE_GROUPS and x[0] not in LATE_GROUPS2 and x[0] not in LATE_GROUPS3]
 for k, x in enumerate(order):
     if k == len([y for y in G if y[0] in CMM_OWNED]):
         g = nxt_block(g - 1, 1001); c = nxt_block(c - 1, 100001)
@@ -241,10 +255,33 @@ for k, x in enumerate(order):
     for v in x[6]:
         if (x[0], v[0]) in LATE: continue
         CODEID[(x[0], v[0])] = c; c += 1
+    c += len([r for r in RETIRED if r[0] == x[0]])
 V3_START = nxt_block(c - 1, 100001)
 c = V3_START
+LATE_AFTER_GROUPS = [('QUALIFICATION_APPROVAL_STATUS', 'REVOKED'), ('QUALIFICATION_APPROVAL_STATUS', 'CANCELED')]  # C-43: C-40 그룹보다 나중에 추가
 for key in LATE:
+    if key in LATE_AFTER_GROUPS or key in LATE_LAST: continue
     CODEID[key] = c; c += 1
+for x in G:
+    if x[0] not in LATE_GROUPS: continue
+    GID[x[0]] = g; g += 1; CID[x[0]] = c
+    for v in x[6]:
+        CODEID[(x[0], v[0])] = c; c += 1
+for key in LATE_AFTER_GROUPS:
+    CODEID[key] = c; c += 1
+for gc2 in LATE_GROUPS2:
+    x = next(y for y in G if y[0] == gc2)
+    GID[x[0]] = g; g += 1; CID[x[0]] = c
+    for v in x[6]:
+        if (x[0], v[0]) in LATE_LAST: continue
+        CODEID[(x[0], v[0])] = c; c += 1
+for key in LATE_LAST:
+    CODEID[key] = c; c += 1
+for gc3 in LATE_GROUPS3:
+    x = next(y for y in G if y[0] == gc3)
+    GID[x[0]] = g; g += 1; CID[x[0]] = c
+    for v in x[6]:
+        CODEID[(x[0], v[0])] = c; c += 1
 LAST_G, LAST_C = g - 1, c - 1
 def th(p, ko): return f'<th><span class="pc">{pn(p)}</span><br><span class="en">{il(ko)}</span></th>'
 body += '<h2 class="g t">2. 회원 도메인 코드 그룹 (CMM_CODE_GROUP 행)</h2>'
@@ -252,7 +289,7 @@ body += ('<div class="box"><b>ID 값은 가상 값이다</b> <span class="warn">
   '· 시퀀스 시작값: <code>SEQ_CMM_CODE_GROUP</code> START WITH 1001, <code>SEQ_CMM_CODE</code> START WITH 100001 (START WITH는 결정 항목이 아니었다). INCREMENT BY 1, CACHE 20 (선행 결정 1).<br>'
   '· 적재 순서: Flyway V1이 여러 도메인 공통 그룹(<code>OWNER_DOMAIN_CD = CMM</code>) 7개를 먼저 넣고, V2가 회원 그룹 34개를 넣는다. 그래서 ID 순서는 문서 순서(규칙 8)와 다르다.<br>'
   f'· V1과 V2 사이에 DB를 재시작해 캐시 20개가 버려졌다고 가정해 번호가 건너뛴다 (그룹 {GID["PII_RETENTION_REASON"]} → {min(v for k, v in GID.items() if k not in CMM_OWNED)}). 시군구 약 250개도 V1에서 <code>CODE_ID</code>를 차지한다.<br>'
-  f'· 법률 검토(2026-11-22)로 추가한 코드 {len(LATE)}개는 V3 마이그레이션으로 나중에 넣었다고 가정해, 기존 ID를 밀지 않고 {V3_START}부터 받는다: ' + ', '.join(f'<code>{k[1]}</code> {CODEID[k]}' for k in LATE) + '.<br>'
+  f'· 법률 검토(2026-11-22)와 컬럼 검토 C-14·C-17·C-43·C-64(2026-11-23)으로 추가한 코드 {len(LATE)}개는 V3 마이그레이션으로 나중에 넣었다고 가정해, 기존 ID를 밀지 않고 {V3_START}부터 받는다: ' + ', '.join(f'<code>{k[1]}</code> {CODEID[k]}' for k in LATE) + '. 컬럼 검토 C-40으로 추가한 그룹 ' + ', '.join(f'<code>{x}</code>(그룹 {GID[x]})' for x in sorted(LATE_GROUPS)) + '도 V3로 넣어 그 뒤 번호를 받는다. 컬럼 검토 C-52·C-60으로 추가한 그룹 ' + ', '.join(f'<code>{x}</code>(그룹 {GID[x]})' for x in LATE_GROUPS2) + '는 C-43 값 뒤 번호를 받는다. C-41로 지운 값 ' + ', '.join(f'<code>{r[0]}.{r[1]}</code>' for r in sorted(RETIRED)) + '의 번호는 비워 둔다.<br>'
   f'· 결과: <code>CODE_GROUP_ID</code> 1001~{LAST_G}, <code>CODE_ID</code> 100001~{LAST_C}. 검토할 때는 이 ID로 알려 주면 된다.</div>')
 body += ('<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:15%"><col style="width:17%"><col style="width:6%"><col style="width:7%"><col style="width:12%"><col style="width:24%"><col style="width:4%"><col style="width:3%"><col style="width:7%"></colgroup><tr>'
          + th('CODE_GROUP_ID','그룹 ID') + th('CODE_GROUP_CD','그룹 코드') + th('CODE_GROUP_NM','한글 이름 (영문 이름)') + th('OWNER_DOMAIN_CD','소유 도메인')

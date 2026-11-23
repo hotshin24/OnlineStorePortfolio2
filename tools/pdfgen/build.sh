@@ -13,9 +13,9 @@ python3 "$HERE/cols/render.py" "$OUT"               # names.html, columns.html
 python3 "$HERE/policy/render.py" "$OUT/policy.html"
 python3 "$HERE/col_decision/col_decision.py" "$OUT/coldec.html"
 python3 "$HERE/rules/rules.py" "$OUT/rules.html"
-python3 "$HERE/decision_change/chg.py" "$OUT"       # chg10/12/17/28/31/39/47.html
+python3 "$HERE/decision_change/chg.py" "$OUT"       # chg03/08/10/12/13/17/20/21/22/25/26/27/28/30/31/32/35/39/43/47.html, chgS03/05/14.html (선행 결정 3·5·14)
 
-for n in cmm names columns coldec rules policy chg10 chg12 chg17 chg28 chg31 chg39 chg47; do
+for n in cmm names columns coldec rules policy chg03 chg08 chg10 chg12 chg13 chg17 chg20 chg21 chg22 chg25 chg26 chg27 chg28 chg30 chg31 chg32 chg35 chg39 chg43 chg47 chgS03 chgS05 chgS14; do
   "$CHROME" --headless=new --disable-gpu --no-pdf-header-footer --user-data-dir="$OUT/chrome-profile" \
     --print-to-pdf="$OUT/$n.pdf" "file://$OUT/$n.html" >/dev/null 2>&1
   echo "$n.pdf $(grep -a -E -c '/Type /Page($|[^s])' "$OUT/$n.pdf")쪽"
