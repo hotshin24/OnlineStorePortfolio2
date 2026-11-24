@@ -1,4 +1,4 @@
-# 회원 도메인 ERD 생성: Mermaid(mmd, 전체 컬럼판과 관계 요약판)와 draw.io(전체 ERD 1개 파일, 도메인별 페이지: 관계 요약, 컬럼 포함)
+# 회원 도메인 ERD와 상품 도메인 관계 요약 생성 (상품은 tools/pdfgen/prd/erd_prd.py): Mermaid(mmd, 전체 컬럼판과 관계 요약판)와 draw.io(전체 ERD 1개 파일, 도메인별 페이지: 관계 요약, 컬럼 포함)
 # 사용법 (저장소 루트에서): python3 tools/pdfgen/erd/erd.py
 # 단일 출처: tools/pdfgen/cols/data.py (컬럼), cols/order.py (테이블·컬럼 순서, 규칙 8)
 import os, re, sys, html
@@ -8,6 +8,9 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 sys.path.insert(0, os.path.join(HERE, '..', 'cols'))
 from data import T
 from order import TABLE_GROUPS, COL_GROUPS
+import importlib.util
+_spec = importlib.util.spec_from_file_location('erd_prd', os.path.join(HERE, '..', 'prd', 'erd_prd.py'))
+PRD = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(PRD)
 
 TODAY = date.today().isoformat()
 BY = {t['t']: t for t in T}
@@ -16,7 +19,7 @@ for t in T:  # 컬럼정의서와 같은 순서 (규칙 8)
     t['cols'] = [cm[n] for g, ns in COL_GROUPS[t['t']] for n in ns]
 
 EXT_NOTE = {'ADM_USER': '관리자 도메인', 'SYS_EXTERNAL_VENDOR': '시스템 도메인 (외부 업체 마스터)',
-            'PRD_STYLE_COLOR': '상품 도메인', 'PRD_CATEGORY': '상품 도메인', 'PRM_DISCOUNT_POLICY': '프로모션 도메인'}
+            'PRD_STYLE_COLOR': '상품 도메인', 'PRD_SKU': '상품 도메인', 'PRD_CATEGORY': '상품 도메인', 'PRM_DISCOUNT_POLICY': '프로모션 도메인'}
 
 def keys(t, c):
     ck = c[6]
@@ -196,7 +199,7 @@ def summary_positions():
     for i, n in enumerate(left): pos[n] = (150, 120 + i * 120, SW, SH)
     for i, n in enumerate(right): pos[n] = (2150, 120 + i * 120, SW, SH)
     for i, n in enumerate(bottom): pos[n] = (150 + i * 370, 1360, SW, SH)
-    ext = {'ADM_USER': (1175, 120), 'PRD_STYLE_COLOR': (2780, 420), 'PRD_CATEGORY': (2780, 600),
+    ext = {'ADM_USER': (1175, 120), 'PRD_STYLE_COLOR': (2780, 340), 'PRD_SKU': (2780, 480), 'PRD_CATEGORY': (2780, 640),
            'PRM_DISCOUNT_POLICY': (2780, 840), 'SYS_EXTERNAL_VENDOR': (-330, 240)}
     for e in EXT:
         x, y = ext.get(e, (2780, 1100 + 120 * EXT.index(e)))
@@ -264,6 +267,7 @@ def drawio():
     return ('<mxfile host="drawio" agent="tools/pdfgen/erd/erd.py" version="24.0.0">\n'
             + diagram('mbr-summary', '회원 (MBR) 관계 요약', drawio_summary_page(), 3200, 1800)
             + diagram('mbr', '회원 (MBR)', drawio_page(), 4800, 3600)
+            + diagram('prd-summary', '상품 (PRD) 관계 요약', PRD.summary_cells(), 3200, 1600)
             + '</mxfile>\n')
 
 if __name__ == '__main__':
@@ -275,5 +279,8 @@ if __name__ == '__main__':
     p3 = os.path.join(ROOT, 'docs', 'mmd', '회원_MBR_관계요약.mmd')
     open(p2, 'w', encoding='utf-8').write(drawio())
     open(p3, 'w', encoding='utf-8').write(mmd_summary())
-    print(p1); print(p3); print(p2)
+    p4 = os.path.join(ROOT, 'docs', 'mmd', '상품_PRD_관계요약.mmd')
+    open(p4, 'w', encoding='utf-8').write(PRD.mmd_summary())
+    print(p1); print(p3); print(p4); print(p2)
+    print(f'상품: 테이블 {len(PRD.BY)}개, 관계 {len(PRD.RELS)}개, 다른 도메인 {len(PRD.EXT)}개')
     print(f'테이블 {len(T)}개, 관계 {len(RELS)}개, 다른 도메인 {len(EXT)}개')

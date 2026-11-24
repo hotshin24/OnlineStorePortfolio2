@@ -1,0 +1,95 @@
+---
+title: 상품 도메인 (PRD) 관계 요약
+---
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/prd/erd_prd.py (2026-11-24). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보
+%% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N. 선 이름은 FK 컬럼
+%% 다른 도메인 상자: 상품을 참조하는 회원 테이블(확정 이름, 재입고 알림 신청은 후보)과 관리자 도메인(후보)
+erDiagram
+    %% ---- 상품 계층
+    PRD_STYLE["PRD_STYLE 상품 스타일"] {
+    }
+    PRD_STYLE_COLOR["PRD_STYLE_COLOR 상품 스타일 컬러"] {
+    }
+    PRD_SKU["PRD_SKU 상품 SKU"] {
+    }
+    %% ---- 상품 상세 정보
+    PRD_STYLE_MEDIA["PRD_STYLE_MEDIA 스타일 이미지·영상"] {
+    }
+    PRD_STYLE_FABRIC["PRD_STYLE_FABRIC 스타일 사용 원단"] {
+    }
+    PRD_STYLE_FUNCTIONAL_CLAIM["PRD_STYLE_FUNCTIONAL_CLAIM 스타일 기능성 표시와 실증자료"] {
+    }
+    %% ---- 가격
+    PRD_PRICE_HIST["PRD_PRICE_HIST 상품 가격 이력"] {
+    }
+    PRD_PRICE_CHANGE_REQUEST["PRD_PRICE_CHANGE_REQUEST 상품 가격 변경 요청"] {
+    }
+    %% ---- 연관·검색
+    PRD_STYLE_RELATION["PRD_STYLE_RELATION 스타일 연관 상품"] {
+    }
+    PRD_SEARCH_INDEX_OUTBOX["PRD_SEARCH_INDEX_OUTBOX 상품 검색 색인 아웃박스"] {
+    }
+    %% ---- 표시 기록·집계
+    PRD_DISPLAY_CONTENT_HIST["PRD_DISPLAY_CONTENT_HIST 상품 표시 내용 버전 이력"] {
+    }
+    PRD_SALES_DAILY_STAT["PRD_SALES_DAILY_STAT SKU 일별 판매 집계"] {
+    }
+    %% ---- 기준 정보
+    PRD_CATEGORY["PRD_CATEGORY 상품 관리 분류"] {
+    }
+    PRD_BRAND["PRD_BRAND 상품 브랜드 마스터"] {
+    }
+    PRD_SEASON["PRD_SEASON 상품 시즌 마스터"] {
+    }
+    PRD_COLOR["PRD_COLOR 상품 컬러 마스터"] {
+    }
+    PRD_FABRIC["PRD_FABRIC 원단 마스터"] {
+    }
+    %% ---- 다른 도메인
+    ADM_USER["ADM_USER (관리자 도메인)"] {
+    }
+    MBR_PREFERENCE["MBR_PREFERENCE (회원 도메인)"] {
+    }
+    MBR_RECENTLY_VIEWED_ITEM["MBR_RECENTLY_VIEWED_ITEM (회원 도메인)"] {
+    }
+    MBR_RESTOCK_NOTIFICATION_REQUEST["MBR_RESTOCK_NOTIFICATION_REQUEST (회원 도메인)"] {
+    }
+    MBR_WISHLIST_ITEM["MBR_WISHLIST_ITEM (회원 도메인)"] {
+    }
+    %% ---- 관계
+    PRD_BRAND ||--o{ PRD_STYLE : "BRAND_ID"
+    PRD_SEASON ||--o{ PRD_STYLE : "SEASON_ID"
+    PRD_CATEGORY ||--o{ PRD_STYLE : "CATEGORY_ID"
+    PRD_STYLE |o--o{ PRD_STYLE : "ORIGINAL_STYLE_ID"
+    PRD_PRICE_HIST |o--o{ PRD_STYLE : "CURRENT_PRICE_HIST_ID"
+    ADM_USER |o--o{ PRD_STYLE : "RESPONSIBLE_MD_ADMIN_ID"
+    PRD_STYLE ||--o{ PRD_STYLE_COLOR : "STYLE_ID"
+    PRD_COLOR ||--o{ PRD_STYLE_COLOR : "COLOR_ID"
+    PRD_PRICE_HIST |o--o{ PRD_STYLE_COLOR : "CURRENT_PRICE_HIST_ID"
+    PRD_STYLE_COLOR ||--o{ PRD_SKU : "STYLE_COLOR_ID"
+    PRD_STYLE ||--o{ PRD_STYLE_FABRIC : "STYLE_ID"
+    PRD_FABRIC ||--o{ PRD_STYLE_FABRIC : "FABRIC_ID"
+    PRD_STYLE ||--o{ PRD_STYLE_MEDIA : "STYLE_ID"
+    PRD_STYLE_COLOR |o--o{ PRD_STYLE_MEDIA : "STYLE_COLOR_ID"
+    ADM_USER ||--o{ PRD_PRICE_CHANGE_REQUEST : "REQUESTED_BY_ADMIN_ID"
+    ADM_USER |o--o{ PRD_PRICE_CHANGE_REQUEST : "APPROVED_BY_ADMIN_ID"
+    ADM_USER |o--o{ PRD_PRICE_CHANGE_REQUEST : "WITHDRAWN_BY_ADMIN_ID"
+    PRD_PRICE_CHANGE_REQUEST ||--o{ PRD_PRICE_HIST : "PRICE_CHANGE_REQUEST_ID"
+    PRD_STYLE ||--o{ PRD_PRICE_HIST : "STYLE_ID"
+    PRD_STYLE_COLOR |o--o{ PRD_PRICE_HIST : "STYLE_COLOR_ID"
+    PRD_SKU |o--o{ PRD_PRICE_HIST : "SKU_ID"
+    PRD_PRICE_CHANGE_REQUEST |o--o{ PRD_PRICE_HIST : "APPLY_END_CHANGE_REQUEST_ID"
+    PRD_PRICE_HIST |o--o{ PRD_PRICE_HIST : "CORRECTED_PRICE_HIST_ID"
+    PRD_PRICE_HIST |o--o{ PRD_PRICE_HIST : "PREVIOUS_PRICE_HIST_ID"
+    ADM_USER |o--o{ PRD_PRICE_HIST : "WITHDRAWN_BY_ADMIN_ID"
+    PRD_PRICE_HIST |o--o{ PRD_PRICE_HIST : "SUPERSEDED_BY_PRICE_HIST_ID"
+    PRD_STYLE ||--o{ PRD_STYLE_FUNCTIONAL_CLAIM : "STYLE_ID"
+    PRD_STYLE ||--o{ PRD_STYLE_RELATION : "STYLE_ID"
+    PRD_STYLE ||--o{ PRD_STYLE_RELATION : "RELATED_STYLE_ID"
+    PRD_STYLE ||--o{ PRD_DISPLAY_CONTENT_HIST : "STYLE_ID"
+    PRD_SKU ||--o{ PRD_SALES_DAILY_STAT : "SKU_ID"
+    PRD_STYLE_COLOR ||--o{ MBR_WISHLIST_ITEM : "STYLE_COLOR_ID"
+    PRD_SKU ||--o{ MBR_RESTOCK_NOTIFICATION_REQUEST : "SKU_ID"
+    PRD_STYLE_COLOR ||--o{ MBR_RECENTLY_VIEWED_ITEM : "STYLE_COLOR_ID"
+    PRD_CATEGORY |o--o{ MBR_PREFERENCE : "CATEGORY_ID"
+    %% PRD_SEARCH_INDEX_OUTBOX: STYLE_ID는 FK 없음 (이벤트 로그)

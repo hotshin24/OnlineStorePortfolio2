@@ -1,9 +1,9 @@
 ---
 title: 회원 도메인 (MBR) ERD
 ---
-%% 생성: tools/pdfgen/erd/erd.py (2026-11-23). 단일 출처는 tools/pdfgen/cols/data.py
-%% 테이블 24개. 업무 컬럼만 그렸다. 모든 테이블 끝의 공통 컬럼(개인정보 보유 4, 시스템 6, 논리 삭제 3)은 생략했다 (규칙 1, 8-A).
-%% 다른 도메인 테이블(ADM_USER, PRD_CATEGORY, PRD_STYLE_COLOR, PRM_DISCOUNT_POLICY, SYS_EXTERNAL_VENDOR)은 FK 대상만 표시한 후보 이름이다.
+%% 생성: tools/pdfgen/erd/erd.py (2026-11-24). 단일 출처는 tools/pdfgen/cols/data.py
+%% 테이블 25개. 업무 컬럼만 그렸다. 모든 테이블 끝의 공통 컬럼(개인정보 보유 4, 시스템 6, 논리 삭제 3)은 생략했다 (규칙 1, 8-A).
+%% 다른 도메인 테이블(ADM_USER, PRD_CATEGORY, PRD_SKU, PRD_STYLE_COLOR, PRM_DISCOUNT_POLICY, SYS_EXTERNAL_VENDOR)은 FK 대상만 표시한 후보 이름이다.
 %% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, ||--o| 1:1 (공유 PK)
 erDiagram
     %% ---- 가입·계정
@@ -259,6 +259,12 @@ erDiagram
         NUMBER(19) STYLE_COLOR_ID PK, FK "찜한 스타일 컬러 식별 번호"
         NUMBER(15) WISHLISTED_SALE_PRICE_AMT "찜할 당시 판매 가격 (원화) · NULL 허용"
     }
+    MBR_RESTOCK_NOTIFICATION_REQUEST["MBR_RESTOCK_NOTIFICATION_REQUEST 회원 재입고 알림 신청"] {
+        NUMBER(19) MEMBER_ID PK, FK "신청 회원 식별 번호"
+        NUMBER(19) SKU_ID PK, FK "신청 SKU 식별 번호"
+        TIMESTAMP REQUESTED_AT "신청 일시"
+        TIMESTAMP NOTIFICATION_SENT_AT "알림 발송 일시 · NULL 허용"
+    }
     MBR_RECENTLY_VIEWED_ITEM["MBR_RECENTLY_VIEWED_ITEM 회원 최근 본 상품"] {
         NUMBER(19) MEMBER_ID PK, FK "상품을 본 회원 식별 번호"
         NUMBER(19) STYLE_COLOR_ID PK, FK "본 스타일 컬러 식별 번호"
@@ -391,6 +397,8 @@ erDiagram
     }
     PRD_CATEGORY["PRD_CATEGORY (상품 도메인, 후보)"] {
     }
+    PRD_SKU["PRD_SKU (상품 도메인, 후보)"] {
+    }
     PRD_STYLE_COLOR["PRD_STYLE_COLOR (상품 도메인, 후보)"] {
     }
     PRM_DISCOUNT_POLICY["PRM_DISCOUNT_POLICY (프로모션 도메인, 후보)"] {
@@ -427,6 +435,8 @@ erDiagram
     MBR_MEMBER ||--o{ MBR_DELIVERY_ADDRESS : "MEMBER_ID"
     MBR_MEMBER ||--o{ MBR_WISHLIST_ITEM : "MEMBER_ID"
     PRD_STYLE_COLOR ||--o{ MBR_WISHLIST_ITEM : "STYLE_COLOR_ID"
+    MBR_MEMBER ||--o{ MBR_RESTOCK_NOTIFICATION_REQUEST : "MEMBER_ID"
+    PRD_SKU ||--o{ MBR_RESTOCK_NOTIFICATION_REQUEST : "SKU_ID"
     MBR_MEMBER ||--o{ MBR_RECENTLY_VIEWED_ITEM : "MEMBER_ID"
     PRD_STYLE_COLOR ||--o{ MBR_RECENTLY_VIEWED_ITEM : "STYLE_COLOR_ID"
     MBR_MEMBER ||--o{ MBR_PREFERENCE : "MEMBER_ID"

@@ -139,7 +139,7 @@ for i, t in enumerate(T, 1):
 total = sum(len(full_cols(t)) for t in T)
 body = ('<h1>회원 도메인 테이블 이름 (확정)</h1>'
         '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-23 (법률 검토·컬럼 검토 반영) · 물리명은 B-1~B-14 결정과 이후 추가 결정으로 확정 · 논리명과 설명은 제안 (확인 칸으로 검토)</div>'
-        f'<div class="box">물리명 {len(T)}개는 확정했다. 논리명(한글, 괄호에 영문)과 설명은 이 문서에서 처음 제안하는 것이라 아직 후보다. '
+        f'<div class="box">물리명 {len(T)}개 중 {len(T)-1}개는 확정했다. 2026-11-24 상품 도메인에서 추가한 <code>MBR_RESTOCK_NOTIFICATION_REQUEST</code>는 이름이 후보다. 논리명(한글, 괄호에 영문)과 설명은 이 문서에서 처음 제안하는 것이라 아직 후보다. '
         '확정한 행은 <b>확정</b> 칸에 표시하고, 고칠 내용은 메모 칸에 적는다.</div>'
         + rows + f'</table><p><b>합계: 테이블 {len(T)}개, 컬럼 {total}개</b></p>')
 B = [('B-1','로그인 계정','A','MBR_LOGIN_ACCOUNT'),('B-2','배송지','B','MBR_DELIVERY_ADDRESS'),('B-3','위시리스트','B','MBR_WISHLIST_ITEM'),
@@ -151,11 +151,12 @@ B = [('B-1','로그인 계정','A','MBR_LOGIN_ACCOUNT'),('B-2','배송지','B','
      ('L9 후속 3-1','동의 현재 상태 (2026-11-22 추가)','A','MBR_CONSENT'),
      ('C-20','가입 유입 경로 (2026-11-23 회원 테이블에서 분리)','A (후보 이름 그대로)','MBR_JOIN_ATTRIBUTION'),
      ('C-52','소셜 로그인 연결·해제·실패 로그 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_SOCIAL_LOGIN_LOG'),
-     ('C-88','미성년 회원 법정대리인 구매 동의 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_LEGAL_GUARDIAN_CONSENT')]
+     ('C-88','미성년 회원 법정대리인 구매 동의 (2026-11-23 추가)','B (선택지에 적은 이름)','MBR_LEGAL_GUARDIAN_CONSENT'),
+     ('상품 결정 36-1','재입고 알림 신청 (2026-11-24 상품 도메인에서 추가)','이름 후보 (이름 결정 질문 전)','MBR_RESTOCK_NOTIFICATION_REQUEST')]
 body += '<h2>이름 결정 기록</h2><table><tr><th>질문</th><th>대상</th><th>선택</th><th>확정 이름</th></tr>' + ''.join(
     f'<tr><td>{a}</td><td>{b}</td><td>{c}</td><td class="p">{d}</td></tr>' for a, b, c, d in B) + '</table>'
 body += ('<h2>공통 사항</h2><ul><li>모든 이름은 128바이트 이내. 가장 긴 것은 <code>MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT</code>(34바이트), <code>MBR_ADVERTISING_PLATFORM_SHARE_HIST</code>(35바이트).</li>'
-         '<li>시퀀스는 <code>SEQ_{테이블}</code>. 복합 PK인 <code>MBR_MEMBER_TAG</code>, <code>MBR_WISHLIST_ITEM</code>, <code>MBR_RECENTLY_VIEWED_ITEM</code>과 회원 PK를 공유하는 <code>MBR_JOIN_ATTRIBUTION</code>(C-21)은 시퀀스 없음.</li>'
+         '<li>시퀀스는 <code>SEQ_{테이블}</code>. 복합 PK인 <code>MBR_MEMBER_TAG</code>, <code>MBR_WISHLIST_ITEM</code>, <code>MBR_RESTOCK_NOTIFICATION_REQUEST</code>, <code>MBR_RECENTLY_VIEWED_ITEM</code>과 회원 PK를 공유하는 <code>MBR_JOIN_ATTRIBUTION</code>(C-21)은 시퀀스 없음.</li>'
          '<li>표 순서는 지시 규칙 8: 테이블을 관련 그룹으로 모으고, 그룹은 업무 흐름 순, 그룹 안은 중요도 순 (그룹 구성은 제안). DDL 생성 순서는 FK 순서로 따로 정한다 (8-D).</li><li>B-7 C는 PK 컬럼 이름에 약어 <code>AD</code>가 들어가 재확인했고, 풀어 쓴 C로 확정.</li></ul>')
 open(os.path.join(OUT, 'names.html'), 'w').write(page('회원 도메인 테이블 이름', body))
 
@@ -240,7 +241,7 @@ for k, (col, vals) in enumerate(CODES.items(), 1):
     codes += '</table>'
 
 body = ('<h1>회원 도메인 컬럼 정의서 (제안)</h1>'
-        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-23 (법률 검토 L1~L12, 컬럼 검토 C-1~C-99 반영) · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 그룹별 검토 중 (확정한 그룹은 확정 칸 ☑, 나머지는 제안)</div>'
+        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-23 (법률 검토 L1~L12, 컬럼 검토 C-1~C-99 반영), 2026-11-24 재입고 알림 신청 추가 (상품 컬럼 검토 R-1~R-9) · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름은 확정, 컬럼은 그룹별 검토 중 (확정한 그룹은 확정 칸 ☑, 나머지는 제안)</div>'
         + NOTE + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('회원 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(tot_b, tot_s, tot_b + tot_s)

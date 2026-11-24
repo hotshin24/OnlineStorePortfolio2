@@ -157,10 +157,10 @@ M += [
 M += [
  ('HEIGHT_CM_VAL','키 (센티미터, 정수)','Height in Centimeters','NUMBER(3)','Y','','CK (100~230)','정확한 수치 (24-3 A). 체형 동의 철회·탈퇴 시 NULL (24-7 C).'),
  ('WEIGHT_KG_VAL','몸무게 (킬로그램, 정수)','Weight in Kilograms','NUMBER(3)','Y','','CK (25~250)','같은 방식.'),
- ('USUAL_TOP_SIZE_CD','평소 상의 사이즈 코드','Usual Top Size Code','VARCHAR2(20)','Y','','','`CMM_CODE` 선택 (XS~XXL) (24-9-3 B).'),
+ ('USUAL_TOP_SIZE_CD','평소 상의 사이즈 코드','Usual Top Size Code','VARCHAR2(20)','Y','','','`CMM_CODE` 상의 사이즈 그룹에서 회원 선택 가능 값(XS~XXL)만 고른다. 그룹은 상품과 함께 쓴다 (24-9-3 B, 상품 컬럼 검토 PC-14 A, R-7 C).'),
  ('USUAL_BOTTOM_SIZE_CD','평소 하의 사이즈 코드','Usual Bottom Size Code','VARCHAR2(20)','Y','','',''),
- ('USUAL_WAIST_SIZE_CD','평소 허리 사이즈 코드 (인치)','Usual Waist Size Code (Inch)','VARCHAR2(20)','Y','','','24~40인치 공통코드.'),
- ('USUAL_SHOE_SIZE_CD','평소 신발 사이즈 코드 (밀리미터)','Usual Shoe Size Code (Millimeter)','VARCHAR2(20)','Y','','','220~300mm 공통코드.'),
+ ('USUAL_WAIST_SIZE_CD','평소 허리 사이즈 코드 (인치)','Usual Waist Size Code (Inch)','VARCHAR2(20)','Y','','','공통코드 허리 사이즈 그룹에서 회원 선택 가능 값(24~40인치)만 고른다 (R-7 C).'),
+ ('USUAL_SHOE_SIZE_CD','평소 신발 사이즈 코드 (밀리미터)','Usual Shoe Size Code (Millimeter)','VARCHAR2(20)','Y','','','공통코드 신발 사이즈 그룹에서 회원 선택 가능 값(220~300mm)만 고른다 (R-7 C).'),
  ('BODY_REVIEW_DISCLOSURE_CD','리뷰 체형 공개 범위 코드','Review Body Information Disclosure Code','VARCHAR2(20)','N',"'RANGE'",'CK (값 목록)','리뷰에 체형을 어떻게 보일지 회원 설정 (24-8 B).'),
  ('TOP_SIZE_ADJUSTMENT_VAL','상의 사이즈 추천 보정 값 (사이즈 단계)','Top Size Recommendation Adjustment Value','NUMBER(2)','N','0','CK (-3~3)','사이즈 피드백으로 계산한 보정값. 예: -1 = 한 사이즈 작게 (24-11-3).'),
  ('BOTTOM_SIZE_ADJUSTMENT_VAL','하의 사이즈 추천 보정 값 (사이즈 단계)','Bottom Size Recommendation Adjustment Value','NUMBER(2)','N','0','CK (-3~3)',''),
@@ -525,6 +525,20 @@ T.append(dict(
  ('WISHLISTED_SALE_PRICE_AMT','찜할 당시 판매 가격 (원화)','Sale Price When Wishlisted (KRW)','NUMBER(15)','Y','','CK (>= 0)','가격 인하 알림 판단 기준 (18-2 B). [제안: 결정 항목 아님]'),
  ],
  idx=['IX `IX_MBR_WISHLIST_ITEM_STYLE_COLOR_ID` (가격 인하·재입고 대상 추출)'], check=[],
+))
+
+# ---------------------------------------------------------------- 15-2 (2026-11-24 상품 도메인에서 추가)
+T.append(dict(
+ t='MBR_RESTOCK_NOTIFICATION_REQUEST', ko='회원 재입고 알림 신청 (SKU 단위)', en='Member Restock Notification Request (SKU Level)',
+ desc='품절된 SKU의 재입고 알림 신청 (상품 결정 36 B, 테이블은 회원 도메인 36-1). 단순 연결이라 복합 PK. 회원 소유 목록이라 물리 삭제한다: 회원 취소, 단종(상품 결정 42 세부 B), 휴면 전환(R-6 A), 탈퇴 확정 때 즉시, 발송한 행은 발송 30일 뒤(R-1 B), 발송하지 않은 행은 신청 90일 뒤(R-3 B) 매일 배치. 발송은 재입고 알림 수신 여부가 Y인 회원에게만 하고, 수신이 꺼져 있어도 신청은 남긴다 (R-2 B). 입고 수량 × 5배까지 신청 순서대로 보내고 나머지는 다음 입고 때 이어서 보낸다 (R-5 B). 회원당 50개까지 (애플리케이션 검사, R-4 B). 일수·상한·배수는 `MEMBER_POLICY` 정책값 (R-9 B). R 번호는 상품 컬럼 검토 결정 (`상품_컬럼검토_결정.pdf`).',
+ basis='상품 결정 36 B, 36-1, 42 세부 B, 상품 컬럼 검토 R-1~R-9, 18-2', pk='복합 PK (MEMBER_ID, SKU_ID)', cache='-', delete='물리 삭제 (회원 소유 목록). 탈퇴 확정·휴면 전환 때 즉시, 발송 30일 뒤·신청 90일 뒤 배치', part='없음', keep='발송 뒤 30일, 미발송 신청은 신청 뒤 90일', ldel=False, pii=False,
+ cols=[
+ ('MEMBER_ID','신청 회원 식별 번호','Requesting Member Identifier',ID,'N','','PK, FK → `MBR_MEMBER`',''),
+ ('SKU_ID','신청 SKU 식별 번호','Requested SKU Identifier',ID,'N','','PK, FK → `PRD_SKU` (후보)','사이즈까지 정한 단위로 신청한다 (상품 결정 36 B).'),
+ ('REQUESTED_AT','신청 일시','Requested At',TS,'N','SYSTIMESTAMP','','발송 순서(R-5 B)와 유효 기간(R-3 B)의 기준. 발송 뒤 같은 SKU를 다시 신청하면 지금 시각으로 갱신한다 (R-8 A).'),
+ ('NOTIFICATION_SENT_AT','알림 발송 일시','Notification Sent At',TS,'Y','','','NULL = 발송 대기. 발송 배치가 기록하고 30일 뒤 행을 지운다 (R-1 B). 다시 신청하면 NULL로 되돌린다 (R-8 A). 발송 기록 원본은 알림 도메인 통합 발송 이력.'),
+ ],
+ idx=['IX `IX_MBR_RESTOCK_NOTIFICATION_REQUEST_SKU_ID_REQUESTED_AT` (입고 때 신청 순서대로 대상 추출, R-5 B)'], check=[],
 ))
 
 # ---------------------------------------------------------------- 16

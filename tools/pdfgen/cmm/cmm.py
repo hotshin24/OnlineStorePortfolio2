@@ -100,16 +100,16 @@ add('CONSENT_ITEM','동의 항목','Consent Item','`MBR_CONSENT.CONSENT_ITEM_CD`
     [(c,k,e,d,['Y' if d.split('\x1e')[0]=='필수' else 'N']) for c,k,e,d,_ in from_codes('CONSENT_ITEM_CD')],'17-3, 38-10, 43-3, 법률 L7-1, L9-1, L9 후속')
 add('CONSENT_PATH','동의 경로','Consent Path','`MBR_CONSENT_HIST.CONSENT_PATH_CD`','Y',[],from_codes('CONSENT_PATH_CD'),'17-2')
 add('BODY_REVIEW_DISCLOSURE','리뷰 체형 공개 범위','Review Body Information Disclosure','`MBR_MEMBER.BODY_REVIEW_DISCLOSURE_CD`','Y',[],from_codes('BODY_REVIEW_DISCLOSURE_CD'),'24-8')
-add('TOP_SIZE','평소 상의 사이즈','Usual Top Size','`MBR_MEMBER.USUAL_TOP_SIZE_CD`','N',[],[(s,s,s,'',[]) for s in ['XS','S','M','L','XL','XXL']],'24-9-3')
-add('BOTTOM_SIZE','평소 하의 사이즈','Usual Bottom Size','`MBR_MEMBER.USUAL_BOTTOM_SIZE_CD`','N',[],[(s,s,s,'',[]) for s in ['XS','S','M','L','XL','XXL']],'24-9-3')
-add('WAIST_SIZE','평소 허리 사이즈 (인치)','Usual Waist Size (Inch)','`MBR_MEMBER.USUAL_WAIST_SIZE_CD`','N',['인치 값'],[(f'W{n}',f'{n}인치',f'{n} Inch','',[str(n)]) for n in range(24,41)],'24-9-3')
-add('SHOE_SIZE','평소 신발 사이즈 (mm)','Usual Shoe Size (Millimeter)','`MBR_MEMBER.USUAL_SHOE_SIZE_CD`','N',['mm 값'],[(f'S{n}',f'{n}mm',f'{n} mm','',[str(n)]) for n in range(220,301,5)],'24-9-3')
+add('TOP_SIZE','상의 사이즈','Top Size','`MBR_MEMBER.USUAL_TOP_SIZE_CD`, 상품 `PRD_SKU.SIZE_CD` 등 (사이즈 체계 TOP_SIZE)','N',['회원 선택 가능 여부'],[(s,s,s,'' if s not in ('XXS','3XL') else '상품 전용 (R-7 C)',['Y' if s not in ('XXS','3XL') else 'N']) for s in ['XXS','XS','S','M','L','XL','XXL','3XL']],'24-9-3, 상품 컬럼 검토 PC-14 A, R-7 C')
+add('BOTTOM_SIZE','하의 사이즈','Bottom Size','`MBR_MEMBER.USUAL_BOTTOM_SIZE_CD`, 상품 `PRD_SKU.SIZE_CD` 등 (사이즈 체계 BOTTOM_SIZE)','N',['회원 선택 가능 여부'],[(s,s,s,'' if s not in ('XXS','3XL') else '상품 전용 (R-7 C)',['Y' if s not in ('XXS','3XL') else 'N']) for s in ['XXS','XS','S','M','L','XL','XXL','3XL']],'24-9-3, 상품 컬럼 검토 PC-14 A, R-7 C')
+add('WAIST_SIZE','허리 사이즈 (인치)','Waist Size (Inch)','`MBR_MEMBER.USUAL_WAIST_SIZE_CD`, 상품 `PRD_SKU.SIZE_CD` 등 (사이즈 체계 WAIST_SIZE)','N',['인치 값','회원 선택 가능 여부'],[(f'W{n}',f'{n}인치',f'{n} Inch','' if n<=40 else '상품 전용 (R-7 C)',[str(n),'Y' if n<=40 else 'N']) for n in range(24,45)],'24-9-3, 상품 컬럼 검토 PC-14 A, R-7 C')
+add('SHOE_SIZE','신발 사이즈 (mm)','Shoe Size (Millimeter)','`MBR_MEMBER.USUAL_SHOE_SIZE_CD`, 상품 `PRD_SKU.SIZE_CD` 등 (사이즈 체계 SHOE_SIZE)','N',['mm 값','회원 선택 가능 여부'],[(f'S{n}',f'{n}mm',f'{n} mm','' if 220<=n<=300 else '상품 전용 (R-7 C)',[str(n),'Y' if 220<=n<=300 else 'N']) for n in range(210,311,5)],'24-9-3, 상품 컬럼 검토 PC-14 A, R-7 C')
 add('PREFERENCE_DIMENSION','취향 차원','Preference Dimension','`MBR_PREFERENCE.PREFERENCE_DIMENSION_CD`','Y',['대상 코드 그룹'],
     [('CATEGORY','카테고리','Category','`CATEGORY_ID` 사용',['']),('STYLE_MOOD','스타일 무드','Style Mood','',['STYLE_MOOD']),('FIT','핏','Fit','',['FIT']),('PRICE_RANGE','가격대','Price Range','',['PRICE_RANGE'])],'38-1, 38-6')
 G[-1] = G[-1][:6] + ([(v[0], v[1], v[2], _withrel('PREFERENCE_DIMENSION_CD', v[0], v[3]), v[4]) for v in G[-1][6]],) + G[-1][7:]
 add('STYLE_MOOD','스타일 무드','Style Mood','`MBR_PREFERENCE.TARGET_CD` (차원 STYLE_MOOD)','N',[],
     [('MINIMAL','미니멀','Minimal','',[]),('CASUAL','캐주얼','Casual','',[]),('STREET','스트릿','Street','',[]),('OFFICE','오피스','Office','',[]),('CLASSIC','클래식','Classic','',[]),('SPORTY','스포티','Sporty','',[])],'38-1 예시 값 기반. 상품 도메인과 함께 확정')
-add('FIT','핏','Fit','`MBR_PREFERENCE.TARGET_CD` (차원 FIT)','N',['부위'],
+add('FIT','핏','Fit','`MBR_PREFERENCE.TARGET_CD` (차원 FIT), 상품 `PRD_STYLE.FIT_CD` (CHECK)','Y',['부위'],
     [('TOP_SLIM','상의 슬림','Top Slim','',['TOP']),('TOP_REGULAR','상의 레귤러','Top Regular','',['TOP']),('TOP_OVERSIZED','상의 오버','Top Oversized','',['TOP']),
      ('BOTTOM_SLIM','하의 슬림','Bottom Slim','',['BOTTOM']),('BOTTOM_REGULAR','하의 레귤러','Bottom Regular','',['BOTTOM']),('BOTTOM_WIDE','하의 와이드','Bottom Wide','',['BOTTOM'])],'38-1 (상의·하의 따로)')
 add('PRICE_RANGE','가격대','Price Range','`MBR_PREFERENCE.TARGET_CD` (차원 PRICE_RANGE)','N',['최소 금액','최대 금액'],
@@ -162,8 +162,12 @@ add('MEMBER_POLICY','회원 정책 기준값','Member Policy Threshold','배치�
      ('PAYMENT_RESTRICTION_PERIOD','결제 자동 제한 기간','Payment Restriction Period','',['24','시간']),
      ('RETURN_ABUSE_RATE','반품 남용 검토 반품률','Return Abuse Review Rate','',['[미정]','%']),
      ('EMPLOYEE_REVERIFICATION_CYCLE','임직원 재인증 주기','Employee Reverification Cycle','',['12','개월']),
-     ('RECENTLY_VIEWED_DISPLAY_LIMIT','최근 본 상품 표시 개수','Recently Viewed Display Limit','',['50','개']),('RECENTLY_VIEWED_RETENTION','최근 본 상품 보관 기간','Recently Viewed Retention','',['30','일'])],
-    '27-2, 27-4, 39-3, 6-1, 41-2, 46-2, 12-4, 32-4, 23-3')
+     ('RECENTLY_VIEWED_DISPLAY_LIMIT','최근 본 상품 표시 개수','Recently Viewed Display Limit','',['50','개']),('RECENTLY_VIEWED_RETENTION','최근 본 상품 보관 기간','Recently Viewed Retention','',['30','일']),
+     ('RESTOCK_SENT_RETENTION','재입고 알림 발송 뒤 보관 기간','Restock Notification Retention After Sending','발송한 신청 행을 지우기까지 (R-1 B)',['30','일']),
+     ('RESTOCK_REQUEST_VALID_PERIOD','재입고 알림 신청 유효 기간','Restock Request Valid Period','발송하지 않은 신청을 지우기까지 (R-3 B)',['90','일']),
+     ('RESTOCK_REQUEST_MAX_COUNT','회원당 재입고 알림 신청 최대 개수','Max Restock Requests per Member','애플리케이션이 등록 때 검사 (R-4 B)',['50','개']),
+     ('RESTOCK_SEND_MULTIPLIER','재입고 알림 발송 배수','Restock Notification Send Multiplier','입고 수량 × 배수까지 신청 순서대로 발송 (R-5 B)',['5','배'])],
+    '27-2, 27-4, 39-3, 6-1, 41-2, 46-2, 12-4, 32-4, 23-3, 상품 컬럼 검토 R-1·R-3·R-4·R-5·R-9 B')
 NOT_CMM = [
  ('`MBR_GRADE.GRADE_CD`', '등급은 마스터 테이블 `MBR_GRADE`에서 관리 (35-1)'),
  ('`MBR_TAG.TAG_CD`', '태그는 마스터 테이블 `MBR_TAG`에서 관리 (11-5)'),
@@ -244,6 +248,11 @@ LATE_GROUPS = {'INFLUENCER_SNS_CHANNEL'}  # 2026-11-23 C-40: 그룹째 V3로 추
 LATE_GROUPS2 = ['SOCIAL_LOGIN_EVENT_TYPE', 'SOCIAL_LOGIN_EVENT_RESULT', 'DELIVERY_PLACE']  # DELIVERY_PLACE는 C-60
 LATE_LAST = [('MEMBER_POLICY', 'DELIVERY_ADDRESS_MAX_COUNT'), ('SOCIAL_LOGIN_EVENT_TYPE', 'TOKEN_REVOKE_CANCEL'), ('IDENTITY_VERIFICATION_PURPOSE', 'LEGAL_GUARDIAN_CONSENT'), ('IDENTITY_VERIFICATION_PURPOSE', 'GUEST_ORDER_CHECKOUT'), ('PII_RETENTION_REASON', 'LEGAL_GUARDIAN_CONSENT')]  # C-85·C-87·C-89
 LATE_GROUPS3 = ['LEGAL_GUARDIAN_RELATION', 'LEGAL_GUARDIAN_CONSENT_END_REASON']  # C-87·C-88: LATE_LAST 뒤에 그룹째 추가
+# 2026-11-24 상품 컬럼 검토 R-7 C·R-9 B: 사이즈 값과 재입고 정책값. LATE_GROUPS3 뒤 번호
+LATE_FINAL = [('TOP_SIZE', 'XXS'), ('TOP_SIZE', '3XL'), ('BOTTOM_SIZE', 'XXS'), ('BOTTOM_SIZE', '3XL')] + [('WAIST_SIZE', f'W{n}') for n in range(41, 45)] + [('SHOE_SIZE', f'S{n}') for n in (210, 215, 305, 310)] + \
+    [('MEMBER_POLICY', k) for k in ('RESTOCK_SENT_RETENTION', 'RESTOCK_REQUEST_VALID_PERIOD', 'RESTOCK_REQUEST_MAX_COUNT', 'RESTOCK_SEND_MULTIPLIER')]
+LATE = LATE + LATE_FINAL
+CMM_SHARED = {'TOP_SIZE', 'BOTTOM_SIZE', 'WAIST_SIZE', 'SHOE_SIZE', 'FIT'}  # 상품과 함께 쓰는 그룹 (PC-14 A). 소유는 CMM이지만 ID 순서는 처음 적재한 V2 그대로
 # 위 LATE_LAST: C-64: C-60 그룹 뒤 번호, C-69: 그 뒤  # 2026-11-23 C-52: C-43 값보다 나중에 그룹째 추가
 order = [x for x in G if x[0] in CMM_OWNED] + [x for x in G if x[0] not in CMM_OWNED and x[0] not in LATE_GROUPS and x[0] not in LATE_GROUPS2 and x[0] not in LATE_GROUPS3]
 for k, x in enumerate(order):
@@ -260,7 +269,7 @@ V3_START = nxt_block(c - 1, 100001)
 c = V3_START
 LATE_AFTER_GROUPS = [('QUALIFICATION_APPROVAL_STATUS', 'REVOKED'), ('QUALIFICATION_APPROVAL_STATUS', 'CANCELED')]  # C-43: C-40 그룹보다 나중에 추가
 for key in LATE:
-    if key in LATE_AFTER_GROUPS or key in LATE_LAST: continue
+    if key in LATE_AFTER_GROUPS or key in LATE_LAST or key in LATE_FINAL: continue
     CODEID[key] = c; c += 1
 for x in G:
     if x[0] not in LATE_GROUPS: continue
@@ -282,6 +291,8 @@ for gc3 in LATE_GROUPS3:
     GID[x[0]] = g; g += 1; CID[x[0]] = c
     for v in x[6]:
         CODEID[(x[0], v[0])] = c; c += 1
+for key in LATE_FINAL:
+    CODEID[key] = c; c += 1
 LAST_G, LAST_C = g - 1, c - 1
 def th(p, ko): return f'<th><span class="pc">{pn(p)}</span><br><span class="en">{il(ko)}</span></th>'
 body += '<h2 class="g t">2. 회원 도메인 코드 그룹 (CMM_CODE_GROUP 행)</h2>'
@@ -290,13 +301,14 @@ body += ('<div class="box"><b>ID 값은 가상 값이다</b> <span class="warn">
   '· 적재 순서: Flyway V1이 여러 도메인 공통 그룹(<code>OWNER_DOMAIN_CD = CMM</code>) 7개를 먼저 넣고, V2가 회원 그룹 34개를 넣는다. 그래서 ID 순서는 문서 순서(규칙 8)와 다르다.<br>'
   f'· V1과 V2 사이에 DB를 재시작해 캐시 20개가 버려졌다고 가정해 번호가 건너뛴다 (그룹 {GID["PII_RETENTION_REASON"]} → {min(v for k, v in GID.items() if k not in CMM_OWNED)}). 시군구 약 250개도 V1에서 <code>CODE_ID</code>를 차지한다.<br>'
   f'· 법률 검토(2026-11-22)와 컬럼 검토 C-14·C-17·C-43·C-64·C-69·C-85·C-87·C-89(2026-11-23)로 추가한 코드 {len(LATE)}개는 V3 마이그레이션으로 나중에 넣었다고 가정해, 기존 ID를 밀지 않고 {V3_START}부터 받는다: ' + ', '.join(f'<code>{k[1]}</code> {CODEID[k]}' for k in LATE) + '. 컬럼 검토 C-40으로 추가한 그룹 ' + ', '.join(f'<code>{x}</code>(그룹 {GID[x]})' for x in sorted(LATE_GROUPS)) + '도 V3로 넣어 그 뒤 번호를 받는다. 컬럼 검토 C-52·C-60으로 추가한 그룹 ' + ', '.join(f'<code>{x}</code>(그룹 {GID[x]})' for x in LATE_GROUPS2) + '는 C-43 값 뒤 번호를 받는다. C-41로 지운 값 ' + ', '.join(f'<code>{r[0]}.{r[1]}</code>' for r in sorted(RETIRED)) + '의 번호는 비워 둔다. 컬럼 검토 C-64·C-69·C-85·C-87·C-89로 추가한 값(' + ', '.join(f'<code>{k[1]}</code>' for k in LATE_LAST) + ')은 그 그룹들 뒤 번호를, 컬럼 검토 C-87·C-88로 추가한 그룹 ' + ', '.join(f'<code>{x}</code>(그룹 {GID[x]})' for x in LATE_GROUPS3) + '는 맨 끝 번호를 받는다.<br>'
+  f'· 상품 컬럼 검토 R-7 C·R-9 B(2026-11-24)로 추가한 사이즈 값 12개와 재입고 정책값 4개는 그 뒤 번호를 받는다. 사이즈 그룹 4개와 <code>FIT</code>은 상품과 함께 써서 소유 도메인이 <code>CMM</code>이지만, 처음 V2로 넣었으므로 ID는 그대로다.<br>'
   f'· 결과: <code>CODE_GROUP_ID</code> 1001~{LAST_G}, <code>CODE_ID</code> 100001~{LAST_C}. 검토할 때는 이 ID로 알려 주면 된다.</div>')
 body += ('<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:15%"><col style="width:17%"><col style="width:6%"><col style="width:7%"><col style="width:12%"><col style="width:24%"><col style="width:4%"><col style="width:3%"><col style="width:7%"></colgroup><tr>'
          + th('CODE_GROUP_ID','그룹 ID') + th('CODE_GROUP_CD','그룹 코드') + th('CODE_GROUP_NM','한글 이름 (영문 이름)') + th('OWNER_DOMAIN_CD','소유 도메인')
          + th('CHECK_CONSTRAINT_YN','CHECK 적용') + th('ATTR1~5_NM','추가 속성 의미') + th('CODE_GROUP_DESC','설명 (쓰는 컬럼)') + th('USE_YN','사용')
          + '<th>확정</th><th>메모</th></tr>')
 for gi, (gc, ko, en, cols, ck, attrs, vals, note) in enumerate(G, 1):
-    body += (f'<tr><td class="n">{GID[gc]}</td><td class="p">{pn(gc)}</td><td>{ln(ko, en)}</td><td class="ty">{"CMM" if gc in CMM_OWNED else "MBR"}</td><td class="n">{ck}</td>'
+    body += (f'<tr><td class="n">{GID[gc]}</td><td class="p">{pn(gc)}</td><td>{ln(ko, en)}</td><td class="ty">{"CMM" if gc in CMM_OWNED or gc in CMM_SHARED else "MBR"}</td><td class="n">{ck}</td>'
              f'<td>{"<br>".join(f"ATTR{i+1}_NM: {il(x)}" for i, x in enumerate(attrs))}</td><td>{il(cols)}</td><td class="n">Y</td>{CKS}</tr>')
 body += '</table>'
 body += '<h3>CMM_CODE로 관리하지 않는 회원 도메인 코드 컬럼</h3><table><tr><th>컬럼</th><th>이유</th></tr>' + ''.join(f'<tr><td>{il(a)}</td><td>{il(b)}</td></tr>' for a, b in NOT_CMM) + '</table>'

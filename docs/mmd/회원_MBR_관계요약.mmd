@@ -1,7 +1,7 @@
 ---
 title: 회원 도메인 (MBR) 관계 요약
 ---
-%% 생성: tools/pdfgen/erd/erd.py (2026-11-23). 컬럼 없이 테이블과 관계만 그렸다. 컬럼은 회원_MBR_ERD.mmd
+%% 생성: tools/pdfgen/erd/erd.py (2026-11-24). 컬럼 없이 테이블과 관계만 그렸다. 컬럼은 회원_MBR_ERD.mmd
 %% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, ||--o| 1:1 (공유 PK). 선 이름은 FK 컬럼
 erDiagram
     %% ---- 가입·계정
@@ -30,6 +30,8 @@ erDiagram
     MBR_SAVED_PAYMENT_METHOD["MBR_SAVED_PAYMENT_METHOD 회원 저장 결제수단"] {
     }
     MBR_WISHLIST_ITEM["MBR_WISHLIST_ITEM 회원 위시리스트 상품"] {
+    }
+    MBR_RESTOCK_NOTIFICATION_REQUEST["MBR_RESTOCK_NOTIFICATION_REQUEST 회원 재입고 알림 신청"] {
     }
     MBR_RECENTLY_VIEWED_ITEM["MBR_RECENTLY_VIEWED_ITEM 회원 최근 본 상품"] {
     }
@@ -62,6 +64,8 @@ erDiagram
     ADM_USER["ADM_USER (관리자 도메인, 후보)"] {
     }
     PRD_CATEGORY["PRD_CATEGORY (상품 도메인, 후보)"] {
+    }
+    PRD_SKU["PRD_SKU (상품 도메인, 후보)"] {
     }
     PRD_STYLE_COLOR["PRD_STYLE_COLOR (상품 도메인, 후보)"] {
     }
@@ -99,6 +103,8 @@ erDiagram
     MBR_MEMBER ||--o{ MBR_DELIVERY_ADDRESS : "MEMBER_ID"
     MBR_MEMBER ||--o{ MBR_WISHLIST_ITEM : "MEMBER_ID"
     PRD_STYLE_COLOR ||--o{ MBR_WISHLIST_ITEM : "STYLE_COLOR_ID"
+    MBR_MEMBER ||--o{ MBR_RESTOCK_NOTIFICATION_REQUEST : "MEMBER_ID"
+    PRD_SKU ||--o{ MBR_RESTOCK_NOTIFICATION_REQUEST : "SKU_ID"
     MBR_MEMBER ||--o{ MBR_RECENTLY_VIEWED_ITEM : "MEMBER_ID"
     PRD_STYLE_COLOR ||--o{ MBR_RECENTLY_VIEWED_ITEM : "STYLE_COLOR_ID"
     MBR_MEMBER ||--o{ MBR_PREFERENCE : "MEMBER_ID"
