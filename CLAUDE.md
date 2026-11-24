@@ -18,14 +18,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 제외: 오프라인 매장, 외부몰 입점, 해외 판매.
   - 판매는 자사몰(PC, 모바일 웹, 앱)에서만 하고 원화(KRW)만 쓴다.
   - 외화는 생산·소싱(SCM)에서만 쓴다.
-- 진행 상황 (2026-11-23):
+- 진행 상황 (2026-11-24):
   - 선행 결정 17개와 공통 결정을 모두 확정했다.
   - 회원 도메인 결정 1~47번을 모두 확정했다 (`docs/pdf/회원결정/`).
-    - 회원 도메인 테이블은 24개, 컬럼은 484개다. 컬럼 변경 내역은 컬럼 검토 결정 C-1~C-99(`회원_컬럼검토_결정.pdf`)에 있다.
+    - 회원 도메인 테이블은 25개, 컬럼은 494개다 (2026-11-24 재입고 알림 신청 추가). 컬럼 변경 내역은 컬럼 검토 결정 C-1~C-99(`회원_컬럼검토_결정.pdf`)에 있다.
   - 법률 검토 L1~L9와 L9 후속 1~3, L10(만 14~18세 미성년 회원의 구매, 컬럼 검토 C-82~C-90과 같은 결정), L11(개인정보 컬럼 암호화 범위, 컬럼 검토 C-72~C-74·C-77~C-79와 같은 결정, 후속 보완: 운영 DB 직접 조회 통제), L12(법정대리인 동의의 범위와 증빙, 컬럼 검토 C-93~C-96과 같은 결정, L10-5·L10-8 변경)를 반영했다 (L10~L12는 2026-11-23) (`docs/pdf/법률검토/`, 로컬 전용).
   - 테이블 물리명은 확정했다. 지금은 회원 컬럼을 그룹 단위로 검토해 확정하는 중이다.
     - 확정한 그룹: 회원 가입 정보 (2026-11-23 본인 가입 정보에서 이름 변경), 로그인·인증 상태 (2026-11-23, 7개), 회원 유형·특수 자격 (2026-11-23, 18개, `CONFIRMED_GROUPS`). 약관·고지 그룹은 확정했으나 컬럼이 `MBR_CONSENT`로 옮겨졌다. `MBR_CONSENT`·`MBR_CONSENT_HIST`의 확정 표시(`CONFIRMED_GROUPS`)는 사용자가 두 테이블을 검토한 뒤 정한다 (2026-11-23 보류).
-  - 그다음은 나머지 13개 도메인이다.
+  - 상품 도메인 (2026-11-24, 진행 중):
+    - 상품 도메인 결정 1~53번을 확정했다 (`docs/pdf/상품결정/`).
+    - 컬럼 검토 PC-1~PC-86 (`상품_컬럼검토_결정.pdf`). 테이블 18개, 컬럼 398개, 코드 그룹 40개(값 435개). 테이블 이름은 모두 후보다.
+    - 확정 표시: `PRD_STYLE`의 식별·분류, 단계·상태, 가격 그룹과 `PRD_PRICE_HIST`, `PRD_PRICE_CHANGE_REQUEST` 전체. 나머지 그룹·테이블은 검토 전이다.
+    - 재입고 알림 신청은 회원 도메인(`MBR_RESTOCK_NOTIFICATION_REQUEST`)으로 옮겼다 (상품 컬럼 검토 R-1~R-9).
+  - 그다음은 나머지 12개 도메인이다.
 
 ## 자주 쓰는 명령 (저장소 루트에서)
 
@@ -33,7 +38,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - PDF 빌드·설치: `bash tools/pdfgen/build.sh <출력폴더> --install` (빌드 전 `code_ids.json`을 복사해 두고 빌드 뒤 `cmp`).
 - 변경 안내 쪽 다시 붙이기: "PDF 생성 방법"의 반복문 (`--install` 뒤 매번).
-- ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 2개, drawio 1개).
+- 상품 도메인 테이블·컬럼 PDF (`build.sh`에 들어 있지 않음):
+  ```bash
+  P=tools/pdfgen/prd
+  python3 $P/cmm.py $OUT/cmm.html <회원 빌드 출력폴더>/code_ids.json   # 회원 CODE_ID 뒤에 이어서 발번, code_ids_prd.json 생성
+  python3 $P/render.py $OUT                                          # names.html, columns.html
+  python3 $P/col_review.py $OUT/review.html
+  ```
+  - HTML 4개를 Chrome headless로 PDF로 출력해 `docs/pdf/테이블_컬럼/상품/`(names → `상품_테이블이름_검토`, columns → `상품_컬럼정의서_검토용`, review → `상품_컬럼검토_결정`)와 `공통/공통코드_CMM_CODE_상품도메인.pdf`에 복사한다.
+- 상품결정 PDF 53개와 설계 패턴: `python3 tools/pdfgen/prd_decision/gen.py $OUT` (HTML 생성 → Chrome headless로 PDF).
+- ERD: `python3 tools/pdfgen/erd/erd.py` (회원 mmd 2개, 상품 관계 요약 mmd 1개, drawio 1개).
+- 쪽수 확인·쪽 PNG: `swift tools/pdfgen/util/pg.swift <pdf> [<쪽> <png>]`.
 - 법률검토 L10~L12 (로컬 전용): `bash docs/pdf/법률검토/_src/build.sh <작업폴더>`.
 - 검증: `swift tools/pdfgen/util/pdf2txt.swift <pdf> <txt>`로 이전 PDF와 텍스트 비교. 작업 뒤 `._*` 파일 삭제.
 
@@ -45,6 +60,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `policy/`(정책명세), `rules/`(지시 규칙, 정렬 예시는 `order.py`), `decision_change/chg.py`(변경 안내 쪽, 원본 커밋 PDF 앞에 `merge.swift`로 붙임).
 - `erd/erd.py`도 `data.py`와 `order.py`를 읽는다.
 - 그래서 결정 하나를 바꾸면: `data.py`·`col_decision.py`(필요하면 `policy/content.py`, `chg.py`, `cmm.py`)를 고치고 → `build.sh --install` → 변경 안내 쪽 다시 붙이기 → `erd.py` → (법률 결정과 같은 C-n이면) 법률검토 빌드.
+- 상품 도메인(`tools/pdfgen/prd/`)은 회원과 구조가 다르다:
+  - `data.py` 하나가 단일 출처다. 테이블·컬럼(그룹 순서 = 정의서 순서)·코드 값, `TABLE_GROUPS`, `CONFIRM`(확인 필요 사항), `POLICY_GROUPS`(정책값 코드), `GROUP_NAME`(회원 도메인과 코드 그룹 이름 충돌 회피), 확정 표시 `CONFIRMED_GROUPS`(테이블, 그룹)·`CONFIRMED_TABLES`를 담는다. `order.py`는 없다.
+  - `CONFIRMED_TABLES`는 컬럼·코드 값·인덱스·제약·테이블 이름 행까지 ☑, `CONFIRMED_GROUPS`는 그 그룹의 컬럼과 코드 값 행만 ☑.
+  - `col_review.py`는 컬럼 검토 결정 PC-n 기록이다. 튜플은 (번호, 제목, 대상, 경위, 선택지[(기호, 방식, 장점, 단점)], 추천, 이유, 선택, 답변, 반영, 바뀐 결정). 새 결정은 목록 끝에 붙인다. "PC-1~PC-n" 표기는 `col_review.py`, `render.py`, `cmm.py` 세 곳에 있어 함께 바꾼다.
+  - `cmm.py`는 회원 빌드의 `code_ids.json`을 읽어 그 뒤에 CODE_ID를 매긴다. 회원 코드 그룹 이름과 겹치면 오류가 난다 (예: 회원 `WITHDRAWAL_REASON` 때문에 `PRICE_WITHDRAWAL_REASON_CD`).
+  - `erd_prd.py`(`erd.py`가 불러 씀)는 상자 위치 `POS`와 꺾는 선 `ROUTE`를 직접 적는다. 테이블을 추가하면 `POS`에 넣어야 한다.
+  - `prd_decision/`(`gen.py`, `data1~3.py`)는 상품결정 본문과 설계 패턴 생성기로, 컬럼 생성기와 독립이다.
 
 ## 작업 방식 (반드시 지킬 것)
 
@@ -270,27 +292,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 결정 당시 제시한 선택지·장단점 표(선택한 안은 파란 행), 사용자 답변, 충돌 확인·변경 과정을 담았다.
   - 30·31번은 결정 당시 장단점 없이 제시해서, 장단점을 보충 설명으로 추가했다.
   - 나중에 바뀌거나 보완된 결정은 첫 쪽에 변경 안내 쪽을 붙였다. 선행결정 3·5·14번도 같다. 대상 번호와 원본 커밋은 아래 "PDF 생성 방법"과 `tools/pdfgen/README.md`에 있다.
+- `docs/pdf/상품결정/`: 상품 도메인 결정 1~53번 (`상품결정_NN_제목.pdf`). `tools/pdfgen/prd_decision/gen.py`가 만든다.
 - `docs/pdf/설계패턴/`: 도메인별 설계 패턴 검토본.
   - `회원도메인_설계패턴_1-47.pdf`
+  - `상품도메인_설계패턴_1-53.pdf` (`prd_decision/gen.py`가 만든다)
   - `전체도메인_설계패턴_개요.pdf`
 - `docs/pdf/지시규칙/`: 지시 규칙 1~8의 예시판 (`DB설계_지시규칙_1-8.pdf`, 2026-11-22 기준: 논리명 표기, 코드 저장 방식·값 목록 표기, 확정 표시, 8-C 해석 보완 반영).
 - `docs/pdf/후보테이블/`: 후보 테이블 목록 (2026-11-21 기준 89개). 이름은 5개만 확정이고 나머지는 후보다.
-  - 회원 도메인 확정 테이블 24개는 반영하지 않았다 (회원 테이블은 `docs/pdf/테이블_컬럼/회원/`이 기준).
+  - 회원·상품 도메인 테이블은 반영하지 않았다 (각 도메인은 `docs/pdf/테이블_컬럼/`이 기준).
 - `docs/pdf/용어집/`: DB 용어집 (`DB용어집.pdf`). PK·FK·UK·CK·IX 등 약어와 용어 27개의 뜻과 프로젝트 규칙.
 - `docs/pdf/테이블_컬럼/`: 테이블·컬럼 정의서.
-  - `회원/`: 테이블 이름 확정본, 컬럼정의서 검토본 (2026-11-23, 테이블 24개, 컬럼 484개), 컬럼 검토 결정 C-1~C-99 (`회원_컬럼검토_결정.pdf`, 선택지·답변 기록).
-  - `공통/`: 공통코드 `CMM_CODE` 회원 도메인 코드 (그룹 48개, 값 306개).
+  - `회원/`: 테이블 이름 확정본, 컬럼정의서 검토본 (2026-11-24, 테이블 25개, 컬럼 494개), 컬럼 검토 결정 C-1~C-99 (`회원_컬럼검토_결정.pdf`, 선택지·답변 기록).
+  - `상품/`: 테이블 이름 검토본(이름은 후보), 컬럼정의서 검토본 (2026-11-24, 테이블 18개, 컬럼 398개), 컬럼 검토 결정 PC-1~PC-86·R-1~R-9 (`상품_컬럼검토_결정.pdf`).
+  - `공통/`: 공통코드 `CMM_CODE` 회원 도메인 코드 (그룹 48개, 값 322개)와 상품 도메인 코드 (`공통코드_CMM_CODE_상품도메인.pdf`, 그룹 40개, 값 435개, CODE_ID는 회원 뒤에 이어 매김).
 - `docs/pdf/정책명세/`: 회원 도메인 정책 명세 (조문 형식, 2026-11-23 기준, 법률 검토 L1~L12와 컬럼 검토 C-1~C-99 반영).
 - `docs/pdf/법률/`: 법령 원문 11개 (개인정보 보호법, 안전성 확보조치 기준, 전자상거래법, 정보통신망법, 통신비밀보호법, 전자금융거래법과 시행령). **로컬 전용, 커밋하지 않는다.**
 - `docs/pdf/법률검토/`: 법률 검토 결정 L1~L12 (`법률검토_결정.pdf`, 2026-11-22, L10~L12는 2026-11-23 끝에 붙임). L8~L12는 단독 PDF도 있다. **로컬 전용, 커밋하지 않는다.**
   - 다른 문서(정책명세, 회원결정 17·28·31·39·47번 변경 안내 쪽)가 이 경로를 참조한다.
   - `_src/`: L10~L12 생성 스크립트와 L1~L9 원본(13쪽, 스크립트 없음). 다시 만드는 방법은 아래 "PDF 생성 방법".
 - `docs/db/`: 공통 설계 규칙(`00_conventions.md`)과 ERD 개요(`01_erd_overview.md`).
-- `docs/mmd/`, `docs/drawio/`: 회원 도메인 ERD (2026-11-23). `tools/pdfgen/erd/erd.py`가 만든다.
-  - mmd: `회원_MBR_ERD.mmd`(업무 컬럼 포함, 공통 컬럼 생략), `회원_MBR_관계요약.mmd`(테이블과 관계만).
-  - drawio: `전체_ERD.drawio` 1개 파일에 도메인별 페이지 (지금은 "회원 (MBR) 관계 요약", "회원 (MBR)"). 다른 도메인 테이블은 FK 대상만 후보 이름으로 표시한다.
+- `docs/mmd/`, `docs/drawio/`: 회원·상품 도메인 ERD (2026-11-24). `tools/pdfgen/erd/erd.py`가 만든다 (상품 부분은 `prd/erd_prd.py`).
+  - mmd: `회원_MBR_ERD.mmd`(업무 컬럼 포함, 공통 컬럼 생략), `회원_MBR_관계요약.mmd`, `상품_PRD_관계요약.mmd`(테이블과 관계만).
+  - drawio: `전체_ERD.drawio` 1개 파일에 도메인별 페이지 ("회원 (MBR) 관계 요약", "회원 (MBR)", "상품 (PRD) 관계 요약"). 다른 도메인 테이블은 FK 대상만 후보 이름으로 표시한다.
 - `tools/pdfgen/`: PDF 생성 스크립트. 대상과 사용법은 아래 "PDF 생성 방법"과 `tools/pdfgen/README.md`.
-  - 선행결정, 회원결정 본문, 설계패턴, 후보테이블, 용어집, 법률검토 L1~L9의 생성 스크립트는 없다.
+  - 선행결정, 회원결정 본문, 회원·전체 설계패턴, 후보테이블, 용어집, 법률검토 L1~L9의 생성 스크립트는 없다. 상품결정과 상품 설계패턴은 `prd_decision/`에 있다.
 
 ## PDF 생성 방법
 
