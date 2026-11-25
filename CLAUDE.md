@@ -20,13 +20,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 외화는 생산·소싱(SCM)에서만 쓴다.
 - 진행 상황 (2026-11-24):
   - 선행 결정 17개와 공통 결정을 모두 확정했다.
-  - 회원 도메인 결정 1~47번을 모두 확정했다 (`docs/pdf/회원결정/`).
+  - 회원 도메인 결정 1~47번을 모두 확정했다 (`docs/pdf/결정/회원결정/`).
     - 회원 도메인 테이블은 25개, 컬럼은 494개다 (2026-11-24 재입고 알림 신청 추가). 컬럼 변경 내역은 컬럼 검토 결정 C-1~C-99(`회원_컬럼검토_결정.pdf`)에 있다.
   - 법률 검토 L1~L9와 L9 후속 1~3, L10(만 14~18세 미성년 회원의 구매, 컬럼 검토 C-82~C-90과 같은 결정), L11(개인정보 컬럼 암호화 범위, 컬럼 검토 C-72~C-74·C-77~C-79와 같은 결정, 후속 보완: 운영 DB 직접 조회 통제), L12(법정대리인 동의의 범위와 증빙, 컬럼 검토 C-93~C-96과 같은 결정, L10-5·L10-8 변경)를 반영했다 (L10~L12는 2026-11-23) (`docs/pdf/법률검토/`, 로컬 전용).
   - 테이블 물리명은 확정했다. 지금은 회원 컬럼을 그룹 단위로 검토해 확정하는 중이다.
     - 확정한 그룹: 회원 가입 정보 (2026-11-23 본인 가입 정보에서 이름 변경), 로그인·인증 상태 (2026-11-23, 7개), 회원 유형·특수 자격 (2026-11-23, 18개, `CONFIRMED_GROUPS`). 약관·고지 그룹은 확정했으나 컬럼이 `MBR_CONSENT`로 옮겨졌다. `MBR_CONSENT`·`MBR_CONSENT_HIST`의 확정 표시(`CONFIRMED_GROUPS`)는 사용자가 두 테이블을 검토한 뒤 정한다 (2026-11-23 보류).
   - 상품 도메인 (2026-11-24, 진행 중):
-    - 상품 도메인 결정 1~53번을 확정했다 (`docs/pdf/상품결정/`).
+    - 상품 도메인 결정 1~53번을 확정했다 (`docs/pdf/결정/상품결정/`).
     - 컬럼 검토 PC-1~PC-86 (`상품_컬럼검토_결정.pdf`). 테이블 18개, 컬럼 398개, 코드 그룹 40개(값 435개). 테이블 이름은 모두 후보다.
     - 확정 표시: `PRD_STYLE`의 식별·분류, 단계·상태, 가격 그룹과 `PRD_PRICE_HIST`, `PRD_PRICE_CHANGE_REQUEST` 전체. 나머지 그룹·테이블은 검토 전이다.
     - 재입고 알림 신청은 회원 도메인(`MBR_RESTOCK_NOTIFICATION_REQUEST`)으로 옮겼다 (상품 컬럼 검토 R-1~R-9).
@@ -117,13 +117,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - 적용 방식 (사용자 선택):
      - 공통 컬럼은 규칙 1대로 항상 끝에 둔다: 개인정보 보유 4개 → 시스템 6개 → 논리 삭제 3개 (8-A A).
      - PK(복합 PK 포함)는 항상 첫 컬럼이다 (8-B A).
-     - 그룹 순서는 업무 흐름을 따르고, 중요도 순은 그룹 안에만 적용한다 (8-C B).
+     - 그룹도 중요도 순으로 놓고, 그룹 안도 중요도 순이다 (8-C A, 2026-11-25 주문 컬럼 검토 OC-58로 B에서 변경). 합칠 수 있는 그룹은 합친다 (OC-57).
+       - 회원·상품 도메인은 아직 업무 흐름 순서다. 다시 볼 때 확인 사항으로 남겼다 (지금은 고치지 않음).
+     - (변경 전 8-C B) 그룹 순서는 업무 흐름을 따르고, 중요도 순은 그룹 안에만 적용한다.
        - 업무 흐름은 이용 흐름으로도 해석한다. 가입 뒤에도 바뀌는 동의 그룹은 그 동의로 제어하는 설정 바로 앞에 둔다 (2026-11-22, 법률 L9 후속). 이후 동의 컬럼은 `MBR_CONSENT`로 옮겨 회원 테이블에는 동의 그룹이 없다 (L9 후속 3).
      - 문서·ERD는 규칙 8 순서를 따르고, DDL(Flyway) 생성 순서는 FK 순서를 따른다 (8-D A).
 
 ## 확정된 공통 결정 (2026-11-21 확정, 이후 변경은 본문에 표시)
 
-항목별 선택지와 결정 과정은 `docs/pdf/선행결정/`의 PDF 17개에 있다.
+항목별 선택지와 결정 과정은 `docs/pdf/결정/선행결정/`의 PDF 17개에 있다.
 
 ### 1. PK
 - 테이블별 SEQUENCE를 쓰고, 이름은 `SEQ_{테이블}`이다.
@@ -279,6 +281,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 컬럼별 암호화 적용 범위.
 - 주문 도메인에서 정하는 것: 주문 배송지 스냅샷에 복사되는 공동현관 출입 방법(`MBR_DELIVERY_ADDRESS.ENTRANCE_ACCESS_ENC`)을 배송 완료 후 파기할지 (주문 보관 5년과 별도, 회원 컬럼 검토 C-71).
 - 주문 도메인에서 만들 것 (회원 도메인에서 결정함): 주문 행에 미성년자 취소권 고지 일시(C-83), 근거 법정대리인 동의 `LEGAL_GUARDIAN_CONSENT_ID` FK(C-90), 법정대리인 월 구매 한도 검사(C-95, 그 달 결제 금액 합계, 취소·반품 환불분 제외). 미성년 회원 주문 기록의 보관 기간: 주문일부터 5년이면 만 17세 전 주문은 성년 후 3년(민법 146조 취소권 행사 기간)보다 먼저 지워진다. 법정대리인 동의 증빙은 C-96으로 늦은 날까지 보관하기로 했다. 비회원 주문 전 휴대폰 본인인증(목적 `GUEST_ORDER_CHECKOUT`) 결과를 주문에 어떻게 남길지는 주문 도메인에서 정한다 (C-85).
+- 회원·상품 도메인을 다시 볼 때 확인할 것 (2026-11-25): 규칙 8-C 변경(OC-58 A)에 따라 그룹을 중요도 순으로 다시 놓고 합칠 그룹을 합칠지. 상품은 스타일 분류 컬럼(브랜드 기본값 + 스타일별 값, C 선택)도 반영.
 - 회원 도메인에서 정하는 것: 테이블 이름, 컬럼 상세.
   - 탈퇴 시 처리 3개는 정했다:
     - 리뷰·주문 체형 스냅샷 NULL (28-5).
@@ -287,17 +290,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 저장소 구조
 
-- `docs/pdf/선행결정/`: 선행 결정 1~17번. 결정마다 PDF 1개이고, 선택지와 결정 과정을 담았다.
-- `docs/pdf/회원결정/`: 회원 도메인 결정 1~47번. 번호마다 PDF 1개 (`회원결정_NN_제목.pdf`).
+- `docs/pdf/결정/선행결정/`: 선행 결정 1~17번. 결정마다 PDF 1개이고, 선택지와 결정 과정을 담았다.
+- `docs/pdf/결정/회원결정/`: 회원 도메인 결정 1~47번. 번호마다 PDF 1개 (`회원결정_NN_제목.pdf`).
   - 결정 당시 제시한 선택지·장단점 표(선택한 안은 파란 행), 사용자 답변, 충돌 확인·변경 과정을 담았다.
   - 30·31번은 결정 당시 장단점 없이 제시해서, 장단점을 보충 설명으로 추가했다.
   - 나중에 바뀌거나 보완된 결정은 첫 쪽에 변경 안내 쪽을 붙였다. 선행결정 3·5·14번도 같다. 대상 번호와 원본 커밋은 아래 "PDF 생성 방법"과 `tools/pdfgen/README.md`에 있다.
-- `docs/pdf/상품결정/`: 상품 도메인 결정 1~53번 (`상품결정_NN_제목.pdf`). `tools/pdfgen/prd_decision/gen.py`가 만든다.
+- `docs/pdf/결정/상품결정/`: 상품 도메인 결정 1~53번 (`상품결정_NN_제목.pdf`). `tools/pdfgen/prd_decision/gen.py`가 만든다.
 - `docs/pdf/설계패턴/`: 도메인별 설계 패턴 검토본.
   - `회원도메인_설계패턴_1-47.pdf`
   - `상품도메인_설계패턴_1-53.pdf` (`prd_decision/gen.py`가 만든다)
   - `전체도메인_설계패턴_개요.pdf`
-- `docs/pdf/지시규칙/`: 지시 규칙 1~8의 예시판 (`DB설계_지시규칙_1-8.pdf`, 2026-11-22 기준: 논리명 표기, 코드 저장 방식·값 목록 표기, 확정 표시, 8-C 해석 보완 반영).
+- `docs/pdf/지시규칙/`: 지시 규칙 1~8의 예시판 (`DB설계_지시규칙_1-8.pdf`, 2026-11-25 기준: 8-C A 변경(OC-58), 논리명 표기, 코드 저장 방식·값 목록 표기, 확정 표시, 8-C 해석 보완 반영).
 - `docs/pdf/후보테이블/`: 후보 테이블 목록 (2026-11-21 기준 89개). 이름은 5개만 확정이고 나머지는 후보다.
   - 회원·상품 도메인 테이블은 반영하지 않았다 (각 도메인은 `docs/pdf/테이블_컬럼/`이 기준).
 - `docs/pdf/용어집/`: DB 용어집 (`DB용어집.pdf`). PK·FK·UK·CK·IX 등 약어와 용어 27개의 뜻과 프로젝트 규칙.
@@ -330,17 +333,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   cp $OUT/code_ids.json $OUT/../code_ids_prev.json; bash tools/pdfgen/build.sh $OUT --install
   cmp $OUT/../code_ids_prev.json $OUT/code_ids.json && echo 코드ID_변화없음
   ```
-- `--install`은 변경 안내 쪽을 붙이지 않는다. 빌드 뒤 아래를 실행해 원본 앞에 다시 붙인다 (회원결정 원본은 커밋 `77b85b7`, 선행결정 3·5·14번 원본은 커밋 `2cb6480`):
+- `--install`은 변경 안내 쪽을 붙이지 않는다. 빌드 뒤 아래를 실행해 원본 앞에 다시 붙인다 (회원결정 원본은 커밋 `77b85b7`, 선행결정 3·5·14번 원본은 커밋 `2cb6480`). 원본 커밋 당시 경로는 `docs/pdf/회원결정/`, `docs/pdf/선행결정/`이고 지금은 `docs/pdf/결정/` 아래에 있다 (2026-11-25 이동):
   ```bash
   M=tools/pdfgen/decision_change/merge.swift
   for n in 03 08 10 12 13 17 20 21 22 25 26 27 28 30 31 32 35 39 43 47; do
     f=$(git -c core.quotepath=off ls-tree --name-only 77b85b7 "docs/pdf/회원결정/" | grep "회원결정_${n}_")
     git show 77b85b7:"$f" > $OUT/orig.pdf
-    swift $M $OUT/chg$n.pdf $OUT/orig.pdf $OUT/new.pdf >/dev/null && cp $OUT/new.pdf "$f" || echo FAIL $n
+    swift $M $OUT/chg$n.pdf $OUT/orig.pdf $OUT/new.pdf >/dev/null && cp $OUT/new.pdf "docs/pdf/결정/${f#docs/pdf/}" || echo FAIL $n
   done
   for n in 03_네이밍규칙 05_개인정보암호화해시 14_비회원주문; do
     f="docs/pdf/선행결정/선행결정_$n.pdf"; git show 2cb6480:"$f" > $OUT/orig.pdf
-    swift $M $OUT/chgS${n:0:2}.pdf $OUT/orig.pdf $OUT/new.pdf >/dev/null && cp $OUT/new.pdf "$f" || echo FAIL $n
+    swift $M $OUT/chgS${n:0:2}.pdf $OUT/orig.pdf $OUT/new.pdf >/dev/null && cp $OUT/new.pdf "docs/pdf/결정/${f#docs/pdf/}" || echo FAIL $n
   done
   find . -name '._*' -not -path './.git/*' -exec rm -f {} + 2>/dev/null
   ```

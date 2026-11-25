@@ -1,0 +1,89 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>관리자 주문 화면 (컬럼 대응)</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+body { font-family: "Apple SD Gothic Neo", sans-serif; font-size: 9pt; color: #222; margin: 0; }
+h1 { font-size: 15pt; color: #1f4e79; margin: 0 0 2px; }
+.meta { color: #666; font-size: 8pt; margin-bottom: 8px; }
+.wrap { display: flex; gap: 14px; align-items: flex-start; }
+.screen { width: 57%; border: 2px solid #333; border-radius: 6px; background: #fff; }
+.bar { background: #222; color: #fff; padding: 6px 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.steps { font-size: 8pt; color: #bbb; } .steps b { color: #fff; }
+.cols { display: flex; gap: 10px; padding: 10px; }
+.left { flex: 1.6; } .right { flex: 1; }
+.sec { border: 1px solid #d5d9df; border-radius: 4px; padding: 7px 9px; margin-bottom: 8px; position: relative; }
+.sec h3 { margin: 0 0 5px; font-size: 9.5pt; }
+.n { display: inline-block; min-width: 15px; height: 15px; line-height: 15px; border-radius: 8px; background: #d9480f; color: #fff; font-size: 7.5pt; text-align: center; font-weight: 700; padding: 0 2px; margin-right: 3px; vertical-align: middle; }
+.row { display: flex; justify-content: space-between; margin: 3px 0; }
+.item { display: flex; gap: 8px; border-top: 1px dashed #ddd; padding: 5px 0; }
+.item:first-of-type { border-top: 0; }
+.thumb { width: 40px; height: 48px; background: #e9ecef; border-radius: 3px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #888; }
+.muted { color: #888; font-size: 8pt; } .strike { text-decoration: line-through; color: #999; }
+.tag { display: inline-block; border: 1px solid #1f4e79; color: #1f4e79; font-size: 7pt; padding: 0 3px; border-radius: 2px; margin-left: 3px; }
+.warn { color: #c92a2a; font-size: 8pt; }
+.in { border: 1px solid #ced4da; border-radius: 3px; padding: 2px 6px; color: #555; background: #fafafa; margin: 2px 0; font-size: 8.5pt; }
+.chk { margin: 2px 0; font-size: 8.5pt; }
+.btn { background: #1f4e79; color: #fff; text-align: center; padding: 8px; border-radius: 4px; font-weight: 700; font-size: 11pt; }
+.total { font-size: 12pt; font-weight: 700; color: #d9480f; }
+.map { width: 43%; }
+table { border-collapse: collapse; width: 100%; font-size: 7.6pt; }
+th, td { border: 1px solid #c9ced6; padding: 2px 4px; vertical-align: top; text-align: left; }
+th { background: #edf0f4; }
+code { font-family: Menlo, monospace; font-size: 6.9pt; }
+td.k { width: 18px; text-align: center; }
+.note { font-size: 7.8pt; color: #444; margin-top: 6px; }
+.pg { break-before: page; }
+
+.screen.wide { width: 58%; }
+.grid { width:100%; border-collapse: collapse; font-size: 7.6pt; }
+.grid th, .grid td { border: 1px solid #d5d9df; padding: 2px 4px; }
+.grid th { background: #f1f3f5; }
+.flt { display:flex; flex-wrap:wrap; gap:4px; font-size:8pt; margin-bottom:6px; }
+.flt .in { margin:0; }
+.badge { display:inline-block; font-size:7pt; padding:0 3px; border-radius:2px; background:#e7f5ff; color:#1864ab; }
+.badge.red { background:#fff5f5; color:#c92a2a; }
+.badge.gray { background:#f1f3f5; color:#495057; }
+.tabs { font-size:8pt; border-bottom:1px solid #ccc; margin-bottom:4px; } .tabs b { border-bottom:2px solid #1f4e79; }
+.btn2 { display:inline-block; border:1px solid #1f4e79; color:#1f4e79; font-size:7.5pt; padding:0 5px; border-radius:3px; }
+</style></head><body>
+<h1>관리자 주문 목록 (와이어프레임) · 화면 요소별 조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-25 · 주문 도메인 컬럼 정의서(제안) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">주문 관리 &gt; <b>주문 목록</b></span></div><div style="padding:10px">
+<div class="sec"><h3><span class="n">1</span>검색</h3>
+<div class="flt"><span class="in">주문 일시 2026-11-01 ~ 2026-11-25 (필수, 최대 3개월)</span><span class="in"><span class="n">2</span>주문번호 / 주문 상품 번호</span><span class="in"><span class="n">3</span>주문자 휴대폰 010-1234-5678</span><span class="in">회원 ID</span></div>
+<div class="flt"><span class="in"><span class="n">4</span>주문 상태 ▾ 결제 완료, 출고 준비, 부분 배송</span><span class="in"><span class="n">5</span>☑ 보류 주문만 · 사유 ▾</span><span class="in"><span class="n">6</span>☐ 공급 기한 2영업일 이내</span><span class="in"><span class="n">7</span>☐ 비회원 ☐ 선물 ☐ 미성년 ☐ 세금계산서 요청</span><span class="in"><span class="n">8</span>판매 채널 ▾ 전체</span><span class="btn2">검색</span></div>
+</div>
+<div class="sec"><h3><span class="n">9</span>목록 (1,284건) <span class="muted" style="float:right"><span class="n">10</span>[엑셀 다운로드] (사유 입력)</span></h3>
+<table class="grid"><tr><th>주문번호</th><th>주문 일시</th><th>상품</th><th>주문자</th><th>결제 금액</th><th>상태</th><th>표시</th></tr>
+<tr><td>20261124-K3F8QZ</td><td>11-24 21:03</td><td>울 블렌드 싱글 재킷 외 2건</td><td>홍*동 (회원)</td><td>324,500</td><td><span class="badge">부분 배송</span></td><td><span class="badge gray">예약</span></td></tr>
+<tr><td>20261124-7MZQ2P</td><td>11-24 18:40</td><td>캐시미어 크루넥 니트</td><td>김*연 (비회원)</td><td>129,000</td><td><span class="badge">결제 완료</span></td><td><span class="badge red">보류: 결제 확인</span></td></tr>
+<tr><td>20261123-XR4HN9</td><td>11-23 10:12</td><td>옥스퍼드 셔츠 외 1건</td><td>이*호 (회원)</td><td>98,000</td><td><span class="badge">출고 준비</span></td><td><span class="badge red">공급 기한 D-1</span></td></tr>
+<tr><td>20261122-Q8W3TA</td><td>11-22 09:55</td><td>와이드 슬랙스</td><td>박*수 (회원)</td><td>99,000</td><td><span class="badge gray">선물 수락 대기</span></td><td><span class="badge gray">선물</span></td></tr>
+<tr><td>20261120-HC6PVE</td><td>11-20 14:31</td><td>코튼 셔츠 외 3건</td><td>최*진 (회원)</td><td>0 → 환불</td><td><span class="badge gray">취소·반품 종료</span></td><td></td></tr>
+</table>
+<div class="muted" style="margin-top:4px"><span class="n">11</span>주문자 이름·휴대폰은 마스킹해서 보여 줍니다. 목록 조회도 개인정보 접속 기록에 남습니다.</div>
+</div></div></div><div class="map"><table><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr><tr><td class="k">1</td><td>주문 일시 기간</td><td><code>ORDERED_AT</code> 월 파티션. 기간을 필수로 받아 읽는 파티션을 줄임 [제안: 최대 기간은 화면 규칙]</td><td>10-3 A</td></tr><tr><td class="k">2</td><td>주문번호·주문 상품 번호</td><td><code>ORD_ORDER.ORDER_NO</code> UK, <code>ORD_ORDER_ITEM.ORDER_ITEM_NO</code> UK (GLOBAL)</td><td>3-2 B, 4-3 B, OC-59</td></tr><tr><td class="k">3</td><td>주문자 휴대폰 검색</td><td>입력값을 정규화해 HMAC → <code>ORDERER_MOBILE_PHONE_NUMBER_HASH</code> IX. 회원 ID는 <code>IX_ORD_ORDER_MEMBER_ID_ORDERED_AT</code></td><td>선행 5, 5-5 A</td></tr><tr><td class="k">4</td><td>주문 상태</td><td><code>ORDER_STATUS_CD</code> 12개 값 (판정 1~9). 기간 조건과 함께 파티션 안에서 거름</td><td>OC-60~62</td></tr><tr><td class="k">5</td><td>보류 주문</td><td><code>HOLD_YN</code>(가상 컬럼) = Y, 사유 <code>HOLD_REASON_CD</code>. 보류 중인 행만 담는 함수 기반 인덱스</td><td>OC-72~75</td></tr><tr><td class="k">6</td><td>공급 기한 임박</td><td><code>ORD_ORDER_ITEM.SUPPLY_ACTION_DUE_DT</code> IX (출고 전 상품). 영업일 계산은 SYS 영업일 달력</td><td>8-4 A, 1-8 A</td></tr><tr><td class="k">7</td><td>비회원·선물·미성년·세금계산서</td><td><code>GUEST_ORDER_YN</code>, <code>GIFT_ORDER_YN</code>, <code>MINOR_ORDER_YN</code>, <code>TAX_INVOICE_REQUESTED_YN</code> (기간 안에서 거름)</td><td>9-1 A, 4-6 B, 9-3 A, OC-25 B</td></tr><tr><td class="k">8</td><td>판매 채널</td><td><code>ORD_ORDER_ATTRIBUTION.SALES_CHANNEL_CD</code> (주문과 1:1)</td><td>3-6 B</td></tr><tr><td class="k">9</td><td>목록 열</td><td><code>ORDER_NO</code>, <code>ORDERED_AT</code>, <code>REPRESENTATIVE_PRODUCT_NM</code>+<code>ORDER_ITEM_CNT</code>("외 N건"), <code>ORDERER_NM</code>(마스킹), <code>PAYMENT_AMT</code>, <code>ORDER_STATUS_CD</code>, <code>HOLD_*</code>. 주문 상품을 조인하지 않고 주문 행만 읽음</td><td>목록 표시 그룹</td></tr><tr><td class="k">10</td><td>엑셀 다운로드</td><td>다운로드는 사유를 받고 개인정보 접속 기록에 남김 (대상 주문 ID)</td><td>10-8 A</td></tr><tr><td class="k">11</td><td>마스킹 표시</td><td>마스킹은 애플리케이션이 함. 목록 조회도 접속 기록 대상</td><td>선행 5, 10-8 A</td></tr></table><div class="note"><b>검색에 쓰지 않는 값:</b> 수령인 이름·주소로는 검색하지 않습니다(인덱스 없음). 배송 주소 해시(<code>DELIVERY_ADDRESS_HASH</code>)는 재판매 탐지용입니다(8-3 A).</div></div></div><div class="pg"></div><h1>관리자 주문 상세 (와이어프레임) · 화면 요소별 저장·조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-25 · 주문 도메인 컬럼 정의서(제안) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">주문 관리 &gt; 주문 목록 &gt; <b>주문 상세</b></span></div><div class="cols"><div class="left">
+<div class="sec"><h3><span class="n">1</span>20261124-K3F8QZ <span class="badge">부분 배송</span> <span class="muted">2026-11-24 21:03 · 회원 · APP / iOS</span>
+<span style="float:right"><span class="btn2"><span class="n">2</span>보류 걸기</span></span></h3>
+<div class="muted">결제 완료 11-24 21:04 · 주문 확인 11-24 21:03 (약관 v2026.11) · 계약 서면 교부 11-24 21:05 · 원주문 <span class="n">3</span><u>20261120-HC6PVE</u></div>
+<div class="muted"><span class="n">4</span>마지막 보류: 결제 확인 11-24 21:10 → 해제 11-24 22:02</div></div>
+<div class="sec"><h3><span class="n">5</span>주문 상품</h3>
+<table class="grid"><tr><th>번호</th><th>상품 (주문 당시)</th><th>수량</th><th>결제 분담</th><th>상태</th><th>공급·배송</th></tr>
+<tr><td>-01</td><td>울 블렌드 싱글 재킷 차콜/M <span class="badge gray">셋업 1</span></td><td>1</td><td>131,450</td><td><span class="badge">배송 중</span></td><td>출고 11-25 · 송장 [배송]</td></tr>
+<tr><td>-02</td><td>와이드 슬랙스 차콜/30 <span class="badge gray">셋업 1</span></td><td>1</td><td>81,900</td><td><span class="badge">배송 중</span></td><td>출고 11-25</td></tr>
+<tr><td>-03</td><td>캐시미어 니트 아이보리/L <span class="badge gray">예약</span></td><td>1</td><td>111,150</td><td><span class="badge">결제 완료</span></td><td><span class="n">6</span>약정 12-12 (최초 12-05) · 지연 통지 11-25</td></tr>
+</table>
+<div class="row" style="font-size:8pt;margin-top:3px"><span><span class="n">7</span>[할인 배분 보기] 쿠폰 −35,900 · 프로모션 −10,000 · 등급 −11,600 · 적립금 −5,000</span><span><span class="n">8</span>[옵션 변경] [부분 취소 → 클레임]</span></div>
+<div class="muted"><span class="n">9</span>사은품: 브랜드 쇼퍼백 1 (비판매 품목, 프로모션 #331)</div></div>
+<div class="sec"><h3><span class="n">10</span>주문자·배송지 <span class="btn2" style="float:right">마스킹 해제 (사유 입력)</span></h3>
+<div style="font-size:8pt">주문자 홍*동 · 010-****-1234 · gil***@example.com · 등급 GOLD (주문 당시)<br>
+수령인 홍*동 · 010-****-5678 · (06236) 서울 강남구 테헤란로 000 ●●● · 문 앞 · 공동현관 ●●●● · 도서산간 해당 없음 <span class="btn2"><span class="n">11</span>배송지 변경</span></div></div>
+</div><div class="right">
+<div class="sec"><h3><span class="n">12</span>금액</h3>
+<div class="row"><span>상품 금액</span><span>387,000</span></div><div class="row"><span>할인 합계</span><span>−57,500</span></div><div class="row"><span>적립금</span><span>−5,000</span></div><div class="row"><span>배송비</span><span>0</span></div><hr>
+<div class="row"><b>결제 금액</b><b>324,500</b></div><div class="row muted"><span>PG 과세 / 부가세 / 면세</span><span>324,500 / 29,500 / 0</span></div>
+<div class="muted">결제 수단·승인·환불은 [결제] 탭</div></div>
+<div class="sec"><h3><span class="n">13</span>기록</h3>
+<div class="tabs"><b>상태 이력</b> · 변경 이력 · 관리자 메모 2 · 유입</div>
+<div style="font-size:7.5pt">11-25 10:02 -01 출고 요청 → 출고 (배송 업데이트)<br>11-25 09:00 -03 결제 완료 (지연 통지: 생산 지연)<br>11-24 22:02 보류 해제 (변경 이력, 관리자 kim)<br>11-24 21:10 보류: 결제 확인 (PG FDS)</div>
+<div class="in" style="margin-top:3px"><span class="n">14</span>메모 입력 … ☐ 중요</div></div>
+<div class="sec"><h3><span class="n">15</span>미성년·선물·세금계산서</h3><div class="muted">해당 없음 (미성년 주문 N · 선물 N · 세금계산서 요청 N)</div></div>
+</div></div></div><div class="map"><table><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr><tr><td class="k">1</td><td>주문 머리</td><td><code>ORDER_NO</code>, <code>ORDER_STATUS_CD</code>, <code>ORDERED_AT</code>, <code>PAYMENT_COMPLETED_AT</code>, <code>ORDER_CONTENT_CONFIRMED_AT</code>, <code>APPLIED_TERMS_VER</code>, <code>CONTRACT_DOCUMENT_ISSUED_AT</code>. 채널·OS는 <code>ORD_ORDER_ATTRIBUTION</code></td><td>7-7 A, 3-7 A, 3-9 A</td></tr><tr><td class="k">2</td><td>보류 걸기·해제</td><td><code>HOLD_REASON_CD</code>, <code>HOLD_AT</code>, <code>HOLD_RELEASED_AT</code> 갱신 (<code>HOLD_YN</code>은 가상). 거는 순간 출고 전 상품이 남았는지 검사. <code>ORD_ORDER_CHANGE_HIST</code>에 <code>HOLD</code>/<code>HOLD_RELEASE</code> 1행. 행 버전 조건</td><td>7-6 A, OC-72~76, 10-7 A</td></tr><tr><td class="k">3</td><td>원주문 링크</td><td><code>ORIGINAL_ORDER_ID</code> (옵션 가격 차이로 부분 취소 후 새 주문)</td><td>OC-65 A</td></tr><tr><td class="k">4</td><td>마지막 보류</td><td>보류 컬럼은 마지막 보류를 남김. 과거 보류는 변경 이력</td><td>OC-72 A</td></tr><tr><td class="k">5</td><td>주문 상품 표</td><td><code>ORD_ORDER_ITEM</code>: <code>ORDER_ITEM_NO</code>, 스냅샷(<code>STYLE_NM</code>, <code>COLOR_DISPLAY_NM</code>, <code>SIZE_NM</code>), <code>ORDER_QTY</code>, <code>ITEM_PAYMENT_AMT</code>, <code>ORDER_ITEM_STATUS_CD</code>, <code>SET_GROUP_SN</code>, <code>SHIPPED_AT</code>. 송장은 배송 도메인</td><td>4-2 A, OC-27 A</td></tr><tr><td class="k">6</td><td>예약·공급 기한</td><td><code>INITIAL_PROMISED_SUPPLY_DT</code>, <code>CURRENT_PROMISED_SUPPLY_DT</code>, <code>SUPPLY_ACTION_DUE_DT</code>, <code>SUPPLY_DIFFICULTY_NOTIFIED_AT</code>, <code>SUPPLY_DIFFICULTY_REASON_CD</code></td><td>8-4 A</td></tr><tr><td class="k">7</td><td>할인 배분</td><td><code>ORD_ORDER_ITEM_DISCOUNT</code> (출처 7종 × 상품), 주문 합계 컬럼과 매일 검증</td><td>6-4 A, OC-18 A</td></tr><tr><td class="k">8</td><td>옵션 변경·부분 취소</td><td>같은 가격 옵션은 <code>SKU_ID</code>·스냅샷 변경 + 변경 이력 <code>OPTION_CHANGE</code>. 다르면 클레임 도메인 부분 취소 후 새 주문</td><td>OC-21 A, 1-1 A</td></tr><tr><td class="k">9</td><td>사은품</td><td><code>ORD_ORDER_FREEBIE</code></td><td>4-4 A</td></tr><tr><td class="k">10</td><td>주문자·배송지와 마스킹 해제</td><td><code>ORDERER_*</code>, <code>RECIPIENT_*</code>, 주소, <code>DELIVERY_PLACE_CD</code>, <code>ENTRANCE_ACCESS_ENC</code>, <code>REMOTE_AREA_CD</code>, 등급 스냅샷 <code>ORDER_GRADE_CD</code>. 상세 조회·해제 모두 개인정보 접속 기록</td><td>5-5 A, 10-8 A</td></tr><tr><td class="k">11</td><td>배송지 변경</td><td>출고 요청 전만. 바꾸기 전 개인정보는 <code>BEFORE_PERSONAL_VALUE_ENC</code>에 암호문으로 변경 이력</td><td>OC-16 A</td></tr><tr><td class="k">12</td><td>금액</td><td><code>PRODUCT_TOTAL_AMT</code>, 출처별 할인 합계, <code>POINT_USED_AMT</code>, 배송비 3개, <code>PAYMENT_AMT</code>, <code>PG_TAXABLE_AMT</code>·<code>PG_VAT_AMT</code>·<code>PG_TAX_EXEMPT_AMT</code>. 결제 후 바꾸지 않음</td><td>6-1 A, 6-2 A, 6-7 A</td></tr><tr><td class="k">13</td><td>기록 탭</td><td>상태 이력 <code>ORD_ORDER_ITEM_STATUS_HIST</code>(사유 코드, 클레임 ID), 변경 이력 <code>ORD_ORDER_CHANGE_HIST</code>, 관리자 메모, 유입 <code>ORD_ORDER_ATTRIBUTION</code>(UTM). 작업자는 시스템 컬럼</td><td>7-3 C, OC-16 A, 선행 8</td></tr><tr><td class="k">14</td><td>관리자 메모</td><td><code>ORD_ORDER_ADMIN_MEMO</code> (<code>MEMO_CN</code>, <code>IMPORTANT_YN</code>)</td><td>OC-17 A</td></tr><tr><td class="k">15</td><td>미성년·선물·세금계산서</td><td><code>MINOR_*</code>, <code>GUARDIAN_MONTHLY_LIMIT_AMT</code>, <code>GIFT_*</code>, <code>TAX_INVOICE_REQUESTED_*</code>. 해당할 때만 펼침</td><td>9-3 A, 4-6 B, OC-25 B</td></tr></table><div class="note"><b>다른 도메인 탭:</b> 결제(승인·환불·현금영수증), 배송(송장·추적), 클레임(취소·반품·교환·보증 환급)은 각 도메인 화면에서 주문 ID로 조회합니다.<br><b>상세 화면을 여는 것 자체가 개인정보 조회라</b> 마스킹 상태여도 접속 기록 대상입니다(10-8 A).</div></div></div>
+</body></html>

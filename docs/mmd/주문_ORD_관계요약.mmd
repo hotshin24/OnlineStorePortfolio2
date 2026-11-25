@@ -1,0 +1,81 @@
+---
+title: 주문 도메인 (ORD) 관계 요약
+---
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/ord/erd_ord.py (2026-11-25). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보
+%% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, ||--o| 1:1(공유 PK), |o..o{ FK 미정 참조(다른 도메인 테이블이 정해지면 FK). 선 이름은 컬럼
+%% 다른 도메인 상자: 회원(확정 이름), 상품(후보), 클레임·창고·프로모션·전시(후보)
+erDiagram
+    %% ---- 장바구니
+    ORD_CART["ORD_CART 장바구니 상품"] {
+    }
+    %% ---- 주문
+    ORD_ORDER["ORD_ORDER 주문"] {
+    }
+    ORD_ORDER_ATTRIBUTION["ORD_ORDER_ATTRIBUTION 주문 유입 정보"] {
+    }
+    %% ---- 주문 상품
+    ORD_ORDER_ITEM["ORD_ORDER_ITEM 주문 상품"] {
+    }
+    ORD_ORDER_ITEM_DISCOUNT["ORD_ORDER_ITEM_DISCOUNT 주문 상품 할인 출처별 배분"] {
+    }
+    ORD_ORDER_ITEM_STATUS_HIST["ORD_ORDER_ITEM_STATUS_HIST 주문 상품 상태 이력"] {
+    }
+    ORD_ORDER_FREEBIE["ORD_ORDER_FREEBIE 주문 사은품"] {
+    }
+    %% ---- 주문 기록
+    ORD_ORDER_CHANGE_HIST["ORD_ORDER_CHANGE_HIST 주문 변경 이력"] {
+    }
+    ORD_ORDER_ADMIN_MEMO["ORD_ORDER_ADMIN_MEMO 주문 관리자 메모"] {
+    }
+    %% ---- 다른 도메인
+    CLM_CLAIM["CLM_CLAIM (클레임 도메인, 이름 후보)"] {
+    }
+    DSP_DISPLAY_CONTENT["DSP_DISPLAY_CONTENT (전시 도메인, 이름 후보)"] {
+    }
+    MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT["MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT (회원 도메인)"] {
+    }
+    MBR_LEGAL_GUARDIAN_CONSENT["MBR_LEGAL_GUARDIAN_CONSENT (회원 도메인)"] {
+    }
+    MBR_MEMBER["MBR_MEMBER (회원 도메인)"] {
+    }
+    PRD_DISPLAY_CONTENT_HIST["PRD_DISPLAY_CONTENT_HIST (상품 도메인, 이름 후보)"] {
+    }
+    PRD_PRICE_HIST["PRD_PRICE_HIST (상품 도메인, 이름 후보)"] {
+    }
+    PRD_SKU["PRD_SKU (상품 도메인, 이름 후보)"] {
+    }
+    PRD_STYLE["PRD_STYLE (상품 도메인, 이름 후보)"] {
+    }
+    PRM_MEMBER_COUPON["PRM_MEMBER_COUPON (프로모션 도메인, 이름 후보)"] {
+    }
+    PRM_PROMOTION["PRM_PROMOTION (프로모션 도메인, 이름 후보)"] {
+    }
+    WMS_NON_SALE_ITEM["WMS_NON_SALE_ITEM (창고 도메인, 이름 후보)"] {
+    }
+    %% ---- 관계
+    MBR_MEMBER |o--o{ ORD_CART : "MEMBER_ID"
+    PRD_SKU ||--o{ ORD_CART : "SKU_ID"
+    MBR_MEMBER |o--o{ ORD_ORDER : "MEMBER_ID"
+    MBR_LEGAL_GUARDIAN_CONSENT |o--o{ ORD_ORDER : "LEGAL_GUARDIAN_CONSENT_ID"
+    ORD_ORDER ||--o| ORD_ORDER_ATTRIBUTION : "ORDER_ID"
+    ORD_ORDER ||--o{ ORD_ORDER_ITEM : "ORDER_ID"
+    PRD_SKU ||--o{ ORD_ORDER_ITEM : "SKU_ID"
+    PRD_STYLE ||--o{ ORD_ORDER_ITEM : "STYLE_ID"
+    PRD_PRICE_HIST ||--o{ ORD_ORDER_ITEM : "PRICE_HIST_ID"
+    ORD_ORDER_ITEM ||--o{ ORD_ORDER_ITEM_DISCOUNT : "ORDER_ITEM_ID"
+    MBR_EMPLOYEE_ANNUAL_DISCOUNT_LIMIT |o--o{ ORD_ORDER_ITEM_DISCOUNT : "EMPLOYEE_ANNUAL_DISCOUNT_LIMIT_ID"
+    ORD_ORDER_ITEM ||--o{ ORD_ORDER_ITEM_STATUS_HIST : "ORDER_ITEM_ID"
+    ORD_ORDER ||--o{ ORD_ORDER_FREEBIE : "ORDER_ID"
+    ORD_ORDER ||--o{ ORD_ORDER_CHANGE_HIST : "ORDER_ID"
+    ORD_ORDER_ITEM |o--o{ ORD_ORDER_CHANGE_HIST : "ORDER_ITEM_ID"
+    ORD_ORDER ||--o{ ORD_ORDER_ADMIN_MEMO : "ORDER_ID"
+    %% ---- FK 미정 참조
+    PRD_DISPLAY_CONTENT_HIST |o..o{ ORD_ORDER_ITEM : "DISPLAY_CONTENT_HIST_ID (FK 미정)"
+    CLM_CLAIM |o..o{ ORD_ORDER_ITEM_STATUS_HIST : "CLAIM_ID (FK 미정)"
+    WMS_NON_SALE_ITEM |o..o{ ORD_ORDER_FREEBIE : "NON_SALE_ITEM_ID (FK 미정)"
+    PRM_PROMOTION |o..o{ ORD_ORDER_FREEBIE : "PROMOTION_ID (FK 미정)"
+    PRM_PROMOTION |o..o{ ORD_ORDER_ITEM_DISCOUNT : "PROMOTION_ID (FK 미정)"
+    PRM_MEMBER_COUPON |o..o{ ORD_ORDER_ITEM_DISCOUNT : "MEMBER_COUPON_ID (FK 미정)"
+    PRM_MEMBER_COUPON |o..o{ ORD_CART : "SELECTED_MEMBER_COUPON_ID (FK 미정)"
+    DSP_DISPLAY_CONTENT |o..o{ ORD_CART : "DISPLAY_CONTENT_ID (FK 미정)"
+    DSP_DISPLAY_CONTENT |o..o{ ORD_ORDER_ITEM : "DISPLAY_CONTENT_ID (FK 미정)"

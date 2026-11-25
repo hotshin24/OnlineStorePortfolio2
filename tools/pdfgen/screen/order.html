@@ -1,0 +1,144 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>주문서 화면 (컬럼 대응)</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+body { font-family: "Apple SD Gothic Neo", sans-serif; font-size: 9pt; color: #222; margin: 0; }
+h1 { font-size: 15pt; color: #1f4e79; margin: 0 0 2px; }
+.meta { color: #666; font-size: 8pt; margin-bottom: 8px; }
+.wrap { display: flex; gap: 14px; align-items: flex-start; }
+.screen { width: 57%; border: 2px solid #333; border-radius: 6px; background: #fff; }
+.bar { background: #222; color: #fff; padding: 6px 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.steps { font-size: 8pt; color: #bbb; } .steps b { color: #fff; }
+.cols { display: flex; gap: 10px; padding: 10px; }
+.left { flex: 1.6; } .right { flex: 1; }
+.sec { border: 1px solid #d5d9df; border-radius: 4px; padding: 7px 9px; margin-bottom: 8px; position: relative; }
+.sec h3 { margin: 0 0 5px; font-size: 9.5pt; }
+.n { display: inline-block; min-width: 15px; height: 15px; line-height: 15px; border-radius: 8px; background: #d9480f; color: #fff; font-size: 7.5pt; text-align: center; font-weight: 700; padding: 0 2px; margin-right: 3px; vertical-align: middle; }
+.row { display: flex; justify-content: space-between; margin: 3px 0; }
+.item { display: flex; gap: 8px; border-top: 1px dashed #ddd; padding: 5px 0; }
+.item:first-of-type { border-top: 0; }
+.thumb { width: 40px; height: 48px; background: #e9ecef; border-radius: 3px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #888; }
+.muted { color: #888; font-size: 8pt; } .strike { text-decoration: line-through; color: #999; }
+.tag { display: inline-block; border: 1px solid #1f4e79; color: #1f4e79; font-size: 7pt; padding: 0 3px; border-radius: 2px; margin-left: 3px; }
+.warn { color: #c92a2a; font-size: 8pt; }
+.in { border: 1px solid #ced4da; border-radius: 3px; padding: 2px 6px; color: #555; background: #fafafa; margin: 2px 0; font-size: 8.5pt; }
+.chk { margin: 2px 0; font-size: 8.5pt; }
+.btn { background: #1f4e79; color: #fff; text-align: center; padding: 8px; border-radius: 4px; font-weight: 700; font-size: 11pt; }
+.total { font-size: 12pt; font-weight: 700; color: #d9480f; }
+.map { width: 43%; }
+table { border-collapse: collapse; width: 100%; font-size: 7.6pt; }
+th, td { border: 1px solid #c9ced6; padding: 2px 4px; vertical-align: top; text-align: left; }
+th { background: #edf0f4; }
+code { font-family: Menlo, monospace; font-size: 6.9pt; }
+td.k { width: 18px; text-align: center; }
+.note { font-size: 7.8pt; color: #444; margin-top: 6px; }
+.pg { break-before: page; }
+</style></head><body>
+<h1>주문서 화면 (와이어프레임) · 화면 요소별 저장 컬럼</h1>
+<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-25 · 주문 도메인 컬럼 정의서(제안) 기준 · 동그라미 번호 = 오른쪽 표의 저장 위치 · 화면 배치는 설명용이고 결정 대상이 아님 · 회원 주문 기준 (비회원은 표 아래 참고)</div>
+<div class="wrap">
+<div class="screen">
+ <div class="bar"><span>OUR BRAND</span><span class="steps">장바구니 &gt; <b>주문서</b> &gt; 주문 완료</span></div>
+ <div class="cols">
+ <div class="left">
+  <div class="sec"><h3><span class="n">1</span>주문 상품 3개</h3>
+   <div class="item"><div class="thumb">썸네일</div><div style="flex:1">
+    <div><b>울 블렌드 싱글 재킷</b> <span class="tag"><span class="n">2</span>셋업 1벌</span></div>
+    <div class="muted">차콜 / M · 수량 1</div>
+    <div><span class="strike">189,000원</span> <b>159,000원</b> <span class="muted">(<span class="n">3</span>)</span></div>
+   </div></div>
+   <div class="item"><div class="thumb">썸네일</div><div style="flex:1">
+    <div><b>울 블렌드 와이드 슬랙스</b> <span class="tag">셋업 1벌</span></div>
+    <div class="muted">차콜 / 30 · 수량 1</div>
+    <div><b>99,000원</b></div>
+   </div></div>
+   <div class="item"><div class="thumb">썸네일</div><div style="flex:1">
+    <div><b>캐시미어 크루넥 니트</b> <span class="tag">예약판매</span></div>
+    <div class="muted">아이보리 / L · 수량 1</div>
+    <div><b>129,000원</b></div>
+    <div class="warn"><span class="n">4</span>12.08(월)~12.12(금) 순차 출고 예정 · 늦어지면 3영업일 안에 안내</div>
+    <div class="muted"><span class="n">5</span>착용·세탁 후 반품 불가 상품입니다 (고지 문구 전문 보기)</div>
+   </div></div>
+   <div class="muted"><span class="n">6</span>사은품: 브랜드 쇼퍼백 1개 (구매 금액 30만 원 이상)</div>
+  </div>
+
+  <div class="sec"><h3><span class="n">7</span>주문자</h3>
+   <div class="in">홍길동</div><div class="in">010-****-1234</div><div class="in">gil***@example.com</div>
+  </div>
+
+  <div class="sec"><h3><span class="n">8</span>배송지 <span class="muted">[저장된 배송지 변경]</span>  <span style="float:right" class="chk">☐ <span class="n">9</span>선물하기</span></h3>
+   <div class="in">받는 분: 홍길동 · 010-****-5678</div>
+   <div class="in">(06236) 서울특별시 강남구 테헤란로 000</div>
+   <div class="in">상세 주소: ●●동 ●●●호</div>
+   <div class="muted"><span class="n">10</span>제주·도서산간 추가 배송비 없음 (주소로 판단)</div>
+   <div class="row"><div class="in" style="flex:1;margin-right:4px"><span class="n">11</span>수령 장소: 문 앞 ▾</div><div class="in" style="flex:1">공동현관: 비밀번호 ****</div></div>
+   <div class="in">배송 요청 사항: 부재 시 경비실에 맡겨 주세요</div>
+  </div>
+
+  <div class="sec"><h3><span class="n">12</span>할인·적립금</h3>
+   <div class="row"><span>상품 쿠폰 (장바구니에서 고른 쿠폰)</span><span>재킷: 10% 쿠폰 −15,900원 ▾</span></div>
+   <div class="row"><span>주문 쿠폰</span><span>2만 원 할인 (30만 원 이상) −20,000원 ▾</span></div>
+   <div class="row"><span>셋업 함께 구매 할인 (자동)</span><span>−10,000원</span></div>
+   <div class="row"><span>등급 할인 (GOLD 3%)</span><span>−11,600원</span></div>
+   <div class="row"><span>적립금 (보유 12,000)</span><span><span class="in" style="display:inline">5,000</span> [전액]</span></div>
+   <div class="row"><span>예치금 (보유 0)</span><span class="muted">사용 불가</span></div>
+  </div>
+
+  <div class="sec"><h3><span class="n">13</span>결제 수단</h3>
+   <div class="chk">◉ 신용카드 ○ 간편결제 ○ 가상계좌 (입금 기한 내일 23:59) ○ 계좌이체</div>
+   <div class="chk"><span class="n">14</span>☐ 구매안전서비스(결제대금예치) 이용</div>
+   <div class="chk"><span class="n">15</span>현금영수증 ◉ 소득공제 010-****-1234 ○ 지출증빙 ○ 신청 안 함 · ☐ 세금계산서 발급 요청</div>
+  </div>
+ </div>
+
+ <div class="right">
+  <div class="sec"><h3><span class="n">16</span>결제 금액</h3>
+   <div class="row"><span>상품 금액</span><span>387,000원</span></div>
+   <div class="row"><span>쿠폰 할인</span><span>−35,900원</span></div>
+   <div class="row"><span>프로모션 할인</span><span>−10,000원</span></div>
+   <div class="row"><span>등급 할인</span><span>−11,600원</span></div>
+   <div class="row"><span>적립금</span><span>−5,000원</span></div>
+   <div class="row"><span>배송비</span><span>0원 <span class="muted">(5만 원 이상 무료)</span></span></div>
+   <hr><div class="row"><b>최종 결제 금액</b><span class="total">324,500원</span></div>
+   <div class="row muted"><span><span class="n">17</span>적립 예정</span><span>6,490원 (구매 확정 후)</span></div>
+  </div>
+  <div class="sec"><h3><span class="n">18</span>확인·동의</h3>
+   <div class="chk">☑ 주문 상품, 가격, 배송비, 공급 시기, 청약철회 조건을 확인했습니다 (필수)</div>
+   <div class="chk">☑ 이용약관 (필수) <span class="muted">v2026.11</span></div>
+   <div class="chk muted">배송을 위해 택배사에 개인정보 처리를 위탁합니다 (처리방침 고지)</div>
+   <div class="chk muted"><span class="n">19</span>(만 19세 미만 회원) 법정대리인 동의 없이 한 계약은 취소할 수 있습니다 · 이번 달 남은 구매 한도 120,000원</div>
+  </div>
+  <div class="btn"><span class="n">20</span>324,500원 결제하기</div>
+  <div class="muted" style="margin-top:6px">버튼을 누르면 "결제 대기" 주문을 만들고 재고·쿠폰·적립금을 예약한 뒤 PG 결제창을 엽니다.</div>
+ </div>
+ </div>
+</div>
+
+<div class="map">
+<table>
+<tr><th style="width:16px">No</th><th style="width:62px">화면 요소</th><th>저장 위치 (주문 때 복사·기록)</th><th style="width:48px">근거</th></tr>
+<tr><td class="k">1</td><td>주문 상품 행</td><td><code>ORD_ORDER_ITEM</code> 1행 = SKU 1개. 상품명·컬러·사이즈·썸네일은 스냅샷 <code>STYLE_NM</code>, <code>COLOR_DISPLAY_NM</code>, <code>SIZE_NM</code>, <code>PRODUCT_IMAGE_URL</code>. 장바구니 행의 담은 경로 4개를 복사</td><td>4-2 A, 5-1 A, 5-3 A, OC-34</td></tr>
+<tr><td class="k">2</td><td>셋업 1벌 표시</td><td><code>SET_GROUP_SN</code> (상의·하의 같은 번호). 장바구니는 기억하지 않고 주문서에서 짝을 맞춤</td><td>OC-27 A, OC-33 A</td></tr>
+<tr><td class="k">3</td><td>정가 취소선·판매가</td><td><code>LIST_PRICE_AMT</code>, <code>SALE_PRICE_AMT</code>, <code>SKU_EXTRA_PRICE_AMT</code>, <code>UNIT_PRICE_AMT</code>, <code>PRICE_HIST_ID</code></td><td>5-2 C</td></tr>
+<tr><td class="k">4</td><td>예약판매 출고 예정</td><td><code>INITIAL_PROMISED_SUPPLY_DT</code>, <code>CURRENT_PROMISED_SUPPLY_DT</code>, <code>SUPPLY_ACTION_DUE_DT</code></td><td>8-4 A</td></tr>
+<tr><td class="k">5</td><td>청약철회 제한 고지</td><td><code>WITHDRAWAL_RESTRICTION_CD</code>, <code>WITHDRAWAL_RESTRICTION_NOTICE_CN</code> (문구 전문)</td><td>5-9 A</td></tr>
+<tr><td class="k">6</td><td>사은품</td><td><code>ORD_ORDER_FREEBIE</code> (<code>NON_SALE_ITEM_ID</code>, <code>PROMOTION_ID</code>)</td><td>4-4 A</td></tr>
+<tr><td class="k">7</td><td>주문자</td><td><code>ORDERER_NM</code>, <code>ORDERER_MOBILE_PHONE_NUMBER_ENC</code>·<code>_HASH</code>, <code>ORDERER_EMAIL_ENC</code></td><td>5-5 A</td></tr>
+<tr><td class="k">8</td><td>배송지</td><td><code>RECIPIENT_NM</code>, <code>RECIPIENT_MOBILE_PHONE_NUMBER_ENC</code>, <code>POSTAL_CODE_VAL</code>, <code>ROAD_ADDR</code>, <code>LOT_NUMBER_ADDR</code>, <code>DETAIL_ADDRESS_ENC</code>, <code>DELIVERY_ADDRESS_HASH</code>. 회원 배송지를 가리키지 않고 복사</td><td>5-5 A</td></tr>
+<tr><td class="k">9</td><td>선물하기</td><td><code>GIFT_ORDER_YN</code>, 받는 사람 이름·휴대폰, 메시지, 입력 기한. 켜면 8의 주소는 비움</td><td>4-6 B</td></tr>
+<tr><td class="k">10</td><td>도서산간 판단</td><td><code>SIDO_CD</code>, <code>SIGUNGU_CD</code>, <code>LEGAL_DONG_CD</code>, <code>REMOTE_AREA_CD</code></td><td>5-7 A</td></tr>
+<tr><td class="k">11</td><td>수령 장소·공동현관·요청 사항</td><td><code>DELIVERY_PLACE_CD</code>, <code>ENTRANCE_ACCESS_ENC</code>, <code>DELIVERY_REQUEST_ENC</code></td><td>5-6 A, 5-8 B</td></tr>
+<tr><td class="k">12</td><td>쿠폰·프로모션·등급·적립금·예치금</td><td>출처별 <code>ORD_ORDER_ITEM_DISCOUNT</code> 행 (상품마다 배분), 주문 합계 <code>COUPON_DISCOUNT_AMT</code> 등. 임직원이면 <code>EMPLOYEE</code> 행과 <code>EMPLOYEE_PURCHASE_MARKET_PRICE_AMT</code></td><td>6-4 A, OC-18 A, OC-26 A, 6-9 A</td></tr>
+<tr><td class="k">13</td><td>결제 수단·기한</td><td>결제 수단은 결제 도메인. 주문에는 <code>PAYMENT_DUE_AT</code></td><td>1-2 A, 3-4 A</td></tr>
+<tr><td class="k">14</td><td>결제대금예치 선택</td><td>결제 도메인</td><td>1-9 A</td></tr>
+<tr><td class="k">15</td><td>현금영수증·세금계산서</td><td>현금영수증은 결제 도메인. 세금계산서 요청은 <code>TAX_INVOICE_REQUESTED_YN</code>·<code>_AT</code></td><td>OC-25 B</td></tr>
+<tr><td class="k">16</td><td>결제 금액</td><td><code>PRODUCT_TOTAL_AMT</code>, 출처별 할인 합계, <code>BASE_DELIVERY_FEE_AMT</code>, <code>REMOTE_AREA_DELIVERY_FEE_AMT</code>, <code>DELIVERY_FEE_DISCOUNT_AMT</code>, <code>FREE_DELIVERY_THRESHOLD_AMT</code>, <code>PAYMENT_AMT</code>, PG 과세·부가세·면세 금액</td><td>6-1 A, 6-6 A, 6-7 A</td></tr>
+<tr><td class="k">17</td><td>적립 예정</td><td><code>POINT_ACCUMULATION_RT</code>, <code>EXPECTED_POINT_AMT</code> (상품별)</td><td>6-8 A</td></tr>
+<tr><td class="k">18</td><td>확인·동의</td><td><code>ORDER_CONTENT_CONFIRMED_AT</code>, <code>APPLIED_TERMS_VER</code>. 서면 교부는 결제 뒤 <code>CONTRACT_DOCUMENT_ISSUED_AT</code></td><td>3-7 A, 3-9 A</td></tr>
+<tr><td class="k">19</td><td>미성년 고지·월 한도</td><td><code>MINOR_ORDER_YN</code>, <code>MINOR_CANCELLATION_RIGHT_NOTIFIED_AT</code>, <code>LEGAL_GUARDIAN_CONSENT_ID</code>, <code>GUARDIAN_MONTHLY_LIMIT_AMT</code>, <code>MONTH_USED_BEFORE_ORDER_AMT</code></td><td>9-3 A, 9-5 B</td></tr>
+<tr><td class="k">20</td><td>결제하기</td><td>주문 행 생성: <code>ORDER_NO</code>, <code>ORDER_REQUEST_KEY_VAL</code>(UK, 두 번 눌러도 1건), <code>ORDER_STATUS_CD</code> = 결제 대기, <code>ORDERED_AT</code>. 회원 등급·체형 스냅샷, <code>ORD_ORDER_ATTRIBUTION</code>(채널·OS·UTM·진입 경로)</td><td>3-1 A, 3-3 A, 5-4 B, 5-10 A, 3-6 B</td></tr>
+</table>
+<div class="note"><b>화면에 안 보이지만 함께 기록되는 것:</b> 등급·회원 유형(5-4 B), 체형 스냅샷(5-10 A), 진입 경로 장바구니/바로 구매(3-6 B), 비회원 장바구니 키 해시(OC-31 B), 행 버전(10-7 A).<br>
+<b>비회원 주문이면:</b> 주문 전 휴대폰 본인인증(<code>GUEST_IDENTITY_*</code>), 개인정보 처리 고지 확인(<code>GUEST_PRIVACY_*</code>), 주문 조회 비밀번호(<code>GUEST_ORDER_PASSWORD_HASH</code>)가 7번 위에 추가됩니다. 쿠폰·적립금·재입고 알림은 없습니다.</div>
+</div>
+</div>
+</body></html>

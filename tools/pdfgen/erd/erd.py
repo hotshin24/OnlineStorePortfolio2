@@ -1,4 +1,4 @@
-# 회원 도메인 ERD와 상품 도메인 관계 요약 생성 (상품은 tools/pdfgen/prd/erd_prd.py): Mermaid(mmd, 전체 컬럼판과 관계 요약판)와 draw.io(전체 ERD 1개 파일, 도메인별 페이지: 관계 요약, 컬럼 포함)
+# 회원 도메인 ERD와 상품·주문 도메인 관계 요약 생성 (상품은 tools/pdfgen/prd/erd_prd.py, 주문은 tools/pdfgen/ord/erd_ord.py): Mermaid(mmd, 전체 컬럼판과 관계 요약판)와 draw.io(전체 ERD 1개 파일, 도메인별 페이지: 관계 요약, 컬럼 포함)
 # 사용법 (저장소 루트에서): python3 tools/pdfgen/erd/erd.py
 # 단일 출처: tools/pdfgen/cols/data.py (컬럼), cols/order.py (테이블·컬럼 순서, 규칙 8)
 import os, re, sys, html
@@ -11,6 +11,8 @@ from order import TABLE_GROUPS, COL_GROUPS
 import importlib.util
 _spec = importlib.util.spec_from_file_location('erd_prd', os.path.join(HERE, '..', 'prd', 'erd_prd.py'))
 PRD = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(PRD)
+_spec = importlib.util.spec_from_file_location('erd_ord', os.path.join(HERE, '..', 'ord', 'erd_ord.py'))
+ORD = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(ORD)
 
 TODAY = date.today().isoformat()
 BY = {t['t']: t for t in T}
@@ -268,6 +270,7 @@ def drawio():
             + diagram('mbr-summary', '회원 (MBR) 관계 요약', drawio_summary_page(), 3200, 1800)
             + diagram('mbr', '회원 (MBR)', drawio_page(), 4800, 3600)
             + diagram('prd-summary', '상품 (PRD) 관계 요약', PRD.summary_cells(), 3200, 1600)
+            + diagram('ord-summary', '주문 (ORD) 관계 요약', ORD.summary_cells(), 3200, 1600)
             + '</mxfile>\n')
 
 if __name__ == '__main__':
@@ -281,6 +284,9 @@ if __name__ == '__main__':
     open(p3, 'w', encoding='utf-8').write(mmd_summary())
     p4 = os.path.join(ROOT, 'docs', 'mmd', '상품_PRD_관계요약.mmd')
     open(p4, 'w', encoding='utf-8').write(PRD.mmd_summary())
-    print(p1); print(p3); print(p4); print(p2)
+    p5 = os.path.join(ROOT, 'docs', 'mmd', '주문_ORD_관계요약.mmd')
+    open(p5, 'w', encoding='utf-8').write(ORD.mmd_summary())
+    print(p1); print(p3); print(p4); print(p5); print(p2)
+    print(f'주문: 테이블 {len(ORD.BY)}개, 관계 {len(ORD.RELS)}개, FK 미정 참조 {len(ORD.REF)}개, 다른 도메인 {len(ORD.EXT)}개')
     print(f'상품: 테이블 {len(PRD.BY)}개, 관계 {len(PRD.RELS)}개, 다른 도메인 {len(PRD.EXT)}개')
     print(f'테이블 {len(T)}개, 관계 {len(RELS)}개, 다른 도메인 {len(EXT)}개')

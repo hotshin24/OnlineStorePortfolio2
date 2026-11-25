@@ -27,11 +27,11 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 
 ## 회원결정 변경 안내 쪽
 
-`docs/pdf/회원결정/`의 3·8·10·12·13·17·20·21·22·25·26·27·28·30·31·32·35·39·43·47번에는 변경 안내 쪽이 이미 붙어 있다 (3·8·10·12·13·20·21·22·25·26·27·30·32·35·43은 컬럼 검토, 나머지는 법률 검토이고 28번에는 컬럼 검토 보완 행도 있다). 다시 만들 때는 원본(커밋 `77b85b7`의 PDF)에 붙인다. 선행결정 3·5·14번(`chgS03.pdf` 컬럼 검토 C-70·C-76, `chgS05.pdf` C-25·C-39·C-49·C-70·C-72, `chgS14.pdf` C-85)의 원본은 커밋 `2cb6480`의 `docs/pdf/선행결정/`의 해당 PDF다.
+`docs/pdf/결정/회원결정/`의 3·8·10·12·13·17·20·21·22·25·26·27·28·30·31·32·35·39·43·47번에는 변경 안내 쪽이 이미 붙어 있다 (3·8·10·12·13·20·21·22·25·26·27·30·32·35·43은 컬럼 검토, 나머지는 법률 검토이고 28번에는 컬럼 검토 보완 행도 있다). 다시 만들 때는 원본(커밋 `77b85b7`의 PDF)에 붙인다. 선행결정 3·5·14번(`chgS03.pdf` 컬럼 검토 C-70·C-76, `chgS05.pdf` C-25·C-39·C-49·C-70·C-72, `chgS14.pdf` C-85)의 원본은 커밋 `2cb6480`의 `docs/pdf/선행결정/`의 해당 PDF다. 원본 커밋 당시 경로는 `docs/pdf/회원결정/`, `docs/pdf/선행결정/`이고, 2026-11-25에 `docs/pdf/결정/` 아래로 옮겼다.
 
 ```bash
 git show 77b85b7:"docs/pdf/회원결정/회원결정_28_개인정보보유기간과파기.pdf" > /tmp/orig28.pdf
-swift tools/pdfgen/decision_change/merge.swift /tmp/pdfout/chg28.pdf /tmp/orig28.pdf "docs/pdf/회원결정/회원결정_28_개인정보보유기간과파기.pdf"
+swift tools/pdfgen/decision_change/merge.swift /tmp/pdfout/chg28.pdf /tmp/orig28.pdf "docs/pdf/결정/회원결정/회원결정_28_개인정보보유기간과파기.pdf"
 ```
 
 ## 검증

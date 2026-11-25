@@ -1,0 +1,122 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>장바구니 화면 (컬럼 대응)</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+body { font-family: "Apple SD Gothic Neo", sans-serif; font-size: 9pt; color: #222; margin: 0; }
+h1 { font-size: 15pt; color: #1f4e79; margin: 0 0 2px; }
+.meta { color: #666; font-size: 8pt; margin-bottom: 8px; }
+.wrap { display: flex; gap: 14px; align-items: flex-start; }
+.screen { width: 57%; border: 2px solid #333; border-radius: 6px; background: #fff; }
+.bar { background: #222; color: #fff; padding: 6px 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.steps { font-size: 8pt; color: #bbb; } .steps b { color: #fff; }
+.cols { display: flex; gap: 10px; padding: 10px; }
+.left { flex: 1.6; } .right { flex: 1; }
+.sec { border: 1px solid #d5d9df; border-radius: 4px; padding: 7px 9px; margin-bottom: 8px; position: relative; }
+.sec h3 { margin: 0 0 5px; font-size: 9.5pt; }
+.n { display: inline-block; min-width: 15px; height: 15px; line-height: 15px; border-radius: 8px; background: #d9480f; color: #fff; font-size: 7.5pt; text-align: center; font-weight: 700; padding: 0 2px; margin-right: 3px; vertical-align: middle; }
+.row { display: flex; justify-content: space-between; margin: 3px 0; }
+.item { display: flex; gap: 8px; border-top: 1px dashed #ddd; padding: 5px 0; }
+.item:first-of-type { border-top: 0; }
+.thumb { width: 40px; height: 48px; background: #e9ecef; border-radius: 3px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #888; }
+.muted { color: #888; font-size: 8pt; } .strike { text-decoration: line-through; color: #999; }
+.tag { display: inline-block; border: 1px solid #1f4e79; color: #1f4e79; font-size: 7pt; padding: 0 3px; border-radius: 2px; margin-left: 3px; }
+.warn { color: #c92a2a; font-size: 8pt; }
+.in { border: 1px solid #ced4da; border-radius: 3px; padding: 2px 6px; color: #555; background: #fafafa; margin: 2px 0; font-size: 8.5pt; }
+.chk { margin: 2px 0; font-size: 8.5pt; }
+.btn { background: #1f4e79; color: #fff; text-align: center; padding: 8px; border-radius: 4px; font-weight: 700; font-size: 11pt; }
+.total { font-size: 12pt; font-weight: 700; color: #d9480f; }
+.map { width: 43%; }
+table { border-collapse: collapse; width: 100%; font-size: 7.6pt; }
+th, td { border: 1px solid #c9ced6; padding: 2px 4px; vertical-align: top; text-align: left; }
+th { background: #edf0f4; }
+code { font-family: Menlo, monospace; font-size: 6.9pt; }
+td.k { width: 18px; text-align: center; }
+.note { font-size: 7.8pt; color: #444; margin-top: 6px; }
+.pg { break-before: page; }
+</style></head><body>
+<h1>장바구니 화면 (와이어프레임) · 화면 요소별 저장 컬럼</h1>
+<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-25 · 주문 도메인 컬럼 정의서(제안) 기준 · 동그라미 번호 = 오른쪽 표의 저장 위치 · 화면 배치는 설명용이고 결정 대상이 아님 · 회원 장바구니 기준 (비회원은 표 아래 참고)</div>
+<div class="wrap">
+<div class="screen">
+ <div class="bar"><span>OUR BRAND</span><span class="steps"><b>장바구니</b> &gt; 주문서 &gt; 주문 완료</span></div>
+ <div class="cols">
+ <div class="left">
+  <div class="sec"><h3><span class="n">1</span>장바구니 4 <span class="muted" style="float:right"><span class="n">2</span>☑ 전체 선택 · 선택 삭제 · 품절 삭제</span></h3>
+   <div class="item"><div style="width:14px">☑</div><div class="thumb"><span class="n">3</span></div><div style="flex:1">
+    <div><b>울 블렌드 싱글 재킷</b> <span class="tag">셋업</span> <span style="float:right"><span class="n">10</span>♡ ✕</span></div>
+    <div class="muted"><span class="n">4</span>차콜 / M · [옵션 변경] · 수량 <span class="in" style="display:inline"><span class="n">5</span>− 1 +</span></div>
+    <div><span class="strike">189,000원</span> <b>159,000원</b> <span class="warn"><span class="n">6</span>담았을 때보다 10% 할인</span></div>
+    <div class="row"><span class="muted"><span class="n">7</span>[쿠폰 사용] 10% 상품 쿠폰 적용 −15,900원</span></div>
+   </div></div>
+   <div class="item"><div style="width:14px">☑</div><div class="thumb">썸네일</div><div style="flex:1">
+    <div><b>울 블렌드 와이드 슬랙스</b> <span class="tag">셋업</span> <span style="float:right">♡ ✕</span></div>
+    <div class="muted">차콜 / 30 · [옵션 변경] · 수량 − 1 +</div>
+    <div><b>99,000원</b></div>
+    <div class="muted"><span class="n">8</span>재킷과 함께 사면 셋업 할인 10,000원 (주문서에서 자동 적용)</div>
+   </div></div>
+   <div class="item"><div style="width:14px">☑</div><div class="thumb">썸네일</div><div style="flex:1">
+    <div><b>캐시미어 크루넥 니트</b> <span class="tag">예약판매</span> <span style="float:right">♥ ✕</span></div>
+    <div class="muted">아이보리 / L · [옵션 변경] · 수량 − 1 +</div>
+    <div><b>129,000원</b></div>
+    <div class="warn"><span class="n">9</span>발송 예정일이 늦어졌어요: 12.01~12.05 → 12.08~12.12 순차 출고</div>
+   </div></div>
+   <div class="item" style="opacity:.75"><div style="width:14px">☐</div><div class="thumb">품절</div><div style="flex:1">
+    <div><b>옥스퍼드 버튼다운 셔츠</b> <span style="float:right">♡ ✕</span></div>
+    <div class="muted">블루 / L · 수량 1</div>
+    <div class="warn"><span class="n">11</span>품절 · <span class="in" style="display:inline"><span class="n">12</span>재입고 알림 신청됨 ✓</span></div>
+   </div></div>
+   <div style="background:#f6f7f9;border-radius:3px;padding:4px 6px;margin-top:2px"><b style="font-size:8.5pt"><span class="n">17</span>품절되어 아쉽다면</b><div style="display:flex;gap:5px;margin-top:4px"><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>옥스퍼드 셔츠 스카이</div><div><span class="warn"></span> <b>59,000원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>코튼 버튼다운 셔츠</div><div><span class="warn">10%</span> <b>53,100원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>린넨 블렌드 셔츠</div><div><span class="warn"></span> <b>65,000원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>스트라이프 셔츠</div><div><span class="warn">15%</span> <b>50,150원</b></div></div></div></div>
+  </div>
+  <div class="sec"><h3><span class="n">13</span>주문 쿠폰</h3>
+   <div class="muted">2만 원 할인 (30만 원 이상) 사용 가능 · 주문서에서 선택하세요</div>
+  </div>
+  <div class="sec"><h3><span class="n">18</span>함께 보면 좋을 상품 <span class="muted" style="float:right">MD 추천</span></h3><div style="display:flex;gap:5px;margin-top:4px"><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>레더 벨트</div><div><span class="warn"></span> <b>49,000원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>울 머플러</div><div><span class="warn">20%</span> <b>47,200원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>더비 슈즈</div><div><span class="warn"></span> <b>159,000원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>코튼 셔츠</div><div><span class="warn"></span> <b>59,000원</b></div></div></div></div>
+  <div class="sec"><h3><span class="n">19</span>내가 전에 보고 놓쳤던 상품 다시보기</h3><div style="display:flex;gap:5px;margin-top:4px"><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>캐시미어 코트</div><div><span class="warn">30%</span> <b>349,300원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>덕다운 패딩</div><div><span class="warn">15%</span> <b>212,500원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>코듀로이 팬츠</div><div><span class="warn"></span> <b>79,000원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND</div><div>라운드 니트</div><div><span class="warn">10%</span> <b>80,100원</b></div></div></div></div>
+  <div class="sec"><h3><span class="n">20</span>캐주얼 스타일 브랜드 아이템 추천</h3><div style="display:flex;gap:5px;margin-top:4px"><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND 데일리</div><div>하프 집업 스웨트</div><div><span class="warn">25%</span> <b>66,750원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND 데일리</div><div>유틸리티 파카</div><div><span class="warn"></span> <b>119,500원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND 진</div><div>로고 후디 집업</div><div><span class="warn">30%</span> <b>69,300원</b></div></div><div style="flex:1;font-size:7.5pt"><div class="thumb" style="width:100%;height:42px">상품</div><div class="muted">OUR BRAND 데일리</div><div>스웨트 팬츠</div><div><span class="warn"></span> <b>45,000원</b></div></div></div></div>
+ </div>
+ <div class="right">
+  <div class="sec"><h3><span class="n">14</span>결제 예정 금액 (선택 3개)</h3>
+   <div class="row"><span>상품 금액</span><span>387,000원</span></div>
+   <div class="row"><span>상품 쿠폰</span><span>−15,900원</span></div>
+   <div class="row"><span>셋업 할인 (예상)</span><span>−10,000원</span></div>
+   <div class="row"><span>배송비</span><span>0원</span></div>
+   <hr><div class="row"><b>결제 예정 금액</b><span class="total">361,100원</span></div>
+   <div class="muted">등급 할인·주문 쿠폰·적립금은 주문서에서 적용</div>
+  </div>
+  <div class="btn"><span class="n">15</span>3개 상품 주문하기</div>
+  <div class="muted" style="margin-top:6px">체크한 행 ID를 주문서로 넘깁니다. 장바구니 행은 결제가 완료될 때 지웁니다.</div>
+  <div class="sec" style="margin-top:8px"><h3><span class="n">16</span>(비회원일 때)</h3>
+   <div class="muted">로그인하면 장바구니를 합쳐 드려요. 쿠폰·재입고 알림은 로그인 뒤 쓸 수 있습니다. [로그인]</div>
+  </div>
+ </div>
+ </div>
+</div>
+<div class="map">
+<table>
+<tr><th style="width:16px">No</th><th style="width:62px">화면 요소</th><th>저장 위치 (<code>ORD_CART</code>)</th><th style="width:48px">근거</th></tr>
+<tr><td class="k">1</td><td>장바구니 행</td><td>1행 = SKU 1개. <code>CART_ID</code>, <code>MEMBER_ID</code> 또는 <code>GUEST_CART_KEY_HASH</code>(정확히 하나), <code>SKU_ID</code>. UK (회원, 키 해시, SKU). 담은 순서 정렬은 <code>CREATED_AT</code></td><td>2-1 A, OC-15 B</td></tr>
+<tr><td class="k">2</td><td>체크·선택 삭제</td><td>체크는 저장하지 않음 (화면 상태). 삭제는 행 물리 삭제</td><td>OC-30 B, 선행 4</td></tr>
+<tr><td class="k">3</td><td>썸네일</td><td><code>ADDED_THUMBNAIL_URL</code> (담을 때 컬러 썸네일)</td><td>OC-47 B</td></tr>
+<tr><td class="k">4</td><td>상품명·옵션·옵션 변경</td><td>이름은 열 때 상품에서 읽음. 옵션 변경은 <code>SKU_ID</code> UPDATE (같은 SKU가 있으면 수량 합침), 가격·썸네일·예정일도 새 값으로</td><td>2-7 A, OC-48 A</td></tr>
+<tr><td class="k">5</td><td>수량</td><td><code>ITEM_QTY</code> (1~99 CHECK). 바꾸면 <code>LAST_CART_ACTIVITY_AT</code> 갱신</td><td>2-5 A, 2-4 A</td></tr>
+<tr><td class="k">6</td><td>담았을 때보다 n% 할인</td><td>현재 가격과 <code>ADDED_DISPLAY_PRICE_AMT</code>(즉시 할인 반영)를 비교. 판매가는 <code>ADDED_SALE_PRICE_AMT</code></td><td>2-3 B, OC-37 B</td></tr>
+<tr><td class="k">7</td><td>상품 쿠폰 사용</td><td><code>SELECTED_MEMBER_COUPON_ID</code> (한 쿠폰은 한 행에만 UK, 비회원 NULL)</td><td>OC-38 B</td></tr>
+<tr><td class="k">8</td><td>셋업 할인 안내</td><td>저장하지 않음. 짝이 맞으면 주문서에서 할인하고 <code>SET_GROUP_SN</code>을 매김</td><td>OC-33 A</td></tr>
+<tr><td class="k">9</td><td>발송 예정일 지연 안내</td><td><code>ADDED_SHIPMENT_EXPECTED_DT</code>, <code>ADDED_SHIPMENT_EXPECTED_END_DT</code>를 현재 예정일과 비교 (화면 안내만)</td><td>OC-55 B, OC-56 B</td></tr>
+<tr><td class="k">10</td><td>하트·삭제</td><td>하트는 회원 <code>MBR_WISHLIST_ITEM</code>에서 읽음. 삭제는 물리 삭제</td><td>OC-54 A</td></tr>
+<tr><td class="k">11</td><td>품절 표시</td><td>저장하지 않음. 열 때 재고·판매 상태를 읽음</td><td>2-6 A</td></tr>
+<tr><td class="k">12</td><td>재입고 알림 신청</td><td>회원 <code>MBR_RESTOCK_NOTIFICATION_REQUEST</code>에 행 추가, 장바구니 <code>RESTOCK_REQUESTED_YN</code> = Y (신청 행이 지워지면 N)</td><td>OC-49 B</td></tr>
+<tr><td class="k">13</td><td>주문 쿠폰</td><td>저장하지 않음. 주문서에서 선택</td><td>OC-39 A</td></tr>
+<tr><td class="k">14</td><td>결제 예정 금액</td><td>저장하지 않음. 현재 가격·쿠폰·배송 정책으로 계산</td><td>-</td></tr>
+<tr><td class="k">15</td><td>주문하기</td><td>선택 행 ID를 주문서로 넘김. 결제 완료 때 주문한 SKU 행 삭제 (회원 ID + SKU, 비회원은 주문에 복사한 키 해시 + SKU)</td><td>OC-30 B, 2-8 A, OC-31 B</td></tr>
+<tr><td class="k">16</td><td>비회원 로그인 안내</td><td>로그인하면 비회원 행을 회원 행으로 옮기고 같은 SKU는 수량 합침. 재입고 버튼은 로그인 안내</td><td>2-2 A, OC-50 A</td></tr>
+<tr><td class="k">17</td><td>품절되어 아쉽다면</td><td>저장하지 않음. 품절 행의 스타일로 상품 <code>PRD_STYLE_RELATION</code>의 <code>SUBSTITUTE</code>(품절 시 대체) 관계를 읽고, 없으면 같은 소분류 <code>CATEGORY_ID</code>의 판매 중 상품으로 채움</td><td>상품 14 B</td></tr>
+<tr><td class="k">18</td><td>함께 보면 좋을 상품</td><td>저장하지 않음. 자체 브랜드몰이라 외부 광고가 아닌 MD 편성 영역. 영역·상품 편성은 전시 도메인(<code>DSP</code>), 편성이 없으면 장바구니 상품의 <code>COORDINATION</code>(코디 추천) 관계</td><td>전시 도메인에서 정함, 상품 14 B</td></tr>
+<tr><td class="k">19</td><td>보고 놓쳤던 상품</td><td>저장하지 않음. 회원 <code>MBR_RECENTLY_VIEWED_ITEM</code>(스타일 × 컬러)에서 주문한 상품을 빼고 최근 본 순. 비회원은 표시 안 함</td><td>회원 결정</td></tr>
+<tr><td class="k">20</td><td>스타일 브랜드 추천</td><td>저장하지 않음. 장바구니 상품의 스타일 분류와 같은 분류의 상품. 분류 컬럼은 상품 도메인에 추가 예정: 브랜드 기본값 <code>PRD_BRAND.BRAND_STYLE_CD</code> + 상품별 <code>PRD_STYLE.STYLE_MOOD_CD</code> (이름은 후보, 2026-11-25 C 선택, 상품 도메인 진행 때 반영)</td><td>상품 도메인에서 반영</td></tr>
+</table>
+<div class="note"><b>화면에 안 보이지만 행에 있는 것:</b> 담은 경로 <code>ADDED_SOURCE_TYPE_CD</code>·<code>EXHIBITION_ID</code>·<code>DISPLAY_CONTENT_ID</code>·<code>AFFILIATE_ID</code>(다시 담으면 마지막 경로, 주문 상품에 복사, OC-34·OC-44), 보관 기간 기준 <code>LAST_CART_ACTIVITY_AT</code>(2-4 A), 가격 인하 알림 기록 <code>PRICE_DROP_NOTIFIED_AT</code>·<code>PRICE_DROP_NOTIFIED_PRICE_AMT</code>(OC-32 B). 리마인드 알림은 알림 도메인 발송 기록으로 판단(OC-29 B).<br>
+<b>비회원이면:</b> 행은 <code>GUEST_CART_KEY_HASH</code>로 찾고, 쿠폰 선택은 NULL, 재입고 신청 여부는 N, 행 수 상한은 비회원 키별 정책값(OC-40 A).<br>
+<b>추천 영역 17~20</b>은 장바구니 컬럼을 쓰지 않고 다른 도메인 데이터로 만듭니다.<br><b>업무 컬럼 19개</b> 중 화면에 직접 보이는 값은 수량·썸네일·담은 가격 비교·쿠폰·예정일 비교·재입고 신청 여부이고, 나머지는 식별·정리·알림·정산용입니다.</div>
+</div>
+</div>
+</body></html>

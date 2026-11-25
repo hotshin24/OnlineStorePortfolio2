@@ -40,7 +40,7 @@ body += '<h3>제3조 (시행)</h3><p>이 명세는 2026-11-21 확정한 결정�
 head = ('<h1>회원 도메인 정책 명세</h1>'
         '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-23 기준 (법률 검토·컬럼 검토 반영) · 회원 도메인 결정 1~47번, 선행 결정 1~17번, 법률 검토 결정 L1~L12, 컬럼 검토 결정 C-1~C-99의 명문화</div>'
         '<div class="box">이 문서는 회원 도메인에서 확정한 결정을 조문 형식으로 정리한 것이다. 각 항 끝의 [번호]는 근거 결정이다 (숫자만 있으면 회원 도메인 결정, "선행"은 선행 결정, "법률 L"은 법률 검토 결정). 법령 조문은 해당 정책의 법적 근거다. "변경"은 법률 검토로 바뀐 결정이다. '
-        '테이블과 컬럼의 상세는 <code>docs/pdf/테이블_컬럼/회원/</code>, 결정 과정은 <code>docs/pdf/회원결정/</code>, 법률 검토 과정은 <code>docs/pdf/법률검토/</code>를 본다.</div>'
+        '테이블과 컬럼의 상세는 <code>docs/pdf/테이블_컬럼/회원/</code>, 결정 과정은 <code>docs/pdf/결정/회원결정/</code>, 법률 검토 과정은 <code>docs/pdf/법률검토/</code>를 본다.</div>'
         f'<h3>목차</h3><table class="toc">{toc}<tr><td>부칙</td><td>다른 도메인으로 넘기는 사항, 미정 사항, 시행</td><td></td></tr></table>')
 open(sys.argv[1], 'w', encoding='utf-8').write(f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>회원 도메인 정책 명세</title><style>{CSS}</style></head><body>{head}{body}</body></html>')
 print('articles', art)
