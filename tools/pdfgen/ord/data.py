@@ -146,19 +146,21 @@ table(t='ORD_ORDER', ko='주문', en='Order',
  ('배송지', [
   ('RECIPIENT_NM','수령인 이름','Recipient Name','VARCHAR2(150)','Y','','','평문 + TDE. 선물 주문은 수락 전 NULL (4-6 B). 회원 배송지를 가리키지 않고 값을 복사한다 (5-5 A). 출고 전에 바꾸면 덮어쓰고 바꾸기 전 값은 `ORD_ORDER_CHANGE_HIST`에 남긴다 (5-5 A 변경, OC-16 A).'),
   ('RECIPIENT_MOBILE_PHONE_NUMBER_ENC','수령인 휴대폰 번호 암호문','Recipient Mobile Phone Number Ciphertext','RAW(49)','Y','','',''),
+  ('RECIPIENT_MOBILE_PHONE_NUMBER_HASH','수령인 휴대폰 번호 검색용 해시','Recipient Mobile Phone Number Search Hash','RAW(32)','Y','','IX','회원 배송지와 같은 정규화(숫자만)와 HMAC 키. 회원이 아닌 수령인이 열람·정정·삭제·처리정지를 요청할 때(개인정보 보호법 35~37조) 주문을 찾는 용도이고, 업무 화면 검색에는 쓰지 않는다. 선물 받는 사람 휴대폰도 수락 때 수령인으로 복사돼 함께 찾는다. 파기 때 NULL (회원 C-63 A, OC-101 A).'),
   ('POSTAL_CODE_VAL','배송지 우편번호','Delivery Postal Code','VARCHAR2(5)','Y','','CK (숫자 5자리)',''),
   ('ROAD_ADDR','배송지 도로명 주소','Delivery Road Name Address','VARCHAR2(300)','Y','','','평문 + TDE (회원 C-72).'),
   ('LOT_NUMBER_ADDR','배송지 지번 주소','Delivery Lot Number Address','VARCHAR2(300)','Y','','',''),
   ('DETAIL_ADDRESS_ENC','배송지 상세 주소 암호문','Delivery Detail Address Ciphertext','RAW(229)','Y','','',''),
   ('DELIVERY_PLACE_CD','수령 장소 코드','Delivery Place Code','VARCHAR2(20)','Y','','CK (값 목록)','회원 코드 그룹을 함께 쓴다 (5-6 A).'),
-  ('ENTRANCE_ACCESS_ENC','공동현관 출입 방법 암호문','Building Entrance Access Method Ciphertext','RAW(129)','Y','','','주문 상품이 모두 구매 확정되고 진행 중인 회수가 없을 때 NULL. 출고 없이 끝나면 취소·만료 때 바로 NULL (5-8 B, 회원 C-71).'),
-  ('DELIVERY_REQUEST_ENC','배송 요청 사항 암호문','Delivery Request Note Ciphertext','RAW(329)','Y','','','[확인 필요: 공동현관 출입 방법과 같은 시점에 지울지 (5-8 B)]'),
-  ('REMOTE_AREA_CD','도서산간 구분 코드 (주문 때 판단)','Remote Area Type Code (Judged at Order)','VARCHAR2(20)','Y','','CK (값 목록)','기준표는 배송 도메인. 주문에는 판단 결과만 남긴다 (5-7 A).'),
-  ('SIDO_CD','배송지 시도 코드','Delivery Province Code','VARCHAR2(2)','Y','','',''),
-  ('SIGUNGU_CD','배송지 시군구 코드','Delivery District Code','VARCHAR2(5)','Y','','',''),
-  ('LEGAL_DONG_CD','배송지 법정동 코드','Delivery Legal Dong Code','VARCHAR2(10)','Y','','CK (숫자 10자리)',''),
-  ('DELIVERY_ADDRESS_HASH','정규화 배송 주소 검색용 해시','Normalized Delivery Address Search Hash','RAW(32)','Y','','IX','재판매 의심 주문 합산용 HMAC-SHA256 (8-3 A). 탈퇴·파기 때 NULL로만 바꾼다. [확인 필요: 정규화 규칙, 처리방침 고지]'),
-  ('HASH_KEY_VER','검색용 해시 계산 HMAC 키 버전','Search Hash HMAC Key Version','VARCHAR2(10)','N',"'1'",'','주문자 휴대폰 해시와 주소 해시의 키 버전 (선행 5, 회원 C-25).'),
+  ('ENTRANCE_ACCESS_METHOD_CD','공동현관 출입 방법 코드','Building Entrance Access Method Code','VARCHAR2(20)','Y','','CK (값 목록), CK (테이블 수준)','비밀번호 / 경비실 호출 / 자유 출입 / 기타. 비밀이 아닌 출입 방법은 암호화하지 않는다. 회원 배송지(C-59 C, 암호문 하나)도 같은 구조로 바꾼다 [회원 도메인을 다시 열 때] (OC-100 A).'),
+  ('ENTRANCE_ACCESS_ENC','공동현관 출입 방법 암호문','Building Entrance Access Method Ciphertext','RAW(129)','Y','','','공동현관 비밀번호나 기타 출입 방법. 출입 방법 코드가 비밀번호·기타일 때만 채운다 (OC-100 A). 주문 상품이 모두 구매 확정되고 진행 중인 회수가 없을 때 NULL. 출고 없이 끝나면 취소·만료 때 바로 NULL (5-8 B, 회원 C-71).'),
+  ('DELIVERY_REQUEST_ENC','배송 요청 사항 암호문','Delivery Request Note Ciphertext','RAW(329)','Y','','','평문 최대 300바이트. 공동현관 출입 방법 암호문과 같은 시점에 NULL로 바꾼다 (5-8 B, OC-105 A). 수령 장소가 기타이면 필수라는 검사(회원 C-60)는 일찍 지우는 값이라 애플리케이션이 한다.'),
+  ('REMOTE_AREA_CD','도서산간 구분 코드 (주문 때 판단)','Remote Area Type Code (Judged at Order)','VARCHAR2(20)','Y','','CK (값 목록)','기준표는 배송 도메인. 주문에는 판단 결과만 남긴다 (5-7 A). 선물 주문은 수락 때 판단하고, 받는 사람 주소가 도서산간이면 수락을 막고 다른 주소를 안내한다 (결제 뒤 추가비를 받을 수 없음, OC-104 B). 주문 때 판단한 값으로 고정하고 출고 전 배송지를 바꿔도 고치지 않는다. 도서산간 여부가 바뀌면 차액은 결제 도메인의 추가 결제(주문 1 : 결제 N)나 부분 환불로 처리하고, 새 판단은 변경 이력과 배송 도메인 출고 기록에 남긴다 (OC-107 A, 6-2 A, OC-98 A 유지).'),
+  ('LEGAL_DONG_CD','배송지 법정동 코드','Delivery Legal Dong Code','VARCHAR2(10)','Y','','CK (숫자 10자리)','주소 검색 API가 주는 법정동 코드. 시도·시군구 가상 컬럼의 원천이다 (OC-102 A).'),
+  ('SIDO_CD','시도 코드 (가상)','Province Code (Virtual)','VARCHAR2(2)','Y','','가상 컬럼','`GENERATED ALWAYS AS (SUBSTR(LEGAL_DONG_CD, 1, 2)) VIRTUAL`. 지역별 매출 집계와 배송 권역에 쓴다 (5-7 A, OC-102 A). 회원 배송지는 저장형(22-3 A)이다.'),
+  ('SIGUNGU_CD','시군구 코드 (가상)','District Code (Virtual)','VARCHAR2(5)','Y','','가상 컬럼','`GENERATED ALWAYS AS (SUBSTR(LEGAL_DONG_CD, 1, 5)) VIRTUAL`. 지역별 매출 집계와 배송 권역에 쓴다 (OC-102 A).'),
+  ('DELIVERY_ADDRESS_HASH','정규화 배송 주소 검색용 해시','Normalized Delivery Address Search Hash','RAW(32)','Y','','IX','재판매 의심 주문 합산용 HMAC-SHA256 (8-3 A). 입력은 주소 검색 API가 준 표준 도로명 주소(건물번호까지) + 정규화한 상세 주소(공백 제거, 동·호 표기 통일). 건물관리번호는 저장하지 않는다 (회원 C-61 A, OC-99 B). 탈퇴·파기 때 NULL로만 바꾼다. [확인 필요: 처리방침 고지]'),
+  ('HASH_KEY_VER','검색용 해시 계산 HMAC 키 버전','Search Hash HMAC Key Version','VARCHAR2(10)','N',"'1'",'','주문자 휴대폰 해시, 수령인 휴대폰 해시, 배송 주소 해시의 HMAC 키 버전. 키를 바꾸면 세 해시를 함께 다시 계산한다. CI 해시는 교체하지 않는 전용 키라 대상이 아니다 (선행 5, 회원 C-25).'),
  ]),
  ('선물하기', [
   yn('GIFT_ORDER_YN','선물 주문 여부','Gift Order Flag','N','받는 사람이 배송지를 입력하는 주문 (4-6 B, 회원 34-3).'),
@@ -202,7 +204,7 @@ table(t='ORD_ORDER', ko='주문', en='Order',
  ],
  idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 11개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
       'IX `IX_ORD_ORDER_MEMBER_ID_ORDERED_AT` (회원 주문 목록, LOCAL. 고객 주문 목록은 기간 선택 필수: 기본 최근 3개월, 최대 기간은 정책값, OC-90 A)', 'IX `IX_ORD_ORDER_PAYMENT_PENDING_DUE_AT` (만료 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'PAYMENT_PENDING\' THEN PAYMENT_DUE_AT END`, 결제 대기 행만 담음, GLOBAL, OC-70 A, OC-78 A)',
-      'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)',
+      'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (수령인 권리 요청, 드물어 LOCAL, OC-101 A)',
       'IX `IX_ORD_ORDER_PII_RETENTION_END_DT` (파기 배치, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GIFT_PENDING_INPUT_DUE_AT` (선물 기한 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'GIFT_ACCEPT_PENDING\' THEN GIFT_ADDRESS_INPUT_DUE_AT END`, OC-70 A)', 'IX `IX_ORD_ORDER_ORIGINAL_ORDER_ID` (원주문 연결 조회, FK 없음, GLOBAL, OC-77 B, OC-78 A)', 'IX `IX_ORD_ORDER_ORDER_STATUS_CD_ORDERED_AT` (관리자 상태별 목록, 기간 조건 필수, LOCAL, OC-82 A)', 'IX `IX_ORD_ORDER_HOLD_REASON_CD` (보류 목록, 함수 기반: `CASE WHEN HOLD_YN = \'Y\' THEN HOLD_REASON_CD END`, 보류 중인 행만 담음, GLOBAL, OC-75 A, OC-78 A)', 'IX `IX_ORD_ORDER_LEGAL_GUARDIAN_CONSENT_ID` (FK, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GUEST_IDENTITY_CI_HASH` (회원 연결 목록, GLOBAL, OC-83 A)'],
  check=['`ORDER_STATUS_CD`가 결제 대기·결제 만료가 아니면 `ORDER_CONTENT_CONFIRMED_AT` NOT NULL (3-7 A)',
         '`GUEST_ORDER_YN` = Y이고 `PII_PURGED_AT` IS NULL이면 비회원 본인인증 3개 컬럼, `GUEST_IDENTITY_CI_HASH`, `GUEST_ORDER_PASSWORD_HASH`, 개인정보 처리 고지 2개 컬럼 NOT NULL. '
@@ -228,6 +230,9 @@ table(t='ORD_ORDER', ko='주문', en='Order',
         '`ORIGINAL_ORDER_ID <> ORDER_ID` (OC-65 A, OC-77 B)',
         '`TAX_INVOICE_REQUESTED_YN` = Y ⇔ `TAX_INVOICE_REQUESTED_AT` NOT NULL (OC-25 B)',
         '`GIFT_ORDER_YN` = Y이면 받는 사람 휴대폰 암호문과 배송지 입력 기한 NOT NULL (4-6 B)',
+        '(`GIFT_ORDER_YN` = N 또는 `GIFT_ACCEPTED_AT` NOT NULL)이고 `PII_PURGED_AT` IS NULL이면 수령인 이름, 수령인 휴대폰 암호문·해시, 우편번호, 도로명 주소, 법정동 코드, 수령 장소, 도서산간 구분 NOT NULL. '
+        '상세 주소는 회원 쪽도 선택이라 빼고, 공동현관·배송 요청은 일찍 지우는 값이라 뺀다 (선행 7, OC-84 A와 같은 형식, OC-103 A)',
+        '`ENTRANCE_ACCESS_ENC` NOT NULL이면 `ENTRANCE_ACCESS_METHOD_CD` IN (\'PASSWORD\', \'OTHER\') (파기 뒤에는 암호문만 NULL, OC-100 A)',
         '`GUEST_ORDER_YN` = N이면 `MEMBER_ID` NOT NULL, 비회원 전용 컬럼(본인인증 3개, CI 해시, 비밀번호 해시, 고지 2개, 마지막 실패 일시, 잠금 해제 일시, 연결 일시·방식, 장바구니 키 해시) IS NULL, '
         '`GUEST_LOOKUP_FAIL_CNT` = 0 (OC-31 B, OC-84 A)',
         '`GUEST_ORDER_YN` = Y이면 `MEMBER_ID` NOT NULL ⇔ `MEMBER_LINKED_AT` NOT NULL (연결 전에는 회원 ID 없음, OC-84 A)',
@@ -510,6 +515,7 @@ CODES = {
  'ADDED_SOURCE_TYPE_CD': vals(('EXHIBITION','기획전','Exhibition','기획전 페이지에서 담음'),('CONTENT','스냅·코디 콘텐츠','Styling Content','전시 콘텐츠에서 담음'),('AFFILIATE','크리에이터·제휴 링크','Affiliate Link','수수료 정산 대상'),('DIRECT','직접','Direct','상품 목록·상세·검색·추천 등 나머지. 경로 분석은 외부 분석 도구 (선행 12)')),
  'LOOKUP_FAIL_REASON_CD': vals(('ORDER_NOT_FOUND','주문 없음','Order Not Found','입력한 주문번호의 비회원 주문이 없음'),('PASSWORD_MISMATCH','비밀번호 불일치','Password Mismatch',''),('LOOKUP_LOCKED','조회 잠김','Lookup Locked','주문별 잠금 중 시도 (OC-23 A)')),
  'DELIVERY_FEE_DISCOUNT_REASON_CD': vals(('FREE_THRESHOLD','무료배송 기준 충족','Free Delivery Threshold Met','기본 배송비와 같은 금액 (OC-96 A)'),('COUPON','무료배송 쿠폰','Free Delivery Coupon','쿠폰 ID 필수'),('PROMOTION','프로모션','Promotion','등급 무료배송 혜택은 프로모션 도메인에서 정하면 값 추가 (OC-93 A)')),
+ 'ENTRANCE_ACCESS_METHOD_CD': vals(('PASSWORD','공동현관 비밀번호','Entrance Password','암호문 필수 입력'),('CALL_SECURITY','경비실 호출','Call Security Office',''),('FREE_ACCESS','자유 출입','Free Access',''),('OTHER','기타','Other','암호문에 방법 입력')),
  'ORDER_ENTRY_PATH_CD': vals(('CART','장바구니 주문','Cart',''),('BUY_NOW','바로 구매','Buy Now','장바구니를 거치지 않음 (2-9 A)')),
  'TAXATION_TYPE_CD': vals(('TAXABLE','과세','Taxable','상품 코드 그룹'),('TAX_EXEMPT','면세','Tax Exempt','')),
  'WITHDRAWAL_RESTRICTION_CD': vals(('VALUE_DECREASE_BY_USE','사용·착용으로 가치 감소','Value Decrease by Use','상품 코드 그룹. 제한 없음(`NONE`)은 NULL로 저장')),
@@ -523,7 +529,7 @@ CODES = {
 }
 REUSE = {'DELIVERY_PLACE_CD': 'DELIVERY_PLACE', 'TAXATION_TYPE_CD': 'TAXATION_TYPE (상품)', 'WITHDRAWAL_RESTRICTION_CD': 'WITHDRAWAL_RESTRICTION (상품)'}
 
-CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자'), ('ORD_ORDER', '금액·세금계산서')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자·금액·세금계산서 그룹 확정
+CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자'), ('ORD_ORDER', '금액·세금계산서'), ('ORD_ORDER', '배송지')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자·금액·세금계산서·배송지 그룹 확정
 CONFIRMED_TABLES = set()
 
 CONFIRM = [
@@ -532,6 +538,8 @@ CONFIRM = [
  ('영업일 달력', '"3영업일" 계산용 영업일 달력 테이블(1-8 A)은 주문 도메인 테이블이 아니다. 소속(`SYS` / `CMM`)을 정한 뒤 그 도메인에 둔다.', 'SYS 또는 CMM'),
  ('다른 도메인 FK', '`CLAIM_ID`, `NON_SALE_ITEM_ID`, `PROMOTION_ID`(사은품·할인 배분), `MEMBER_COUPON_ID`, 주문 `DELIVERY_FEE_MEMBER_COUPON_ID`, 장바구니 `SELECTED_MEMBER_COUPON_ID`, 장바구니·주문 상품의 `EXHIBITION_ID`·`DISPLAY_CONTENT_ID`·`AFFILIATE_ID`는 해당 도메인 테이블이 정해지면 FK로 건다.', 'CLM, WMS, PRM, DSP'),
  ('기획전·제휴처 소속', '기획전 테이블의 소속(DSP / PRM)은 전시·프로모션 도메인을 설계할 때 정한다 (OC-45 C). 크리에이터·제휴처 마스터의 소속(SYS / STL)과 개인 크리에이터의 개인정보 항목·보유 기간·원천징수(세무 확인)는 정산 도메인을 설계할 때 정한다 (OC-46 C).', 'DSP, PRM, SYS, STL'),
+ ('회원 배송지 다시 열 때', '공동현관 출입 방법 코드 추가(C-59 C 변경, OC-100 A). 시도·시군구 저장형(22-3 A)을 주문처럼 가상 컬럼으로 바꿀지 확인 (OC-102 A).', '회원 `MBR_DELIVERY_ADDRESS`'),
+ ('도착 보장 배송', '주문 상품에 배송 서비스 유형 코드(일반 / 도착 보장)를 둔다 (OC-106 A). 주문 상품 그룹을 검토할 때 컬럼으로 정하고, 택배사 도착 보장 약정과 지연 보상은 배송 도메인에서 정한다.', '`ORD_ORDER_ITEM`, 배송 `DLV`'),
  ('재입고 알림 신청 경로', '회원 도메인 `MBR_RESTOCK_NOTIFICATION_REQUEST`에 신청 경로 코드(`PRODUCT_DETAIL` / `CART` / `WISHLIST`)를 추가하기로 했다 (OC-51 B). 다시 신청하면 마지막 경로로 바꾼다 (OC-53 A). 확정된 회원 문서는 회원 도메인을 다시 열 때 함께 고친다 (OC-52 B). 그때 신청 행 삭제 처리 6곳에 장바구니 `RESTOCK_REQUESTED_YN` 갱신도 적는다 (OC-49 B).', '회원 MBR'),
  ('세트 할인 조건', '장바구니는 세트로 담았는지 기억하지 않는다 (OC-33 A). 함께 구매 할인을 "짝이 맞으면 자동 할인"으로 정한다는 전제다. 프로모션 도메인에서 "세트로 담아야 할인"으로 정하면 OC-33을 다시 연다.', '프로모션 PRM'),
  ('`SYS_PII_ARCHIVE` 주문 대상 FK', '탈퇴 회원 주문 개인정보를 옮길 때 주문을 가리키는 대상 FK가 필요하다 (10-11 A). 시스템 도메인에서 설계한다.', '`SYS_PII_ARCHIVE`'),
