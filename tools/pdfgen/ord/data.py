@@ -178,16 +178,18 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('GIFT_LINK_LAST_SENT_AT','선물 링크 마지막 발송 일시','Gift Link Last Sent At',TS,'Y','','','다시 보내기 최소 간격(정책값)과 기한 전 알림 일정의 기준 (OC-112 A).'),
  ]),
  ('법정 확인·고지', [
-  ('ORDER_CONTENT_CONFIRMED_AT','주문 내용 확인 일시','Order Content Confirmed At',TS,'Y','','CK (테이블 수준)','결제 전 확인 절차 (전자상거래법 7조, 8조 2항). 결제 완료 이후면 NOT NULL (3-7 A).'),
-  ('APPLIED_TERMS_VER','적용 이용약관 버전','Applied Terms of Service Version','VARCHAR2(20)','Y','','',''),
-  ('CONTRACT_DOCUMENT_ISSUED_AT','계약 내용 서면 교부 일시','Contract Document Issued At',TS,'Y','','IX','주문 완료 메일·알림톡 발송이 성공한 시각. 청약철회 기간 시작점 (3-9 A, 전자상거래법 13조 2항, 17조 1항). 발송 기록은 `NTF`.'),
-  ('CONTRACT_DOCUMENT_TEMPLATE_VER','계약 서면 양식 버전','Contract Document Template Version','VARCHAR2(20)','Y','','','서면 내용은 주문 데이터와 양식 버전으로 다시 만든다 (3-9 A).'),
+  ('ORDER_CONTENT_CONFIRMED_AT','주문 내용 확인 일시','Order Content Confirmed At',TS,'Y','','CK (테이블 수준)','결제 전 확인 절차 (전자상거래법 7조, 8조 2항). 결제 완료 이후면 NOT NULL (3-7 A). 결제 완료 일시보다 늦을 수 없다 (OC-120 A).'),
+  ('APPLIED_TERMS_VER','적용 이용약관 버전','Applied Terms of Service Version','VARCHAR2(20)','Y','','CK (테이블 수준)','결제 전 확인 때 보여 준 이용약관 버전. 확인 일시와 함께 채운다 (OC-120 A).'),
+  ('CONTRACT_DOCUMENT_ISSUED_AT','계약 내용 서면 교부 일시','Contract Document Issued At',TS,'Y','','CK (테이블 수준)','계약 내용 서면(주문 완료 알림톡·문자·이메일) 발송이 성공한 시각. 청약철회 기간 시작점 (3-9 A, 전자상거래법 13조 2항, 17조 1항). 알림톡이 실패하면 문자·이메일로 바꿔 다시 보내고, 정책값 횟수까지 실패하면 관리자에게 알린다. 이 값이 NULL이면 출고 요청을 막는다(13조 2항 "공급할 때까지 교부", 애플리케이션 검사). 미교부 주문은 함수 기반 인덱스로 찾는다 (OC-117 A, OC-118 A).'),
+  ('CONTRACT_DOCUMENT_CHANNEL_CD','계약 서면 교부 수단 코드','Contract Document Delivery Channel Code','VARCHAR2(20)','Y','','CK (값 목록), CK (테이블 수준)','발송에 성공한 수단(알림톡 / 문자 / 이메일). 다른 수단으로 다시 보내면 성공한 수단을 남긴다. 알림 기록의 보관 기간에 기대지 않고 주문과 같이 보관한다 (OC-119 A).'),
+  ('CONTRACT_DOCUMENT_TEMPLATE_VER','계약 서면 양식 버전','Contract Document Template Version','VARCHAR2(20)','Y','','CK (테이블 수준)','서면 내용은 주문 데이터와 양식 버전으로 다시 만든다 (3-9 A).'),
+  ('ORDER_RECEIPT_NOTIFIED_AT','청약 수신 확인 통지 일시','Order Receipt Confirmation Notified At',TS,'Y','','','청약(주문)을 받았다는 확인과 판매 가능 여부를 통지한 발송 성공 일시 (전자상거래법 14조 1항). 계약 서면과 따로 보낸다 (OC-121 B).'),
   yn('MINOR_ORDER_YN','미성년 회원 주문 여부','Minor Member Order Flag','N','주문 때 생년월일로 계산. 비회원은 본인인증 결과가 만 19세 미만이면 주문할 수 없으므로(정책명세 제52조, 회원 C-85 B) 비회원 주문은 언제나 N (9-3 A).'),
-  ('ADULTHOOD_DT','주문 회원 성년 도달 일자','Ordering Member Adulthood Date','DATE','Y','','CK (테이블 수준)','만 19세가 되는 날. 탈퇴 뒤에도 파기 예정일 계산에 쓴다 (9-3 A, 10-2 A).'),
-  ('MINOR_CANCELLATION_RIGHT_NOTIFIED_AT','미성년자 계약 취소권 고지 일시','Minor Cancellation Right Notified At',TS,'Y','','CK (테이블 수준)','회원 C-83. 전자상거래법 13조 3항.'),
   fk('LEGAL_GUARDIAN_CONSENT_ID','근거 법정대리인 동의 식별 번호','Basis Legal Guardian Consent Identifier','MBR_LEGAL_GUARDIAN_CONSENT','Y','CK (테이블 수준)','회원 C-90.'),
+  ('MINOR_CANCELLATION_RIGHT_NOTIFIED_AT','미성년자 계약 취소권 고지 일시','Minor Cancellation Right Notified At',TS,'Y','','CK (테이블 수준)','회원 C-83. 전자상거래법 13조 3항. 계약 전 고지라 결제 완료 일시보다 늦을 수 없다 (OC-120 A).'),
+  ('ADULTHOOD_DT','주문 회원 성년 도달 일자','Ordering Member Adulthood Date','DATE','Y','','CK (테이블 수준)','만 19세가 되는 날. 탈퇴 뒤에도 파기 예정일 계산에 쓴다 (9-3 A, 10-2 A). 미성년 주문이면 주문일보다 뒤다 (OC-120 A).'),
   amt('GUARDIAN_MONTHLY_LIMIT_AMT','적용 법정대리인 월 구매 한도','Applied Guardian Monthly Purchase Limit','한도를 정하지 않은 동의면 NULL (9-5 B, 회원 C-95).', null='Y', d=''),
-  amt('MONTH_USED_BEFORE_ORDER_AMT','이 주문 전 그 달 결제 금액 합계','Month Payment Total Before This Order','결제 대기 포함, 만료 제외, 환불 차감 (9-4 A, 9-5 B).', null='Y', d=''),
+  amt('MONTH_USED_BEFORE_ORDER_AMT','이 주문 전 그 달 결제 금액 합계','Month Payment Total Before This Order','결제 대기 포함, 만료 제외, 환불 차감 (9-4 A, 9-5 B). "그 달"은 한국 시간 기준 주문 일시의 달이다 (OC-122 A). 합계를 조회하기 전에 회원 행을 잠가 같은 회원의 동시 주문을 차례로 처리한다 (9-4 A).', null='Y', d=''),
  ]),
  ('주문 당시 회원 스냅샷', [
   ('ORDER_GRADE_CD','주문 당시 회원 등급 코드','Member Grade Code at Order','VARCHAR2(30)','Y','','CK (테이블 수준)','회원 ID가 NULL이면 NULL (5-4 B).'),
@@ -207,14 +209,20 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('ROW_VERSION_NO','행 버전 번호','Row Version Number','NUMBER(10)','N','0','','바꿀 때마다 1 증가, `WHERE ROW_VERSION_NO = ?` 조건 (10-7 A).'),
  ]),
  ],
- idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 13개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
+ idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 14개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
       'IX `IX_ORD_ORDER_MEMBER_ID_ORDERED_AT` (회원 주문 목록, LOCAL. 고객 주문 목록은 기간 선택 필수: 기본 최근 3개월, 최대 기간은 정책값, OC-90 A)', 'IX `IX_ORD_ORDER_PAYMENT_PENDING_DUE_AT` (만료 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'PAYMENT_PENDING\' THEN PAYMENT_DUE_AT END`, 결제 대기 행만 담음, GLOBAL, OC-70 A, OC-78 A)',
-      'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)', 'UK `UK_ORD_ORDER_GIFT_ACCEPT_TOKEN_HASH` (GLOBAL, 목록에서 빠져 있던 것을 더함)', 'IX `IX_ORD_ORDER_GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (받은 선물함, GLOBAL, OC-110 A)', 'IX `IX_ORD_ORDER_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (수령인 권리 요청, 드물어 LOCAL, OC-101 A)',
+      'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_CONTRACT_DOCUMENT_UNISSUED` (서면 미교부 주문, 함수 기반: `CASE WHEN CONTRACT_DOCUMENT_ISSUED_AT IS NULL AND PAYMENT_COMPLETED_AT IS NOT NULL THEN ORDERED_AT END`, GLOBAL, 교부 일시 일반 IX를 대체, OC-117 A)', 'UK `UK_ORD_ORDER_GIFT_ACCEPT_TOKEN_HASH` (GLOBAL, 목록에서 빠져 있던 것을 더함)', 'IX `IX_ORD_ORDER_GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (받은 선물함, GLOBAL, OC-110 A)', 'IX `IX_ORD_ORDER_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (수령인 권리 요청, 드물어 LOCAL, OC-101 A)',
       'IX `IX_ORD_ORDER_PII_RETENTION_END_DT` (파기 배치, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GIFT_PENDING_INPUT_DUE_AT` (선물 기한 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'GIFT_ACCEPT_PENDING\' THEN GIFT_ADDRESS_INPUT_DUE_AT END`, OC-70 A)', 'IX `IX_ORD_ORDER_ORIGINAL_ORDER_ID` (원주문 연결 조회, FK 없음, GLOBAL, OC-77 B, OC-78 A)', 'IX `IX_ORD_ORDER_ORDER_STATUS_CD_ORDERED_AT` (관리자 상태별 목록, 기간 조건 필수, LOCAL, OC-82 A)', 'IX `IX_ORD_ORDER_HOLD_REASON_CD` (보류 목록, 함수 기반: `CASE WHEN HOLD_YN = \'Y\' THEN HOLD_REASON_CD END`, 보류 중인 행만 담음, GLOBAL, OC-75 A, OC-78 A)', 'IX `IX_ORD_ORDER_LEGAL_GUARDIAN_CONSENT_ID` (FK, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GUEST_IDENTITY_CI_HASH` (회원 연결 목록, GLOBAL, OC-83 A)'],
  check=['`ORDER_STATUS_CD`가 결제 대기·결제 만료가 아니면 `ORDER_CONTENT_CONFIRMED_AT` NOT NULL (3-7 A)',
         '`GUEST_ORDER_YN` = Y이고 `PII_PURGED_AT` IS NULL이면 비회원 본인인증 3개 컬럼, `GUEST_IDENTITY_CI_HASH`, `GUEST_ORDER_PASSWORD_HASH`, 개인정보 처리 고지 2개 컬럼 NOT NULL. '
         '파기 뒤에는 NULL일 수 있다 (선행 7, 9-1 A, OC-20 A, OC-83 A, OC-84 A). [확인 필요: 분리 보관(10-11 A) 때 `PII_PURGED_AT`을 채우는지. 채우지 않으면 분리 보관 여부 조건을 더한다]',
         '`MINOR_ORDER_YN` = Y ⇔ `ADULTHOOD_DT`, `MINOR_CANCELLATION_RIGHT_NOTIFIED_AT`, `LEGAL_GUARDIAN_CONSENT_ID` NOT NULL (9-3 A)',
+        '`ORDER_CONTENT_CONFIRMED_AT` NOT NULL ⇔ `APPLIED_TERMS_VER` NOT NULL (OC-120 A)',
+        '`CONTRACT_DOCUMENT_ISSUED_AT` NOT NULL ⇔ `CONTRACT_DOCUMENT_TEMPLATE_VER`, `CONTRACT_DOCUMENT_CHANNEL_CD` NOT NULL (OC-119 A, OC-120 A)',
+        '`ORDER_CONTENT_CONFIRMED_AT <= PAYMENT_COMPLETED_AT` (둘 다 있을 때, 결제 전 확인, OC-120 A)',
+        '`MINOR_CANCELLATION_RIGHT_NOTIFIED_AT <= PAYMENT_COMPLETED_AT` (둘 다 있을 때, 계약 전 고지, OC-120 A)',
+        '`MINOR_ORDER_YN` = N이면 `GUARDIAN_MONTHLY_LIMIT_AMT`, `MONTH_USED_BEFORE_ORDER_AMT` IS NULL (OC-120 A)',
+        '`MINOR_ORDER_YN` = Y이면 `GUEST_ORDER_YN` = N이고 `ADULTHOOD_DT > TRUNC(ORDERED_AT)` (OC-120 A)',
         '`GUARDIAN_MONTHLY_LIMIT_AMT` NOT NULL이면 `MONTH_USED_BEFORE_ORDER_AMT` NOT NULL이고 `MONTH_USED_BEFORE_ORDER_AMT + PAYMENT_AMT <= GUARDIAN_MONTHLY_LIMIT_AMT` (9-5 B)',
         '`MEMBER_ID` IS NULL이면 `ORDER_GRADE_CD`, `ORDER_MEMBER_TYPE_CD`, `ORDER_GRADE_POINT_ACCUMULATION_RT` 모두 NULL (5-4 B)',
         '`PAYMENT_AMT = PRODUCT_TOTAL_AMT − COUPON_DISCOUNT_AMT − PROMOTION_DISCOUNT_AMT − GRADE_DISCOUNT_AMT − EMPLOYEE_DISCOUNT_AMT − POINT_USED_AMT − DEPOSIT_USED_AMT + BASE_DELIVERY_FEE_AMT + REMOTE_AREA_DELIVERY_FEE_AMT − DELIVERY_FEE_DISCOUNT_AMT` (6-1 A)',
@@ -525,6 +533,7 @@ CODES = {
  'LOOKUP_FAIL_REASON_CD': vals(('ORDER_NOT_FOUND','주문 없음','Order Not Found','입력한 주문번호의 비회원 주문이 없음'),('PASSWORD_MISMATCH','비밀번호 불일치','Password Mismatch',''),('LOOKUP_LOCKED','조회 잠김','Lookup Locked','주문별 잠금 중 시도 (OC-23 A)')),
  'DELIVERY_FEE_DISCOUNT_REASON_CD': vals(('FREE_THRESHOLD','무료배송 기준 충족','Free Delivery Threshold Met','기본 배송비와 같은 금액 (OC-96 A)'),('COUPON','무료배송 쿠폰','Free Delivery Coupon','쿠폰 ID 필수'),('PROMOTION','프로모션','Promotion','등급 무료배송 혜택은 프로모션 도메인에서 정하면 값 추가 (OC-93 A)')),
  'ENTRANCE_ACCESS_METHOD_CD': vals(('PASSWORD','공동현관 비밀번호','Entrance Password','암호문 필수 입력'),('CALL_SECURITY','경비실 호출','Call Security Office',''),('FREE_ACCESS','자유 출입','Free Access',''),('OTHER','기타','Other','암호문에 방법 입력')),
+ 'CONTRACT_DOCUMENT_CHANNEL_CD': vals(('ALIMTALK','알림톡','KakaoTalk Notification','기본 수단'),('SMS','문자','SMS / LMS','알림톡 실패 때'),('EMAIL','이메일','Email','알림톡 실패 때')),
  'ORDER_ENTRY_PATH_CD': vals(('CART','장바구니 주문','Cart',''),('BUY_NOW','바로 구매','Buy Now','장바구니를 거치지 않음 (2-9 A)')),
  'TAXATION_TYPE_CD': vals(('TAXABLE','과세','Taxable','상품 코드 그룹'),('TAX_EXEMPT','면세','Tax Exempt','')),
  'WITHDRAWAL_RESTRICTION_CD': vals(('VALUE_DECREASE_BY_USE','사용·착용으로 가치 감소','Value Decrease by Use','상품 코드 그룹. 제한 없음(`NONE`)은 NULL로 저장')),
@@ -538,7 +547,7 @@ CODES = {
 }
 REUSE = {'DELIVERY_PLACE_CD': 'DELIVERY_PLACE', 'TAXATION_TYPE_CD': 'TAXATION_TYPE (상품)', 'WITHDRAWAL_RESTRICTION_CD': 'WITHDRAWAL_RESTRICTION (상품)'}
 
-CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자'), ('ORD_ORDER', '금액·세금계산서'), ('ORD_ORDER', '배송지'), ('ORD_ORDER', '선물하기')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자·금액·세금계산서·배송지·선물하기 그룹 확정
+CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자'), ('ORD_ORDER', '금액·세금계산서'), ('ORD_ORDER', '배송지'), ('ORD_ORDER', '선물하기'), ('ORD_ORDER', '법정 확인·고지')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자·금액·세금계산서·배송지·선물하기·법정 확인·고지 그룹 확정
 CONFIRMED_TABLES = set()
 
 CONFIRM = [
@@ -562,6 +571,6 @@ CONFIRM = [
  ('임원 할인과 연도 기준', '임원은 특수관계인이라 저가 판매가 부당행위계산 부인(법인세법 52조) 대상인지 [확인 필요: 세무]. 회원 임직원 연도별 할인 테이블의 연도가 소득세 과세기간(1~12월)과 같은지 확인한다. 재판매 1년 금지(소득세법 시행령 17조의5 2항 3호)는 임직원 할인 약관과 재판매 탐지(8-3 A)의 근거다.', '회원 `MBR`, 관리자 `ADM`'),
  ('적립금 원장 적립 사유', '배분 때 구매 적립분과 기타 적립분을 나누려면 적립금 원장의 적립 건마다 구입 실적 적립인지 구분하는 값이 있어야 한다 (OC-26 A).', '적립금 원장 도메인'),
  ('공급 시기와 임직원 할인 과세', '공급 시기(부가가치세법 15조: 인도되는 때)로 출고 일시와 배송 완료 일시 중 무엇을 쓸지, 임직원 할인 차액의 과세 여부(10조 4항, 29조 4항)와 기타 적립분 결제의 과세 처리. [확인 필요: 세무]', '정산 `STL`'),
- ('정책값 추가', '선물 배송지 입력 기한 일수(결제 완료 기준, OC-113 A), 선물 링크 최대 발송 횟수와 최소 간격 (OC-112 A). 비회원 주문 조회 잠금 실패 횟수와 잠금 시간 (OC-23 A), 실패 횟수 초기화 시간 (OC-86 A), IP별 조회 실패 허용 횟수와 집계 시간 (OC-87 B), 주문 요청 IP 보관 기간 3개월 (OC-92 C), 고객 주문 목록 최대 조회 기간 (OC-90 A). 비회원 키당 장바구니 행 수 상한 (회원과 따로, OC-40 A).', '`CMM_CODE` 주문 정책 그룹'),
+ ('정책값 추가', '계약 서면 다시 보내기 최대 횟수 (OC-118 A). 선물 배송지 입력 기한 일수(결제 완료 기준, OC-113 A), 선물 링크 최대 발송 횟수와 최소 간격 (OC-112 A). 비회원 주문 조회 잠금 실패 횟수와 잠금 시간 (OC-23 A), 실패 횟수 초기화 시간 (OC-86 A), IP별 조회 실패 허용 횟수와 집계 시간 (OC-87 B), 주문 요청 IP 보관 기간 3개월 (OC-92 C), 고객 주문 목록 최대 조회 기간 (OC-90 A). 비회원 키당 장바구니 행 수 상한 (회원과 따로, OC-40 A).', '`CMM_CODE` 주문 정책 그룹'),
  ('재판매 탐지 고지', '정규화 주소 해시를 쓰는 목적을 개인정보 처리방침에 적을지.', '`DELIVERY_ADDRESS_HASH`'),
 ]

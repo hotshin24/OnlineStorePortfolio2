@@ -70,7 +70,7 @@ td.k { width: 18px; text-align: center; }
    <div class="in">(06236) 서울특별시 강남구 테헤란로 000</div>
    <div class="in">상세 주소: ●●동 ●●●호</div>
    <div class="muted"><span class="n">10</span>제주·도서산간 추가 배송비 없음 (주소로 판단)</div>
-   <div class="row"><div class="in" style="flex:1;margin-right:4px"><span class="n">11</span>수령 장소: 문 앞 ▾</div><div class="in" style="flex:1">공동현관: 비밀번호 ****</div></div>
+   <div class="row"><div class="in" style="flex:1;margin-right:4px"><span class="n">11</span>수령 장소: 문 앞 ▾</div><div class="in" style="flex:1">공동현관: 비밀번호 ▾ ****</div></div>
    <div class="in">배송 요청 사항: 부재 시 경비실에 맡겨 주세요</div>
   </div>
 
@@ -97,7 +97,7 @@ td.k { width: 18px; text-align: center; }
    <div class="row"><span>프로모션 할인</span><span>−10,000원</span></div>
    <div class="row"><span>등급 할인</span><span>−11,600원</span></div>
    <div class="row"><span>적립금</span><span>−5,000원</span></div>
-   <div class="row"><span>배송비</span><span>0원 <span class="muted">(5만 원 이상 무료)</span></span></div>
+   <div class="row"><span>배송비</span><span>0원 <span class="muted">(5만 원 이상 무료 · 반품 배송비 편도 3,000원)</span></span></div>
    <hr><div class="row"><b>최종 결제 금액</b><span class="total">324,500원</span></div>
    <div class="row muted"><span><span class="n">17</span>적립 예정</span><span>6,490원 (구매 확정 후)</span></div>
   </div>
@@ -123,22 +123,23 @@ td.k { width: 18px; text-align: center; }
 <tr><td class="k">5</td><td>청약철회 제한 고지</td><td><code>WITHDRAWAL_RESTRICTION_CD</code>, <code>WITHDRAWAL_RESTRICTION_NOTICE_CN</code> (문구 전문)</td><td>5-9 A</td></tr>
 <tr><td class="k">6</td><td>사은품</td><td><code>ORD_ORDER_FREEBIE</code> (<code>NON_SALE_ITEM_ID</code>, <code>PROMOTION_ID</code>)</td><td>4-4 A</td></tr>
 <tr><td class="k">7</td><td>주문자</td><td><code>ORDERER_NM</code>, <code>ORDERER_MOBILE_PHONE_NUMBER_ENC</code>·<code>_HASH</code>, <code>ORDERER_EMAIL_ENC</code></td><td>5-5 A</td></tr>
-<tr><td class="k">8</td><td>배송지</td><td><code>RECIPIENT_NM</code>, <code>RECIPIENT_MOBILE_PHONE_NUMBER_ENC</code>, <code>POSTAL_CODE_VAL</code>, <code>ROAD_ADDR</code>, <code>LOT_NUMBER_ADDR</code>, <code>DETAIL_ADDRESS_ENC</code>, <code>DELIVERY_ADDRESS_HASH</code>. 회원 배송지를 가리키지 않고 복사</td><td>5-5 A</td></tr>
-<tr><td class="k">9</td><td>선물하기</td><td><code>GIFT_ORDER_YN</code>, 받는 사람 이름·휴대폰, 메시지, 입력 기한. 켜면 8의 주소는 비움</td><td>4-6 B</td></tr>
-<tr><td class="k">10</td><td>도서산간 판단</td><td><code>SIDO_CD</code>, <code>SIGUNGU_CD</code>, <code>LEGAL_DONG_CD</code>, <code>REMOTE_AREA_CD</code></td><td>5-7 A</td></tr>
-<tr><td class="k">11</td><td>수령 장소·공동현관·요청 사항</td><td><code>DELIVERY_PLACE_CD</code>, <code>ENTRANCE_ACCESS_ENC</code>, <code>DELIVERY_REQUEST_ENC</code></td><td>5-6 A, 5-8 B</td></tr>
+<tr><td class="k">8</td><td>배송지</td><td><code>RECIPIENT_NM</code>, <code>RECIPIENT_MOBILE_PHONE_NUMBER_ENC</code>·<code>_HASH</code>, <code>POSTAL_CODE_VAL</code>, <code>ROAD_ADDR</code>, <code>LOT_NUMBER_ADDR</code>, <code>DETAIL_ADDRESS_ENC</code>, <code>DELIVERY_ADDRESS_HASH</code>, <code>HASH_KEY_VER</code>. 회원 배송지를 가리키지 않고 복사</td><td>5-5 A, OC-101</td></tr>
+<tr><td class="k">9</td><td>선물하기</td><td><code>GIFT_ORDER_YN</code>, <code>GIFT_RECIPIENT_NM</code>, <code>GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_ENC</code>·<code>_HASH</code>, <code>GIFT_MESSAGE_CN</code>(200자). 켜면 8의 주소는 비움. 받는 사람 링크(<code>GIFT_ACCEPT_TOKEN_HASH</code>)와 입력 기한(<code>GIFT_ADDRESS_INPUT_DUE_AT</code> = 결제 완료 + 정책값 일수)은 결제 완료 뒤에 정함. 받는 사람 화면은 아래 참고</td><td>4-6 B, OC-110, OC-113, OC-115</td></tr>
+<tr><td class="k">10</td><td>도서산간 판단</td><td><code>LEGAL_DONG_CD</code>, <code>REMOTE_AREA_CD</code>. <code>SIDO_CD</code>·<code>SIGUNGU_CD</code>는 법정동 코드에서 계산하는 가상 컬럼</td><td>5-7 A, OC-102</td></tr>
+<tr><td class="k">11</td><td>수령 장소·공동현관·요청 사항</td><td><code>DELIVERY_PLACE_CD</code>, 출입 방법 <code>ENTRANCE_ACCESS_METHOD_CD</code>(비밀번호·경비실 호출·자유 출입·기타), 비밀번호·기타일 때만 <code>ENTRANCE_ACCESS_ENC</code>, <code>DELIVERY_REQUEST_ENC</code></td><td>5-6 A, 5-8 B, OC-100</td></tr>
 <tr><td class="k">12</td><td>쿠폰·프로모션·등급·적립금·예치금</td><td>출처별 <code>ORD_ORDER_ITEM_DISCOUNT</code> 행 (상품마다 배분), 주문 합계 <code>COUPON_DISCOUNT_AMT</code> 등. 임직원이면 <code>EMPLOYEE</code> 행과 <code>EMPLOYEE_PURCHASE_MARKET_PRICE_AMT</code></td><td>6-4 A, OC-18 A, OC-26 A, 6-9 A</td></tr>
 <tr><td class="k">13</td><td>결제 수단·기한</td><td>결제 수단은 결제 도메인. 주문에는 <code>PAYMENT_DUE_AT</code></td><td>1-2 A, 3-4 A</td></tr>
 <tr><td class="k">14</td><td>결제대금예치 선택</td><td>결제 도메인</td><td>1-9 A</td></tr>
 <tr><td class="k">15</td><td>현금영수증·세금계산서</td><td>현금영수증은 결제 도메인. 세금계산서 요청은 <code>TAX_INVOICE_REQUESTED_YN</code>·<code>_AT</code></td><td>OC-25 B</td></tr>
-<tr><td class="k">16</td><td>결제 금액</td><td><code>PRODUCT_TOTAL_AMT</code>, 출처별 할인 합계, <code>BASE_DELIVERY_FEE_AMT</code>, <code>REMOTE_AREA_DELIVERY_FEE_AMT</code>, <code>DELIVERY_FEE_DISCOUNT_AMT</code>, <code>FREE_DELIVERY_THRESHOLD_AMT</code>, <code>PAYMENT_AMT</code>, PG 과세·부가세·면세 금액</td><td>6-1 A, 6-6 A, 6-7 A</td></tr>
+<tr><td class="k">16</td><td>결제 금액</td><td><code>PRODUCT_TOTAL_AMT</code>, 출처별 할인 합계, <code>BASE_DELIVERY_FEE_AMT</code>, <code>REMOTE_AREA_DELIVERY_FEE_AMT</code>, <code>DELIVERY_FEE_DISCOUNT_AMT</code>와 사유 <code>DELIVERY_FEE_DISCOUNT_REASON_CD</code>(무료 기준·쿠폰·프로모션, 쿠폰이면 <code>DELIVERY_FEE_MEMBER_COUPON_ID</code>), <code>FREE_DELIVERY_THRESHOLD_AMT</code>, 반품 배송비 <code>RETURN_DELIVERY_FEE_AMT</code>, <code>PAYMENT_AMT</code>, PG 과세·부가세·면세 금액</td><td>6-1 A, 6-6 A, 6-7 A, OC-93~OC-98</td></tr>
 <tr><td class="k">17</td><td>적립 예정</td><td><code>POINT_ACCUMULATION_RT</code>, <code>EXPECTED_POINT_AMT</code> (상품별)</td><td>6-8 A</td></tr>
-<tr><td class="k">18</td><td>확인·동의</td><td><code>ORDER_CONTENT_CONFIRMED_AT</code>, <code>APPLIED_TERMS_VER</code>. 서면 교부는 결제 뒤 <code>CONTRACT_DOCUMENT_ISSUED_AT</code></td><td>3-7 A, 3-9 A</td></tr>
+<tr><td class="k">18</td><td>확인·동의</td><td><code>ORDER_CONTENT_CONFIRMED_AT</code>, <code>APPLIED_TERMS_VER</code>. 결제 뒤 청약 수신 확인 통지 <code>ORDER_RECEIPT_NOTIFIED_AT</code>와 계약 서면 교부 <code>CONTRACT_DOCUMENT_ISSUED_AT</code>·<code>_CHANNEL_CD</code>·<code>_TEMPLATE_VER</code>를 따로 보냄. 서면이 안 나가면 출고 요청을 막음</td><td>3-7 A, 3-9 A, OC-118, OC-119, OC-121</td></tr>
 <tr><td class="k">19</td><td>미성년 고지·월 한도</td><td><code>MINOR_ORDER_YN</code>, <code>MINOR_CANCELLATION_RIGHT_NOTIFIED_AT</code>, <code>LEGAL_GUARDIAN_CONSENT_ID</code>, <code>GUARDIAN_MONTHLY_LIMIT_AMT</code>, <code>MONTH_USED_BEFORE_ORDER_AMT</code></td><td>9-3 A, 9-5 B</td></tr>
-<tr><td class="k">20</td><td>결제하기</td><td>주문 행 생성: <code>ORDER_NO</code>, <code>ORDER_REQUEST_KEY_VAL</code>(UK, 두 번 눌러도 1건), <code>ORDER_STATUS_CD</code> = 결제 대기, <code>ORDERED_AT</code>. 회원 등급·체형 스냅샷, <code>ORD_ORDER_ATTRIBUTION</code>(채널·OS·UTM·진입 경로)</td><td>3-1 A, 3-3 A, 5-4 B, 5-10 A, 3-6 B</td></tr>
+<tr><td class="k">20</td><td>결제하기</td><td>주문 행 생성: <code>ORDER_NO</code>, <code>ORDER_REQUEST_KEY_VAL</code>(UK, 두 번 눌러도 1건), <code>ORDER_STATUS_CD</code> = 결제 대기, <code>ORDERED_AT</code>. 회원 등급·체형 스냅샷, <code>ORD_ORDER_ATTRIBUTION</code>(채널·OS·UTM·진입 경로·요청 IP)</td><td>3-1 A, 3-3 A, 5-4 B, 5-10 A, 3-6 B, OC-92</td></tr>
 </table>
 <div class="note"><b>화면에 안 보이지만 함께 기록되는 것:</b> 등급·회원 유형(5-4 B), 체형 스냅샷(5-10 A), 진입 경로 장바구니/바로 구매(3-6 B), 비회원 장바구니 키 해시(OC-31 B), 행 버전(10-7 A).<br>
-<b>비회원 주문이면:</b> 주문 전 휴대폰 본인인증(<code>GUEST_IDENTITY_*</code>), 개인정보 처리 고지 확인(<code>GUEST_PRIVACY_*</code>), 주문 조회 비밀번호(<code>GUEST_ORDER_PASSWORD_HASH</code>)가 7번 위에 추가됩니다. 쿠폰·적립금·재입고 알림은 없습니다.</div>
+<b>비회원 주문이면:</b> 주문 전 휴대폰 본인인증(<code>GUEST_IDENTITY_*</code>, 회원 연결에 쓰는 CI 해시 포함, 만 19세 미만이면 주문 불가), 개인정보 처리 고지 확인(<code>GUEST_PRIVACY_*</code>), 주문 조회 비밀번호(<code>GUEST_ORDER_PASSWORD_HASH</code>)가 7번 위에 추가됩니다. 쿠폰·적립금·재입고 알림은 없습니다.<br>
+<b>선물 받는 사람 화면(링크):</b> 휴대폰 인증번호로 본인 확인(<code>GIFT_RECIPIENT_VERIFIED_AT</code>) → 배송지 입력, 같은 가격의 다른 옵션으로 변경 가능 → 수락(<code>GIFT_ACCEPTED_AT</code>) 또는 거절. 수락 뒤에는 같은 링크로 배송 조회만 됩니다(주소·연락처는 보이지 않음). 링크 다시 보내기는 <code>GIFT_LINK_SENT_CNT</code>·<code>GIFT_LINK_LAST_SENT_AT</code>로 제한하고, 알림에 수집 출처를 함께 적어 <code>GIFT_RECIPIENT_SOURCE_NOTIFIED_AT</code>을 남깁니다 (OC-108~OC-116).</div>
 </div>
 </div>
 </body></html>
