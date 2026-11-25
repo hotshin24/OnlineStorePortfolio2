@@ -70,14 +70,14 @@ for i, t in enumerate(T, 1):
 total = sum(len(full_cols(t)) for t in T)
 longest = sorted(T, key=lambda t: -len(t['t']))[:2]
 body = ('<h1>주문 도메인 테이블 이름 (검토용)</h1>'
-        '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-82 기준 · 물리명, 논리명, 설명 모두 후보 (확인 칸으로 검토)</div>'
+        '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-92 기준 · 물리명, 논리명, 설명 모두 후보 (확인 칸으로 검토)</div>'
         f'<div class="box">주문 도메인 결정 1-1~10-11과 컬럼 검토에서 나온 테이블 {len(T)}개다 (모두 <code>ORD_</code>). 물리명도 아직 확정하지 않았다. 확정한 행은 <b>확정</b> 칸에 표시하고, 고칠 이름이나 내용은 메모 칸에 적는다.</div>'
         + rows + f'</table><p><b>합계: 테이블 {len(T)}개, 컬럼 {total}개 (공통 컬럼 포함)</b></p>')
 body += ('<h2>공통 사항</h2><ul>'
          f'<li>모든 이름은 128바이트 이내. 가장 긴 것은 ' + ', '.join(f'<code>{t["t"]}</code>({len(t["t"])}바이트)' for t in longest) + '.</li>'
          '<li>시퀀스는 <code>SEQ_{테이블}</code>. <code>ORD_ORDER_ATTRIBUTION</code>은 주문 ID 공유 PK라 시퀀스 없음 (10-4 A).</li>'
-         '<li>고빈도 시퀀스(CACHE 100): 장바구니, 주문, 주문 상품, 할인 배분, 상태 이력. 주문 사은품, 주문 변경 이력, 주문 관리자 메모는 CACHE 20 (10-4 A, 컬럼 검토 OC-16·OC-17).</li>'
-         '<li>2026-11-25 컬럼 검토로 7개에서 9개가 되었다: 주문 변경 이력(OC-16 A, 5-5 A의 "이전 값은 감사 로그"를 바꿈), 주문 관리자 메모(OC-17 A). 한 주문을 여러 배송지로 보내는 기능은 운영하지 않는다 (OC-24 A).</li>'
+         '<li>고빈도 시퀀스(CACHE 100): 장바구니, 주문, 주문 상품, 할인 배분, 상태 이력, 비회원 주문 조회 실패 로그(공격 때 몰림). 주문 사은품, 주문 변경 이력, 주문 관리자 메모는 CACHE 20 (10-4 A, 컬럼 검토 OC-16·OC-17).</li>'
+         '<li>2026-11-25 컬럼 검토로 7개에서 9개가 되었다: 주문 변경 이력(OC-16 A, 5-5 A의 "이전 값은 감사 로그"를 바꿈), 주문 관리자 메모(OC-17 A). 같은 날 비회원 주문 조회 실패 로그(OC-87 B)를 더해 10개가 되었다. 한 주문을 여러 배송지로 보내는 기능은 운영하지 않는다 (OC-24 A).</li>'
          '<li>주문은 주문 일시 월 단위 INTERVAL 파티션, 자식 테이블은 참조 파티션. 장바구니는 파티션 없음 (10-3 A).</li>'
          '<li>주문 유입 정보(1:1)는 규칙 5 예외가 필요하다 (3-6 B, 결정 단계에서 예외 목록에 추가).</li>'
          '<li>영업일 달력(1-8 A)은 주문 도메인 테이블이 아니어서 넣지 않았다. 소속(<code>SYS</code> / <code>CMM</code>)은 결정 단계에서 정한다.</li>'
@@ -136,7 +136,7 @@ for k, (a, b, c) in enumerate(CONFIRM, 1):
     conf += f'<tr class="cf"><td class="n">Q{k}</td><td>{il(a)}</td><td>{il(b)}</td><td>{il(c)}</td><td class="ck">{BOX}</td><td class="memo"></td></tr>'
 conf += '</table>'
 body = ('<h1>주문 도메인 컬럼 정의서 (제안)</h1>'
-        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-82 기준 · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름과 컬럼 모두 제안</div>'
+        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-92 기준 · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름과 컬럼 모두 제안</div>'
         + NOTE + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('주문 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(len(T), tot_b, tot_s, tot_b + tot_s)

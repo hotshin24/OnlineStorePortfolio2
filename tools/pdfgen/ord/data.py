@@ -89,7 +89,7 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('ORIGINAL_ORDER_ID','원주문 식별 번호','Original Order Identifier',ID,'Y','','IX (FK 없음)','가격이 다른 옵션으로 바꾸려고 부분 취소한 뒤 새로 만든 주문이면 원래 주문 ID (OC-21 A). 고객센터 연결 조회와 쿠폰·적립금 재적용 추적에 쓴다. 자기 참조 FK는 10년 파티션 제거를 막아(21c 시험: ORA-02266, 참조 행이 없어도 거부) FK 없이 둔다. 원주문이 있는지는 매일 검증 배치가 확인하고, 원주문이 파티션 제거로 지워지면 링크가 끊긴 것으로 본다 (OC-65 A → OC-77 B).'),
  ]),
  ('상태·보류', [
-  ('ORDER_STATUS_CD','주문 상태 코드 (주문 상품 상태 요약)','Order Status Code (Summary of Item Statuses)','VARCHAR2(30)','N',"'PAYMENT_PENDING'",'CK (값 목록)','원천은 주문 상품 상태이고, 같은 트랜잭션에서 다시 계산한다 (7-1 A). 주문 상품 상태를 바꾸는 트랜잭션은 먼저 이 주문 행을 `SELECT … FOR UPDATE`로 잠그고, 재계산 때 `ROW_VERSION_NO`도 올린다 (OC-71 A). 값은 판정 순서(값 설명의 "판정 n") 1부터 처음 맞는 값을 쓴다. 매일 검증 배치도 같은 순서로 다시 계산해 비교한다 (OC-60 C, OC-61 C, OC-62 B).'),
+  ('ORDER_STATUS_CD','주문 상태 코드 (주문 상품 상태 요약)','Order Status Code (Summary of Item Statuses)','VARCHAR2(30)','N',"'PAYMENT_PENDING'",'CK (값 목록)','원천은 주문 상품 상태이고, 같은 트랜잭션에서 다시 계산한다 (7-1 A). 주문 상품 상태를 바꾸는 트랜잭션은 먼저 이 주문 행을 `SELECT … FOR UPDATE`로 잠그고, 재계산 때 `ROW_VERSION_NO`도 올린다 (OC-71 A). 값은 판정 순서(값 설명의 "판정 n") 1부터 처음 맞는 값을 쓴다. 판정 5의 진행 순서는 결제 완료 < 출고 요청 < 출고 < 배송 완료이고, 화면 정렬 번호를 판정 근거로 쓰지 않는다. 출고 요청 배치와 보류 걸기, 결제 승인 응답과 만료 배치도 이 행을 먼저 잠그고 보류 여부·상태를 다시 확인한다 (OC-71 A). 매일 검증 배치도 같은 순서로 다시 계산해 비교한다 (OC-60 C, OC-61 C, OC-62 B).'),
   ('ORDERED_AT','주문 일시','Ordered At',TS,'N','SYSTIMESTAMP','','결제 대기 주문을 만든 시각. 파티션 키 (10-3 A). 임직원 할인 연도와 구매 한도 하루의 기준 (6-9 A, 8-1 A).'),
   ('PAYMENT_DUE_AT','결제 만료 일시','Payment Due At',TS,'N','','CK (테이블 수준)','주문 일시 + 결제 수단별 기한(정책값). 가상계좌는 PG 입금 기한에 맞춘다 (3-4 A).'),
   ('PAYMENT_COMPLETED_AT','결제 완료 일시','Payment Completed At',TS,'Y','','',''),
@@ -100,23 +100,26 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('HOLD_RELEASED_AT','주문 보류 해제 일시 (마지막 보류)','Order Hold Released At (Last Hold)',TS,'Y','','CK (테이블 수준)','풀면 채우고, 다시 보류하면 NULL로 돌린다 (OC-72 A). 보류 중에 주문 상태가 끝 상태(완료, 전체 취소, 전체 반품, 취소·반품 종료)가 되면 같은 트랜잭션에서 자동으로 채우고 변경 이력에 사유 `ORDER_CLOSED`로 남긴다 (OC-79 A).'),
  ]),
  ('주문자', [
-  fk('MEMBER_ID','주문 회원 식별 번호','Ordering Member Identifier','MBR_MEMBER','Y','IX','비회원 주문은 NULL (선행 14). 비회원 주문을 회원에 연결하면 채운다 (9-2 A).'),
+  fk('MEMBER_ID','주문 회원 식별 번호','Ordering Member Identifier','MBR_MEMBER','Y','IX','비회원 주문은 NULL (선행 14). 비회원 주문을 회원에 연결하면 채운다 (9-2 A). 잘못 연결된 주문은 연결 일시·방식과 함께 NULL로 되돌리고 변경 이력에 `MEMBER_UNLINK`로 남긴다. 연결된 주문에는 적립금과 등급 실적을 주지 않는다 (OC-89 A).'),
   yn('GUEST_ORDER_YN','비회원 주문 여부','Guest Order Flag','N','주문할 때 비회원이었으면 Y. 회원에 연결해도 바꾸지 않는다 (9-2 A).'),
   ('ORDERER_NM','주문자 이름','Orderer Name','VARCHAR2(150)','Y','','','평문 + TDE (선행 5, 회원 C-72). 파기·분리 보관 때 NULL.'),
   ('ORDERER_MOBILE_PHONE_NUMBER_ENC','주문자 휴대폰 번호 암호문','Orderer Mobile Phone Number Ciphertext','RAW(49)','Y','','',''),
-  ('ORDERER_MOBILE_PHONE_NUMBER_HASH','주문자 휴대폰 번호 검색용 해시','Orderer Mobile Phone Number Search Hash','RAW(32)','Y','','IX','비회원 주문 연결(선행 14)과 재판매 의심 합산(8-3 A). 탈퇴·파기 때 NULL로만 바꾼다 (10-11 A).'),
+  ('ORDERER_MOBILE_PHONE_NUMBER_HASH','주문자 휴대폰 번호 검색용 해시','Orderer Mobile Phone Number Search Hash','RAW(32)','Y','','IX','재판매 의심 합산(8-3 A). 회원 연결은 번호 재할당 때문에 CI 해시로 바꿨다 (OC-83 A). 탈퇴·파기 때 NULL로만 바꾼다 (10-11 A).'),
   ('ORDERER_EMAIL_ENC','주문자 이메일 주소 암호문','Orderer Email Address Ciphertext','RAW(283)','Y','','',''),
-  ('GUEST_ORDER_PASSWORD_HASH','비회원 주문 조회 비밀번호 해시','Guest Order Lookup Password Hash','VARCHAR2(255)','Y','','','Argon2id (선행 14, 회원 C-70). 회원에 연결해도 그대로 둔다.'),
+  ('GUEST_IDENTITY_CI_HASH','비회원 본인인증 연계 정보 해시','Guest Identity Verification CI Hash','RAW(32)','Y','','IX, CK (테이블 수준)','비회원 본인인증 CI의 HMAC-SHA256. 회원 `MBR_MEMBER.CI_HASH`와 같은 CI 전용 키를 쓰고 교체하지 않는다 (회원 C-25). '
+   '회원 연결은 이 값이 회원 CI 해시와 같은 주문만 보여 준다. 번호가 바뀌거나 다른 사람에게 다시 할당돼도 정확하다. 비회원 주문이면 필수. 파기·분리 보관 때 NULL. [확인 필요: 법무, 처리방침에 이용 목적 고지] (OC-83 A).'),
   ('GUEST_IDENTITY_VERIFICATION_PROVIDER_CD','비회원 본인인증 업체 코드','Guest Identity Verification Provider Code','VARCHAR2(30)','Y','','CK (테이블 수준)','외부 업체 마스터의 업체 코드 (선행 13). 비회원 주문이면 필수 (9-1 A).'),
   ('GUEST_IDENTITY_VERIFICATION_TRANSACTION_NO','비회원 본인인증 업체 거래번호','Guest Identity Verification Transaction Number','VARCHAR2(100)','Y','','','본인인증 로그 FK가 아니다. 로그가 지워져도 업체에 다시 확인할 수 있다 (9-1 A, 회원 C-85).'),
   ('GUEST_IDENTITY_VERIFIED_AT','비회원 본인인증 완료 일시','Guest Identity Verified At',TS,'Y','','',''),
+  ('GUEST_ORDER_PASSWORD_HASH','비회원 주문 조회 비밀번호 해시','Guest Order Lookup Password Hash','VARCHAR2(255)','Y','','','Argon2id (선행 14, 회원 C-70). 회원에 연결해도 그대로 둔다.'),
+  ('GUEST_LOOKUP_FAIL_CNT','비회원 주문 조회 연속 실패 횟수','Guest Order Lookup Consecutive Failure Count','NUMBER(3)','N','0','CK (>= 0)','비밀번호를 틀릴 때마다 1 증가, 성공하면 0. 마지막 실패에서 정책값 초기화 시간이 지난 뒤 다시 틀리면 1부터 센다 (OC-86 A). 정책값 횟수에 이르면 잠근다 (OC-23 A, 선행 9). 이 컬럼과 마지막 실패 일시·잠금 해제 일시를 갱신할 때는 `ROW_VERSION_NO`와 `UPDATED_*`를 바꾸지 않는다 (규칙 1 예외, OC-85 A).'),
+  ('GUEST_LOOKUP_LAST_FAILED_AT','비회원 주문 조회 마지막 실패 일시','Guest Order Lookup Last Failed At',TS,'Y','','','실패할 때마다 갱신한다. 이 시각에서 정책값 초기화 시간이 지나면 실패 횟수를 1부터 다시 센다. 갱신 때 행 버전·수정자를 바꾸지 않는다 (OC-86 A, OC-85 A).'),
+  ('GUEST_LOOKUP_LOCKED_UNTIL_AT','비회원 주문 조회 잠금 해제 일시','Guest Order Lookup Locked Until',TS,'Y','','','이 시각 전에는 비밀번호 조회를 막고 휴대폰 인증으로만 풀 수 있다 (OC-23 A). 갱신 때 행 버전·수정자를 바꾸지 않는다 (OC-85 A).'),
   ('GUEST_PRIVACY_NOTICE_CONFIRMED_AT','비회원 개인정보 처리 고지 확인 일시','Guest Privacy Notice Confirmed At',TS,'Y','','CK (테이블 수준)','계약 이행에 필요한 개인정보라 동의가 아니라 고지다 (개인정보 보호법 15조 1항 4호, OC-20 A). 비회원 주문이면 필수. [확인 필요: 법무]'),
   ('GUEST_PRIVACY_POLICY_VER','비회원에게 고지한 개인정보 처리방침 버전','Guest Notified Privacy Policy Version','VARCHAR2(20)','Y','','CK (테이블 수준)','택배사 처리 위탁(3-7)도 이 처리방침에 공개한다.'),
-  ('GUEST_LOOKUP_FAIL_CNT','비회원 주문 조회 연속 실패 횟수','Guest Order Lookup Consecutive Failure Count','NUMBER(3)','N','0','CK (>= 0)','비밀번호를 틀릴 때마다 1 증가, 성공하면 0. 정책값 횟수에 이르면 잠근다 (OC-23 A, 선행 9).'),
-  ('GUEST_LOOKUP_LOCKED_UNTIL_AT','비회원 주문 조회 잠금 해제 일시','Guest Order Lookup Locked Until',TS,'Y','','','이 시각 전에는 비밀번호 조회를 막고 휴대폰 인증으로만 풀 수 있다 (OC-23 A).'),
-  ('MEMBER_LINKED_AT','비회원 주문 회원 연결 일시','Guest Order Member Linked At',TS,'Y','','','본인인증한 휴대폰 번호끼리만, 고객이 목록을 보고 수락해야 연결한다 (9-2 A).'),
-  ('MEMBER_LINK_METHOD_CD','비회원 주문 회원 연결 방식 코드','Guest Order Member Link Method Code','VARCHAR2(30)','Y','','CK (값 목록)',''),
-  ('GUEST_CART_KEY_HASH','비회원 장바구니 키 해시 (주문 당시)','Guest Cart Key Hash at Order','RAW(32)','Y','','','비회원이 장바구니에서 주문했을 때만 `ORD_CART.GUEST_CART_KEY_HASH`를 복사한다. 결제 완료(PG 웹훅) 때 (이 값 + 주문한 SKU)로 장바구니 행을 지운다. 회원은 `MEMBER_ID` + SKU, 바로 구매(`ORDER_ENTRY_PATH_CD` = `BUY_NOW`)는 채우지 않는다. 진입 경로가 유입 정보 테이블에 있어 채움 조건은 애플리케이션이 검사한다 (2-8 A, 2-9 A, OC-31 B).'),
+  ('MEMBER_LINKED_AT','비회원 주문 회원 연결 일시','Guest Order Member Linked At',TS,'Y','','','회원 CI 해시와 비회원 CI 해시가 같은 주문만 목록에 보여 주고, 고객이 수락해야 연결한다 (9-2 A, OC-83 A로 휴대폰 해시에서 변경).'),
+  ('MEMBER_LINK_METHOD_CD','비회원 주문 회원 연결 방식 코드','Guest Order Member Link Method Code','VARCHAR2(30)','Y','','CK (값 목록)','고객 수락 하나만 둔다. 번호를 바꾼 고객도 CI로 연결되므로 관리자 처리 값은 지웠다 (OC-88 B).'),
+  ('GUEST_CART_KEY_HASH','비회원 장바구니 키 해시 (주문 당시)','Guest Cart Key Hash at Order','RAW(32)','Y','','','비회원이 장바구니에서 주문했을 때만 `ORD_CART.GUEST_CART_KEY_HASH`를 복사한다. 결제 완료(PG 웹훅) 때 (이 값 + 주문한 SKU)로 장바구니 행을 지운다. 회원은 `MEMBER_ID` + SKU, 바로 구매(`ORDER_ENTRY_PATH_CD` = `BUY_NOW`)는 채우지 않는다. 진입 경로가 유입 정보 테이블에 있어 채움 조건은 애플리케이션이 검사한다 (2-8 A, 2-9 A, OC-31 B). 결제 완료 때 장바구니 행을 지운 뒤, 또는 결제 만료 때 NULL로 바꾼다. 같은 브라우저의 여러 주문을 이어 볼 수 있는 값을 남기지 않는다 (OC-91 A).'),
  ]),
  ('금액·세금계산서', [
   amt('PRODUCT_TOTAL_AMT','상품 금액 합계','Product Amount Total','주문 상품 상품 금액의 합 (6-1 A).'),
@@ -169,7 +172,7 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('APPLIED_TERMS_VER','적용 이용약관 버전','Applied Terms of Service Version','VARCHAR2(20)','Y','','',''),
   ('CONTRACT_DOCUMENT_ISSUED_AT','계약 내용 서면 교부 일시','Contract Document Issued At',TS,'Y','','IX','주문 완료 메일·알림톡 발송이 성공한 시각. 청약철회 기간 시작점 (3-9 A, 전자상거래법 13조 2항, 17조 1항). 발송 기록은 `NTF`.'),
   ('CONTRACT_DOCUMENT_TEMPLATE_VER','계약 서면 양식 버전','Contract Document Template Version','VARCHAR2(20)','Y','','','서면 내용은 주문 데이터와 양식 버전으로 다시 만든다 (3-9 A).'),
-  yn('MINOR_ORDER_YN','미성년 회원 주문 여부','Minor Member Order Flag','N','주문 때 생년월일로 계산. 비회원 주문은 언제나 N (9-3 A).'),
+  yn('MINOR_ORDER_YN','미성년 회원 주문 여부','Minor Member Order Flag','N','주문 때 생년월일로 계산. 비회원은 본인인증 결과가 만 19세 미만이면 주문할 수 없으므로(정책명세 제52조, 회원 C-85 B) 비회원 주문은 언제나 N (9-3 A).'),
   ('ADULTHOOD_DT','주문 회원 성년 도달 일자','Ordering Member Adulthood Date','DATE','Y','','CK (테이블 수준)','만 19세가 되는 날. 탈퇴 뒤에도 파기 예정일 계산에 쓴다 (9-3 A, 10-2 A).'),
   ('MINOR_CANCELLATION_RIGHT_NOTIFIED_AT','미성년자 계약 취소권 고지 일시','Minor Cancellation Right Notified At',TS,'Y','','CK (테이블 수준)','회원 C-83. 전자상거래법 13조 3항.'),
   fk('LEGAL_GUARDIAN_CONSENT_ID','근거 법정대리인 동의 식별 번호','Basis Legal Guardian Consent Identifier','MBR_LEGAL_GUARDIAN_CONSENT','Y','CK (테이블 수준)','회원 C-90.'),
@@ -194,12 +197,13 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('ROW_VERSION_NO','행 버전 번호','Row Version Number','NUMBER(10)','N','0','','바꿀 때마다 1 증가, `WHERE ROW_VERSION_NO = ?` 조건 (10-7 A).'),
  ]),
  ],
- idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 10개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
-      'IX `IX_ORD_ORDER_MEMBER_ID_ORDERED_AT` (회원 주문 목록, LOCAL)', 'IX `IX_ORD_ORDER_PAYMENT_PENDING_DUE_AT` (만료 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'PAYMENT_PENDING\' THEN PAYMENT_DUE_AT END`, 결제 대기 행만 담음, GLOBAL, OC-70 A, OC-78 A)',
+ idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 11개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
+      'IX `IX_ORD_ORDER_MEMBER_ID_ORDERED_AT` (회원 주문 목록, LOCAL. 고객 주문 목록은 기간 선택 필수: 기본 최근 3개월, 최대 기간은 정책값, OC-90 A)', 'IX `IX_ORD_ORDER_PAYMENT_PENDING_DUE_AT` (만료 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'PAYMENT_PENDING\' THEN PAYMENT_DUE_AT END`, 결제 대기 행만 담음, GLOBAL, OC-70 A, OC-78 A)',
       'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)',
-      'IX `IX_ORD_ORDER_PII_RETENTION_END_DT` (파기 배치, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GIFT_PENDING_INPUT_DUE_AT` (선물 기한 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'GIFT_ACCEPT_PENDING\' THEN GIFT_ADDRESS_INPUT_DUE_AT END`, OC-70 A)', 'IX `IX_ORD_ORDER_ORIGINAL_ORDER_ID` (원주문 연결 조회, FK 없음, GLOBAL, OC-77 B, OC-78 A)', 'IX `IX_ORD_ORDER_ORDER_STATUS_CD_ORDERED_AT` (관리자 상태별 목록, 기간 조건 필수, LOCAL, OC-82 A)', 'IX `IX_ORD_ORDER_HOLD_REASON_CD` (보류 목록, 함수 기반: `CASE WHEN HOLD_YN = \'Y\' THEN HOLD_REASON_CD END`, 보류 중인 행만 담음, GLOBAL, OC-75 A, OC-78 A)', 'IX `IX_ORD_ORDER_LEGAL_GUARDIAN_CONSENT_ID` (FK, GLOBAL, OC-78 A)'],
+      'IX `IX_ORD_ORDER_PII_RETENTION_END_DT` (파기 배치, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GIFT_PENDING_INPUT_DUE_AT` (선물 기한 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'GIFT_ACCEPT_PENDING\' THEN GIFT_ADDRESS_INPUT_DUE_AT END`, OC-70 A)', 'IX `IX_ORD_ORDER_ORIGINAL_ORDER_ID` (원주문 연결 조회, FK 없음, GLOBAL, OC-77 B, OC-78 A)', 'IX `IX_ORD_ORDER_ORDER_STATUS_CD_ORDERED_AT` (관리자 상태별 목록, 기간 조건 필수, LOCAL, OC-82 A)', 'IX `IX_ORD_ORDER_HOLD_REASON_CD` (보류 목록, 함수 기반: `CASE WHEN HOLD_YN = \'Y\' THEN HOLD_REASON_CD END`, 보류 중인 행만 담음, GLOBAL, OC-75 A, OC-78 A)', 'IX `IX_ORD_ORDER_LEGAL_GUARDIAN_CONSENT_ID` (FK, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GUEST_IDENTITY_CI_HASH` (회원 연결 목록, GLOBAL, OC-83 A)'],
  check=['`ORDER_STATUS_CD`가 결제 대기·결제 만료가 아니면 `ORDER_CONTENT_CONFIRMED_AT` NOT NULL (3-7 A)',
-        '`GUEST_ORDER_YN` = Y이면 비회원 본인인증 3개 컬럼, `GUEST_ORDER_PASSWORD_HASH`, 개인정보 처리 고지 2개 컬럼 NOT NULL (9-1 A, OC-20 A)',
+        '`GUEST_ORDER_YN` = Y이고 `PII_PURGED_AT` IS NULL이면 비회원 본인인증 3개 컬럼, `GUEST_IDENTITY_CI_HASH`, `GUEST_ORDER_PASSWORD_HASH`, 개인정보 처리 고지 2개 컬럼 NOT NULL. '
+        '파기 뒤에는 NULL일 수 있다 (선행 7, 9-1 A, OC-20 A, OC-83 A, OC-84 A). [확인 필요: 분리 보관(10-11 A) 때 `PII_PURGED_AT`을 채우는지. 채우지 않으면 분리 보관 여부 조건을 더한다]',
         '`MINOR_ORDER_YN` = Y ⇔ `ADULTHOOD_DT`, `MINOR_CANCELLATION_RIGHT_NOTIFIED_AT`, `LEGAL_GUARDIAN_CONSENT_ID` NOT NULL (9-3 A)',
         '`GUARDIAN_MONTHLY_LIMIT_AMT` NOT NULL이면 `MONTH_USED_BEFORE_ORDER_AMT` NOT NULL이고 `MONTH_USED_BEFORE_ORDER_AMT + PAYMENT_AMT <= GUARDIAN_MONTHLY_LIMIT_AMT` (9-5 B)',
         '`MEMBER_ID` IS NULL이면 `ORDER_GRADE_CD`, `ORDER_MEMBER_TYPE_CD`, `ORDER_GRADE_POINT_ACCUMULATION_RT` 모두 NULL (5-4 B)',
@@ -214,11 +218,13 @@ table(t='ORD_ORDER', ko='주문', en='Order',
         '`ORIGINAL_ORDER_ID <> ORDER_ID` (OC-65 A, OC-77 B)',
         '`TAX_INVOICE_REQUESTED_YN` = Y ⇔ `TAX_INVOICE_REQUESTED_AT` NOT NULL (OC-25 B)',
         '`GIFT_ORDER_YN` = Y이면 받는 사람 휴대폰 암호문과 배송지 입력 기한 NOT NULL (4-6 B)',
-        '`GUEST_ORDER_YN` = N이면 `GUEST_CART_KEY_HASH` IS NULL (OC-31 B)',
+        '`GUEST_ORDER_YN` = N이면 `MEMBER_ID` NOT NULL, 비회원 전용 컬럼(본인인증 3개, CI 해시, 비밀번호 해시, 고지 2개, 마지막 실패 일시, 잠금 해제 일시, 연결 일시·방식, 장바구니 키 해시) IS NULL, '
+        '`GUEST_LOOKUP_FAIL_CNT` = 0 (OC-31 B, OC-84 A)',
+        '`GUEST_ORDER_YN` = Y이면 `MEMBER_ID` NOT NULL ⇔ `MEMBER_LINKED_AT` NOT NULL (연결 전에는 회원 ID 없음, OC-84 A)',
         '`MEMBER_LINKED_AT`과 `MEMBER_LINK_METHOD_CD`는 함께 NULL이거나 함께 NOT NULL (9-2 A)'])
 
 table(t='ORD_ORDER_ATTRIBUTION', ko='주문 유입 정보 (주문과 1:1)', en='Order Attribution',
- desc='주문의 판매 채널, OS, 주문 진입 경로, UTM, 유입 도메인. 회원 `MBR_JOIN_ATTRIBUTION`과 같은 1:1 구조다 (주문 ID 공유 PK).',
+ desc='주문의 판매 채널, OS, 주문 진입 경로, 요청 IP, UTM, 유입 도메인. 회원 `MBR_JOIN_ATTRIBUTION`과 같은 1:1 구조다 (주문 ID 공유 PK).',
  basis='3-6 B, 2-9 A, 선행 10·12', pk='`ORDER_ID` 공유 PK (시퀀스 없음, 10-4 A)', cache='-',
  delete='주문과 함께 처리 (결제 만료 주문 삭제, 10년 파티션 제거)', part='`ORD_ORDER` 참조 파티션 (10-3 A)', keep='주문과 같음',
  cols=[
@@ -229,6 +235,8 @@ table(t='ORD_ORDER_ATTRIBUTION', ko='주문 유입 정보 (주문과 1:1)', en='
   ('SALES_CHANNEL_CD','주문 판매 채널 코드','Order Sales Channel Code','VARCHAR2(20)','N','','CK (PC/MOBILE_WEB/APP)','선행 10.'),
   ('OS_CD','주문 기기 운영체제 코드','Order Device Operating System Code','VARCHAR2(20)','Y','','','회원 OS 코드 그룹을 함께 쓴다.'),
   ('ORDER_ENTRY_PATH_CD','주문 진입 경로 코드','Order Entry Path Code','VARCHAR2(20)','N','','CK (값 목록)','장바구니 주문 / 바로 구매 (2-9 A).'),
+  ('ORDER_REQUEST_IP','주문 요청 IP 주소','Order Request IP Address','VARCHAR2(45)','Y','','','주문을 만든 요청의 IP (IPv6까지 45자). 재판매 의심 합산(8-3 A)과 결제 도용 분쟁 소명에 쓴다. 회원 도메인과 같이 평문 + TDE (선행 5). '
+   '주문 일시로부터 정책값 기간(3개월)이 지나면 매일 배치가 NULL로 바꾼다 (별도 일자 컬럼 없음). [확인 필요: 법무, 보관 기간과 처리방침 고지] (OC-92 C).'),
  ]),
  ('유입', [
   ('UTM_SOURCE_VAL','주문 세션 UTM 유입 출처','Order Session UTM Source Value','VARCHAR2(200)','Y','','','선행 12.'),
@@ -432,11 +440,30 @@ table(t='ORD_ORDER_ADMIN_MEMO', ko='주문 관리자 메모', en='Order Admin Me
  ]),
  ])
 
+table(t='ORD_GUEST_LOOKUP_FAIL_LOG', ko='비회원 주문 조회 실패 로그', en='Guest Order Lookup Failure Log',
+ desc='비회원 주문 조회(주문번호 + 비밀번호)가 실패할 때마다 1행. 주문번호를 바꿔 가며 비밀번호를 시도하는 공격을 IP별로 집계해 막는다. 주문별 잠금(OC-23 A)과 함께 쓴다.',
+ basis='컬럼 검토 OC-87 B, 선행 9', pk='대리 PK `SEQ_ORD_GUEST_LOOKUP_FAIL_LOG`', cache=100,
+ delete='삭제하지 않음 (로그). 파티션 단위로 제거 (선행 4)', part='실패 일시 월 단위 INTERVAL 파티션. 주문을 참조하지 않는다', keep='3개월 (주문 요청 IP와 같음, OC-92 C)',
+ cols=[
+ ('식별', [
+  ('GUEST_LOOKUP_FAIL_LOG_ID','비회원 주문 조회 실패 로그 고유 식별 번호','Guest Order Lookup Failure Log Unique Identifier',ID,'N','','PK',''),
+ ]),
+ ('요청', [
+  ('REQUEST_IP','조회 요청 IP 주소','Lookup Request IP Address','VARCHAR2(45)','N','','IX1','IP별 실패 횟수 집계 기준. 정책값 집계 시간 안의 실패가 정책값 횟수에 이르면 그 IP의 비회원 조회를 막는다 (OC-87 B).'),
+  ('FAILED_AT','조회 실패 일시','Lookup Failed At',TS,'N','SYSTIMESTAMP','IX1','파티션 키.'),
+  ('LOOKUP_FAIL_REASON_CD','조회 실패 사유 코드','Lookup Failure Reason Code','VARCHAR2(30)','N','','CK (값 목록)',''),
+  ('ENTERED_ORDER_NO','입력한 주문번호','Entered Order Number','VARCHAR2(30)','N','','','고객이 입력한 값 그대로 (없는 번호 포함).'),
+  ('ORDER_ID','찾은 주문 식별 번호','Matched Order Identifier',ID,'Y','','','주문번호가 맞은 경우만. FK를 걸지 않는다: 주문 파티션 제거를 막지 않게 하고(OC-77 B), 이 로그가 먼저 지워진다.'),
+  ('SALES_CHANNEL_CD','조회 판매 채널 코드','Lookup Sales Channel Code','VARCHAR2(20)','N','','CK (PC/MOBILE_WEB/APP)','선행 10.'),
+ ]),
+ ],
+ idx=['IX `IX_ORD_GUEST_LOOKUP_FAIL_LOG_REQUEST_IP_FAILED_AT` (IP별 집계, LOCAL, OC-87 B)'])
+
 TABLE_GROUPS = [
  ('장바구니', ['ORD_CART']),
  ('주문', ['ORD_ORDER', 'ORD_ORDER_ATTRIBUTION']),
  ('주문 상품', ['ORD_ORDER_ITEM', 'ORD_ORDER_ITEM_DISCOUNT', 'ORD_ORDER_ITEM_STATUS_HIST', 'ORD_ORDER_FREEBIE']),
- ('주문 기록', ['ORD_ORDER_CHANGE_HIST', 'ORD_ORDER_ADMIN_MEMO']),
+ ('주문 기록', ['ORD_ORDER_CHANGE_HIST', 'ORD_ORDER_ADMIN_MEMO', 'ORD_GUEST_LOOKUP_FAIL_LOG']),
 ]
 
 def vals(*v): return [(a, b, c, d, i) for i, (a, b, c, d) in enumerate(v, 1)]
@@ -452,14 +479,26 @@ ITEM_STATUS_VALS = vals(
  ('CANCELED','취소 완료','Canceled','끝 상태. 취소 수량 = 주문 수량 (7-2 C). 선물 거절·기한 만료 포함'),
  ('RETURNED','반품 완료','Returned','끝 상태. 취소 + 반품 수량 = 주문 수량이고 반품이 있으면 (7-2 C)'))
 CODES = {
- 'MEMBER_LINK_METHOD_CD': vals(('CUSTOMER_ACCEPTED','고객 수락','Customer Accepted','본인인증한 휴대폰 해시가 같은 주문 목록을 보고 수락 (9-2 A)'),('ADMIN_ON_REQUEST','고객 요청 관리자 처리','Admin on Customer Request','[확인 필요]')),
- 'ORDER_STATUS_CD': vals(('PAYMENT_PENDING','결제 대기','Payment Pending','판정 1: 모든 상품이 결제 대기'),('PAYMENT_EXPIRED','결제 만료','Payment Expired','판정 2: 모든 상품이 결제 만료'),('GIFT_ACCEPT_PENDING','선물 수락 대기','Gift Accept Pending','판정 3: 끝 상태가 아닌 상품이 모두 선물 수락 대기. 이 동안은 일부 취소를 받지 않고 전체 취소만 받는다 (OC-60 C)'),('PAID','결제 완료','Paid','판정 5: 끝 상태가 아닌 상품 중 가장 덜 진행된 상품이 결제 완료'),('SHIPMENT_REQUESTED','출고 준비','Shipment Requested','판정 5: 가장 덜 진행된 상품이 출고 요청'),('PARTIALLY_SHIPPED','부분 배송','Partially Shipped','판정 4: 끝 상태가 아닌 상품 중 출고 전(결제 완료·출고 요청)과 출고 후(출고·배송 완료)가 섞임 (OC-61 C)'),('SHIPPED','배송 중','Shipping','판정 5: 가장 덜 진행된 상품이 출고'),('DELIVERED','배송 완료','Delivered','판정 5: 끝 상태가 아닌 상품이 모두 배송 완료 (구매 확정 전)'),('COMPLETED','완료','Completed','판정 6: 모든 상품이 끝 상태이고 구매 확정이 하나라도 있음'),('ALL_CANCELED','전체 취소','All Canceled','판정 7: 모든 상품이 취소 완료 (OC-62 B)'),('ALL_RETURNED','전체 반품','All Returned','판정 8: 모든 상품이 반품 완료'),('CANCELED_RETURNED','취소·반품 종료','Canceled and Returned','판정 9: 나머지 (취소·반품 섞임, 구매 확정 없음)')),
+ 'MEMBER_LINK_METHOD_CD': vals(('CUSTOMER_ACCEPTED','고객 수락','Customer Accepted','본인인증 CI 해시가 같은 주문 목록을 보고 수락 (9-2 A, OC-83 A)')),
+ 'ORDER_STATUS_CD': vals(('PAYMENT_PENDING','결제 대기','Payment Pending','판정 1: 모든 상품이 결제 대기'),
+   ('PAYMENT_EXPIRED','결제 만료','Payment Expired','판정 2: 모든 상품이 결제 만료'),
+   ('GIFT_ACCEPT_PENDING','선물 수락 대기','Gift Accept Pending','판정 3: 끝 상태가 아닌 상품이 모두 선물 수락 대기. 이 동안은 일부 취소를 받지 않고 전체 취소만 받는다 (OC-60 C)'),
+   ('PAID','결제 완료','Paid','판정 5: 끝 상태가 아닌 상품 중 가장 덜 진행된 상품이 결제 완료'),
+   ('SHIPMENT_REQUESTED','출고 준비','Shipment Requested','판정 5: 가장 덜 진행된 상품이 출고 요청'),
+   ('PARTIALLY_SHIPPED','부분 배송','Partially Shipped','판정 4: 끝 상태가 아닌 상품 중 출고 전(결제 완료·출고 요청)과 출고 후(출고·배송 완료)가 섞임 (OC-61 C)'),
+   ('SHIPPED','배송 중','Shipping','판정 5: 가장 덜 진행된 상품이 출고'),
+   ('DELIVERED','배송 완료','Delivered','판정 5: 끝 상태가 아닌 상품이 모두 배송 완료 (구매 확정 전)'),
+   ('COMPLETED','완료','Completed','판정 6: 모든 상품이 끝 상태이고 구매 확정이 하나라도 있음. 17조 3항 반품(4-41-8)으로 전체 반품·취소·반품 종료로 다시 계산될 수 있다. 거래 종료일은 10-9 B를 따른다'),
+   ('ALL_CANCELED','전체 취소','All Canceled','판정 7: 모든 상품이 취소 완료 (OC-62 B)'),
+   ('ALL_RETURNED','전체 반품','All Returned','판정 8: 모든 상품이 반품 완료'),
+   ('CANCELED_RETURNED','취소·반품 종료','Canceled and Returned','판정 9: 나머지 (취소·반품 섞임, 구매 확정 없음)')),
  'ORDER_ITEM_STATUS_CD': ITEM_STATUS_VALS, 'PREVIOUS_STATUS_CD': ITEM_STATUS_VALS, 'NEW_STATUS_CD': ITEM_STATUS_VALS,
  'REMOTE_AREA_CD': vals(('NONE','해당 없음','None',''),('JEJU','제주','Jeju',''),('ISLAND_MOUNTAIN','도서산간 (제주 외)','Island or Mountain Area','')),
  'DELIVERY_PLACE_CD': vals(('DOOR','문 앞','Front Door','회원 코드 그룹'),('SECURITY_OFFICE','경비실','Security Office',''),('PARCEL_LOCKER','택배함','Parcel Locker',''),('IN_PERSON','직접 수령','In Person',''),('OTHER','기타','Other','배송 요청 사항 필수')),
  'HOLD_REASON_CD': vals(('RESALE_SUSPECTED','재판매 의심','Resale Suspected','8-3 A'),('PAYMENT_REVIEW','결제 확인 필요','Payment Review','PG FDS 판정 등'),('ADDRESS_CHECK','배송지 확인 필요','Address Check',''),('CUSTOMER_REQUEST','고객 요청','Customer Request',''),('OTHER','기타','Other','')),
  'SALES_CHANNEL_CD': vals(('PC','PC','PC',''),('MOBILE_WEB','모바일 웹','Mobile Web',''),('APP','앱','App','')),
  'ADDED_SOURCE_TYPE_CD': vals(('EXHIBITION','기획전','Exhibition','기획전 페이지에서 담음'),('CONTENT','스냅·코디 콘텐츠','Styling Content','전시 콘텐츠에서 담음'),('AFFILIATE','크리에이터·제휴 링크','Affiliate Link','수수료 정산 대상'),('DIRECT','직접','Direct','상품 목록·상세·검색·추천 등 나머지. 경로 분석은 외부 분석 도구 (선행 12)')),
+ 'LOOKUP_FAIL_REASON_CD': vals(('ORDER_NOT_FOUND','주문 없음','Order Not Found','입력한 주문번호의 비회원 주문이 없음'),('PASSWORD_MISMATCH','비밀번호 불일치','Password Mismatch',''),('LOOKUP_LOCKED','조회 잠김','Lookup Locked','주문별 잠금 중 시도 (OC-23 A)')),
  'ORDER_ENTRY_PATH_CD': vals(('CART','장바구니 주문','Cart',''),('BUY_NOW','바로 구매','Buy Now','장바구니를 거치지 않음 (2-9 A)')),
  'TAXATION_TYPE_CD': vals(('TAXABLE','과세','Taxable','상품 코드 그룹'),('TAX_EXEMPT','면세','Tax Exempt','')),
  'WITHDRAWAL_RESTRICTION_CD': vals(('VALUE_DECREASE_BY_USE','사용·착용으로 가치 감소','Value Decrease by Use','상품 코드 그룹. 제한 없음(`NONE`)은 NULL로 저장')),
@@ -467,17 +506,17 @@ CODES = {
  'PURCHASE_CONFIRMATION_METHOD_CD': vals(('CUSTOMER','고객 확정','Customer',''),('AUTO','자동 확정','Automatic','배송 완료 + N일 (7-5 A)'),('ADMIN','관리자 확정','Admin','')),
  'DISCOUNT_SOURCE_CD': vals(('COUPON','쿠폰','Coupon',''),('PROMOTION','프로모션','Promotion',''),('GRADE','등급 할인','Grade Discount',''),('EMPLOYEE','임직원 할인','Employee Discount','6-9 A'),('POINT_PURCHASE','구매 적립 적립금 사용','Purchase-Earned Point Used','구입 실적으로 적립된 자기적립마일리지 (부가가치세법 시행령 61조 1항·2항 9호, OC-26 A)'),('POINT_OTHER','기타 적립 적립금 사용','Other-Earned Point Used','리뷰·이벤트·보상 등 구입 실적이 아닌 적립. 과세 처리는 정산에서 정한다 [확인 필요: 세무] (OC-26 A)'),('DEPOSIT','예치금 사용','Deposit Used','')),
  'STATUS_CHANGE_REASON_CD': vals(('CUSTOMER_ACTION','고객 처리','Customer Action',''),('PAYMENT_TIMEOUT','결제 기한 경과','Payment Timeout',''),('PAYMENT_FAILED','결제 실패·취소','Payment Failed or Canceled','PG 승인 실패·결제 취소 확인 즉시 만료 (OC-69 B)'),('REPLACED_BY_NEW_ORDER','새 주문으로 대체','Replaced by New Order','같은 회원·장바구니로 새 주문을 만들어 이전 결제 대기 주문 만료 (OC-69 B)'),('GIFT_TIMEOUT','선물 입력 기한 경과','Gift Timeout',''),('GIFT_REJECTED','선물 거절','Gift Rejected',''),('CLAIM_COMPLETED','클레임 완료','Claim Completed',''),('DELIVERY_UPDATE','배송 상태 반영','Delivery Update',''),('AUTO_CONFIRMATION','자동 구매 확정','Auto Confirmation',''),('ADMIN_ACTION','관리자 처리','Admin Action',''),('OTHER','기타','Other','')),
- 'ORDER_CHANGE_TYPE_CD': vals(('DELIVERY_ADDRESS','배송지 변경','Delivery Address Change','출고 요청 전. 바꾸기 전 값은 암호문'),('HOLD','보류','Hold','7-6 A'),('HOLD_RELEASE','보류 해제','Hold Release',''),('GIFT_ACCEPT','선물 수락','Gift Accept','받는 사람 배송지 입력'),('GIFT_REJECT','선물 거절','Gift Reject',''),('MEMBER_LINK','비회원 주문 회원 연결','Member Link','9-2 A'),('OPTION_CHANGE','옵션 변경','Option Change','출고 전, 같은 가격 (OC-21 A)')),
+ 'ORDER_CHANGE_TYPE_CD': vals(('DELIVERY_ADDRESS','배송지 변경','Delivery Address Change','출고 요청 전. 바꾸기 전 값은 암호문'),('HOLD','보류','Hold','7-6 A'),('HOLD_RELEASE','보류 해제','Hold Release',''),('GIFT_ACCEPT','선물 수락','Gift Accept','받는 사람 배송지 입력'),('GIFT_REJECT','선물 거절','Gift Reject',''),('MEMBER_LINK','비회원 주문 회원 연결','Member Link','9-2 A'),('MEMBER_UNLINK','비회원 주문 회원 연결 취소','Member Unlink','잘못 연결된 주문을 되돌림 (OC-89 A)'),('OPTION_CHANGE','옵션 변경','Option Change','출고 전, 같은 가격 (OC-21 A)')),
  'CHANGE_REASON_CD': vals(('CUSTOMER_REQUEST','고객 요청','Customer Request',''),('RESALE_SUSPECTED','재판매 의심','Resale Suspected',''),('PAYMENT_REVIEW','결제 확인','Payment Review',''),('ADDRESS_CHECK','배송지 확인','Address Check',''),('ADMIN_ACTION','관리자 처리','Admin Action',''),('OTHER','기타','Other',''),('ORDER_CLOSED','주문 종료로 자동 해제','Released on Order Close','보류 중 주문이 끝 상태가 되어 자동 해제 (OC-79 A)')),
  'PII_RETENTION_REASON_CD': vals(('ORDER_TRANSACTION','거래 기록 5년','Order Transaction Record','전자상거래법 시행령 6조 1항 2·3호, 기산일 = 거래 종료일 (10-9 B)'),('MINOR_ORDER','미성년 주문','Minor Order','10-2 A 계산식'),('EXPIRED_ORDER','결제 만료 주문','Expired Order','정책값 일수 (3-5 A)')),
 }
 REUSE = {'DELIVERY_PLACE_CD': 'DELIVERY_PLACE', 'TAXATION_TYPE_CD': 'TAXATION_TYPE (상품)', 'WITHDRAWAL_RESTRICTION_CD': 'WITHDRAWAL_RESTRICTION (상품)'}
 
-CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정
+CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자 그룹 확정
 CONFIRMED_TABLES = set()
 
 CONFIRM = [
- ('테이블 이름', '9개 모두 후보. 상품 도메인처럼 이름 결정 질문을 거쳐 확정한다.', '전체'),
+ ('테이블 이름', '10개 모두 후보. 상품 도메인처럼 이름 결정 질문을 거쳐 확정한다.', '전체'),
  ('결정 단계 미정 사항', '선물하기 세부 7개, 표시 내용 이력 FK, 배송 요청 문구 파기 시점, 체형 동의 철회, 상태 값 목록, 반품 수량 한도 포함 여부 등은 `주문_컬럼검토_결정.pdf`의 OC 질문으로 정한다.', 'OC 질문'),
  ('영업일 달력', '"3영업일" 계산용 영업일 달력 테이블(1-8 A)은 주문 도메인 테이블이 아니다. 소속(`SYS` / `CMM`)을 정한 뒤 그 도메인에 둔다.', 'SYS 또는 CMM'),
  ('다른 도메인 FK', '`CLAIM_ID`, `NON_SALE_ITEM_ID`, `PROMOTION_ID`(사은품·할인 배분), `MEMBER_COUPON_ID`, 장바구니 `SELECTED_MEMBER_COUPON_ID`, 장바구니·주문 상품의 `EXHIBITION_ID`·`DISPLAY_CONTENT_ID`·`AFFILIATE_ID`는 해당 도메인 테이블이 정해지면 FK로 건다.', 'CLM, WMS, PRM, DSP'),
@@ -495,6 +534,6 @@ CONFIRM = [
  ('임원 할인과 연도 기준', '임원은 특수관계인이라 저가 판매가 부당행위계산 부인(법인세법 52조) 대상인지 [확인 필요: 세무]. 회원 임직원 연도별 할인 테이블의 연도가 소득세 과세기간(1~12월)과 같은지 확인한다. 재판매 1년 금지(소득세법 시행령 17조의5 2항 3호)는 임직원 할인 약관과 재판매 탐지(8-3 A)의 근거다.', '회원 `MBR`, 관리자 `ADM`'),
  ('적립금 원장 적립 사유', '배분 때 구매 적립분과 기타 적립분을 나누려면 적립금 원장의 적립 건마다 구입 실적 적립인지 구분하는 값이 있어야 한다 (OC-26 A).', '적립금 원장 도메인'),
  ('공급 시기와 임직원 할인 과세', '공급 시기(부가가치세법 15조: 인도되는 때)로 출고 일시와 배송 완료 일시 중 무엇을 쓸지, 임직원 할인 차액의 과세 여부(10조 4항, 29조 4항)와 기타 적립분 결제의 과세 처리. [확인 필요: 세무]', '정산 `STL`'),
- ('정책값 추가', '비회원 주문 조회 잠금 실패 횟수와 잠금 시간 (OC-23 A). 비회원 키당 장바구니 행 수 상한 (회원과 따로, OC-40 A).', '`CMM_CODE` 주문 정책 그룹'),
+ ('정책값 추가', '비회원 주문 조회 잠금 실패 횟수와 잠금 시간 (OC-23 A), 실패 횟수 초기화 시간 (OC-86 A), IP별 조회 실패 허용 횟수와 집계 시간 (OC-87 B), 주문 요청 IP 보관 기간 3개월 (OC-92 C), 고객 주문 목록 최대 조회 기간 (OC-90 A). 비회원 키당 장바구니 행 수 상한 (회원과 따로, OC-40 A).', '`CMM_CODE` 주문 정책 그룹'),
  ('재판매 탐지 고지', '정규화 주소 해시를 쓰는 목적을 개인정보 처리방침에 적을지.', '`DELIVERY_ADDRESS_HASH`'),
 ]
