@@ -70,7 +70,7 @@ for i, t in enumerate(T, 1):
 total = sum(len(full_cols(t)) for t in T)
 longest = sorted(T, key=lambda t: -len(t['t']))[:2]
 body = ('<h1>주문 도메인 테이블 이름 (검토용)</h1>'
-        '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-107 기준 · 물리명, 논리명, 설명 모두 후보 (확인 칸으로 검토)</div>'
+        '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-116 기준 · 물리명, 논리명, 설명 모두 후보 (확인 칸으로 검토)</div>'
         f'<div class="box">주문 도메인 결정 1-1~10-11과 컬럼 검토에서 나온 테이블 {len(T)}개다 (모두 <code>ORD_</code>). 물리명도 아직 확정하지 않았다. 확정한 행은 <b>확정</b> 칸에 표시하고, 고칠 이름이나 내용은 메모 칸에 적는다.</div>'
         + rows + f'</table><p><b>합계: 테이블 {len(T)}개, 컬럼 {total}개 (공통 컬럼 포함)</b></p>')
 body += ('<h2>공통 사항</h2><ul>'
@@ -136,7 +136,7 @@ for k, (a, b, c) in enumerate(CONFIRM, 1):
     conf += f'<tr class="cf"><td class="n">Q{k}</td><td>{il(a)}</td><td>{il(b)}</td><td>{il(c)}</td><td class="ck">{BOX}</td><td class="memo"></td></tr>'
 conf += '</table>'
 body = ('<h1>주문 도메인 컬럼 정의서 (제안)</h1>'
-        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-107 기준 · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름과 컬럼 모두 제안</div>'
+        f'<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-25 · 주문 도메인 결정 1-1~10-11, 컬럼 검토 OC-10·OC-15·OC-16~OC-116 기준 · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 테이블 이름과 컬럼 모두 제안</div>'
         + NOTE + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('주문 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(len(T), tot_b, tot_s, tot_b + tot_s)

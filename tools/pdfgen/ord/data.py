@@ -160,17 +160,22 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('SIDO_CD','시도 코드 (가상)','Province Code (Virtual)','VARCHAR2(2)','Y','','가상 컬럼','`GENERATED ALWAYS AS (SUBSTR(LEGAL_DONG_CD, 1, 2)) VIRTUAL`. 지역별 매출 집계와 배송 권역에 쓴다 (5-7 A, OC-102 A). 회원 배송지는 저장형(22-3 A)이다.'),
   ('SIGUNGU_CD','시군구 코드 (가상)','District Code (Virtual)','VARCHAR2(5)','Y','','가상 컬럼','`GENERATED ALWAYS AS (SUBSTR(LEGAL_DONG_CD, 1, 5)) VIRTUAL`. 지역별 매출 집계와 배송 권역에 쓴다 (OC-102 A).'),
   ('DELIVERY_ADDRESS_HASH','정규화 배송 주소 검색용 해시','Normalized Delivery Address Search Hash','RAW(32)','Y','','IX','재판매 의심 주문 합산용 HMAC-SHA256 (8-3 A). 입력은 주소 검색 API가 준 표준 도로명 주소(건물번호까지) + 정규화한 상세 주소(공백 제거, 동·호 표기 통일). 건물관리번호는 저장하지 않는다 (회원 C-61 A, OC-99 B). 탈퇴·파기 때 NULL로만 바꾼다. [확인 필요: 처리방침 고지]'),
-  ('HASH_KEY_VER','검색용 해시 계산 HMAC 키 버전','Search Hash HMAC Key Version','VARCHAR2(10)','N',"'1'",'','주문자 휴대폰 해시, 수령인 휴대폰 해시, 배송 주소 해시의 HMAC 키 버전. 키를 바꾸면 세 해시를 함께 다시 계산한다. CI 해시는 교체하지 않는 전용 키라 대상이 아니다 (선행 5, 회원 C-25).'),
+  ('HASH_KEY_VER','검색용 해시 계산 HMAC 키 버전','Search Hash HMAC Key Version','VARCHAR2(10)','N',"'1'",'','주문자 휴대폰 해시, 수령인 휴대폰 해시, 선물 받는 사람 휴대폰 해시, 배송 주소 해시의 HMAC 키 버전. 키를 바꾸면 네 해시를 함께 다시 계산한다. CI 해시는 교체하지 않는 전용 키라 대상이 아니다 (선행 5, 회원 C-25).'),
  ]),
  ('선물하기', [
   yn('GIFT_ORDER_YN','선물 주문 여부','Gift Order Flag','N','받는 사람이 배송지를 입력하는 주문 (4-6 B, 회원 34-3).'),
-  ('GIFT_RECIPIENT_NM','선물 받는 사람 이름','Gift Recipient Name','VARCHAR2(150)','Y','','','[확인 필요: 받는 사람 정보 위치와 수집 근거·보유 기간 (4-6 B)]'),
-  ('GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_ENC','선물 받는 사람 휴대폰 번호 암호문','Gift Recipient Mobile Phone Number Ciphertext','RAW(49)','Y','','CK (테이블 수준)','선물 주문이면 필수.'),
-  ('GIFT_MESSAGE_CN','선물 메시지','Gift Message Content','VARCHAR2(500)','Y','','',''),
-  ('GIFT_ACCEPT_TOKEN_HASH','선물 수락 링크 토큰 해시','Gift Accept Link Token Hash','RAW(32)','Y','','UK','받는 사람에게 보낸 링크의 무작위 토큰 SHA-256. 원문은 저장하지 않는다 (선행 5). 링크를 다시 보내면 덮어쓰고, 만료는 배송지 입력 기한을 쓴다. 수락·거절·만료 때 NULL (OC-22 A).'),
-  ('GIFT_ADDRESS_INPUT_DUE_AT','선물 배송지 입력 기한','Gift Address Input Due At',TS,'Y','','IX, CK (테이블 수준)','지나면 자동 취소한다 (4-6 B).'),
-  ('GIFT_ACCEPTED_AT','선물 수락 (배송지 입력) 일시','Gift Accepted At',TS,'Y','','','공급 조치 기한의 시작점 (8-4 A).'),
+  ('GIFT_RECIPIENT_NM','선물 받는 사람 이름','Gift Recipient Name','VARCHAR2(150)','Y','','CK (테이블 수준)','보낸 사람이 입력한 이름. 평문 + TDE (회원 C-72). 선물이면 필수(파기 전). 주문 테이블에 두고 보유 기간은 주문 개인정보와 같다(거래 종료일 + 5년). 수집 근거는 보낸 사람과의 계약 이행(개인정보 보호법 15조 1항 4호)이고 출처를 통지한다 (20조 2항, OC-109 A). [확인 필요: 법무] (4-6 B 정리, OC-116 메모)'),
+  ('GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_ENC','선물 받는 사람 휴대폰 번호 암호문','Gift Recipient Mobile Phone Number Ciphertext','RAW(49)','Y','','CK (테이블 수준)','선물이면 필수(파기 전, OC-114 A). 수락하면 수령인 휴대폰으로 복사한다.'),
+  ('GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_HASH','선물 받는 사람 휴대폰 번호 검색용 해시','Gift Recipient Mobile Phone Number Search Hash','RAW(32)','Y','','IX, CK (테이블 수준)','숫자만 남기는 정규화 뒤 HMAC-SHA256 (키 버전은 `HASH_KEY_VER`). 회원 앱의 받은 선물함과 수락 전 받는 사람의 권리 요청(35~37조)에 쓴다. 파기 때 NULL (OC-110 A).'),
+  ('GIFT_MESSAGE_CN','선물 메시지','Gift Message Content','VARCHAR2(200 CHAR)','Y','','','글자 단위 길이(최대 200자). 화면 안내와 같게 이 컬럼만 `CHAR` 단위로 둔다. 다른 컬럼은 바이트 단위 (OC-115 A, 공통 규칙은 확인 사항)'),
+  ('GIFT_ACCEPT_TOKEN_HASH','선물 수락 링크 토큰 해시','Gift Accept Link Token Hash','RAW(32)','Y','','UK','받는 사람에게 보낸 링크의 무작위 토큰 SHA-256. 원문은 저장하지 않는다 (선행 5). 링크를 다시 보내면 덮어쓴다. 수락 전에는 배송지 입력 기한까지 유효하고, 수락 뒤에는 배송 조회만 허용한다(주소·연락처는 보여 주지 않음). 거절·기한 만료·모든 주문 상품이 끝 상태가 될 때 NULL (OC-22 A → OC-108 A).'),
+  ('GIFT_ADDRESS_INPUT_DUE_AT','선물 배송지 입력 기한','Gift Address Input Due At',TS,'Y','','IX, CK (테이블 수준)','결제 완료 일시 + 정책값 일수. 링크는 결제 완료 뒤에 보낸다. 지나면 자동 취소한다 (4-6 B, OC-113 A).'),
+  ('GIFT_RECIPIENT_VERIFIED_AT','선물 받는 사람 본인 확인 일시','Gift Recipient Verified At',TS,'Y','','CK (테이블 수준)','수락할 때 저장된 받는 사람 휴대폰으로 인증번호를 보내 확인한 일시 (인증 코드는 시스템 도메인 `SYS_VERIFICATION_CODE`). 수락하려면 필수 (OC-111 A).'),
+  ('GIFT_ACCEPTED_AT','선물 수락 (배송지 입력) 일시','Gift Accepted At',TS,'Y','','','공급 조치 기한의 시작점 (8-4 A). 수락할 때 같은 가격의 다른 옵션으로 바꿀 수 있다 (OC-21 A 규칙, 행위자 `GUEST`, OC-116 A).'),
   ('GIFT_REJECTED_AT','선물 거절 일시','Gift Rejected At',TS,'Y','','',''),
+  ('GIFT_RECIPIENT_SOURCE_NOTIFIED_AT','선물 받는 사람 개인정보 수집 출처 통지 일시','Gift Recipient Collection Source Notified At',TS,'Y','','','선물 알림에 수집 출처, 처리 목적, 처리 정지 요구권을 함께 넣어 발송에 성공한 일시. 통지 사실은 파기할 때까지 보관한다 (개인정보 보호법 20조 2항, 시행령 15조의2). [확인 필요: 법무, 의무 대상 여부와 문구] (OC-109 A)'),
+  ('GIFT_LINK_SENT_CNT','선물 링크 발송 횟수','Gift Link Sent Count','NUMBER(2)','N','0','CK (>= 0)','처음 발송 포함. 정책값 최대 횟수까지만 다시 보낼 수 있다 (OC-112 A).'),
+  ('GIFT_LINK_LAST_SENT_AT','선물 링크 마지막 발송 일시','Gift Link Last Sent At',TS,'Y','','','다시 보내기 최소 간격(정책값)과 기한 전 알림 일정의 기준 (OC-112 A).'),
  ]),
  ('법정 확인·고지', [
   ('ORDER_CONTENT_CONFIRMED_AT','주문 내용 확인 일시','Order Content Confirmed At',TS,'Y','','CK (테이블 수준)','결제 전 확인 절차 (전자상거래법 7조, 8조 2항). 결제 완료 이후면 NOT NULL (3-7 A).'),
@@ -202,9 +207,9 @@ table(t='ORD_ORDER', ko='주문', en='Order',
   ('ROW_VERSION_NO','행 버전 번호','Row Version Number','NUMBER(10)','N','0','','바꿀 때마다 1 증가, `WHERE ROW_VERSION_NO = ?` 조건 (10-7 A).'),
  ]),
  ],
- idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 11개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
+ idx=['UK `UK_ORD_ORDER_ORDER_NO` (GLOBAL. GLOBAL 인덱스 13개는 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 붙여야 UNUSABLE이 되지 않는다, OC-67 A)', 'UK `UK_ORD_ORDER_ORDER_REQUEST_KEY_VAL` (GLOBAL)',
       'IX `IX_ORD_ORDER_MEMBER_ID_ORDERED_AT` (회원 주문 목록, LOCAL. 고객 주문 목록은 기간 선택 필수: 기본 최근 3개월, 최대 기간은 정책값, OC-90 A)', 'IX `IX_ORD_ORDER_PAYMENT_PENDING_DUE_AT` (만료 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'PAYMENT_PENDING\' THEN PAYMENT_DUE_AT END`, 결제 대기 행만 담음, GLOBAL, OC-70 A, OC-78 A)',
-      'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (수령인 권리 요청, 드물어 LOCAL, OC-101 A)',
+      'IX `IX_ORD_ORDER_ORDERER_MOBILE_PHONE_NUMBER_HASH` (GLOBAL)', 'IX `IX_ORD_ORDER_DELIVERY_ADDRESS_HASH` (GLOBAL)', 'UK `UK_ORD_ORDER_GIFT_ACCEPT_TOKEN_HASH` (GLOBAL, 목록에서 빠져 있던 것을 더함)', 'IX `IX_ORD_ORDER_GIFT_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (받은 선물함, GLOBAL, OC-110 A)', 'IX `IX_ORD_ORDER_RECIPIENT_MOBILE_PHONE_NUMBER_HASH` (수령인 권리 요청, 드물어 LOCAL, OC-101 A)',
       'IX `IX_ORD_ORDER_PII_RETENTION_END_DT` (파기 배치, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GIFT_PENDING_INPUT_DUE_AT` (선물 기한 배치, 함수 기반: `CASE WHEN ORDER_STATUS_CD = \'GIFT_ACCEPT_PENDING\' THEN GIFT_ADDRESS_INPUT_DUE_AT END`, OC-70 A)', 'IX `IX_ORD_ORDER_ORIGINAL_ORDER_ID` (원주문 연결 조회, FK 없음, GLOBAL, OC-77 B, OC-78 A)', 'IX `IX_ORD_ORDER_ORDER_STATUS_CD_ORDERED_AT` (관리자 상태별 목록, 기간 조건 필수, LOCAL, OC-82 A)', 'IX `IX_ORD_ORDER_HOLD_REASON_CD` (보류 목록, 함수 기반: `CASE WHEN HOLD_YN = \'Y\' THEN HOLD_REASON_CD END`, 보류 중인 행만 담음, GLOBAL, OC-75 A, OC-78 A)', 'IX `IX_ORD_ORDER_LEGAL_GUARDIAN_CONSENT_ID` (FK, GLOBAL, OC-78 A)', 'IX `IX_ORD_ORDER_GUEST_IDENTITY_CI_HASH` (회원 연결 목록, GLOBAL, OC-83 A)'],
  check=['`ORDER_STATUS_CD`가 결제 대기·결제 만료가 아니면 `ORDER_CONTENT_CONFIRMED_AT` NOT NULL (3-7 A)',
         '`GUEST_ORDER_YN` = Y이고 `PII_PURGED_AT` IS NULL이면 비회원 본인인증 3개 컬럼, `GUEST_IDENTITY_CI_HASH`, `GUEST_ORDER_PASSWORD_HASH`, 개인정보 처리 고지 2개 컬럼 NOT NULL. '
@@ -229,7 +234,11 @@ table(t='ORD_ORDER', ko='주문', en='Order',
         '`PAYMENT_DUE_AT > ORDERED_AT` (OC-68 A)',
         '`ORIGINAL_ORDER_ID <> ORDER_ID` (OC-65 A, OC-77 B)',
         '`TAX_INVOICE_REQUESTED_YN` = Y ⇔ `TAX_INVOICE_REQUESTED_AT` NOT NULL (OC-25 B)',
-        '`GIFT_ORDER_YN` = Y이면 받는 사람 휴대폰 암호문과 배송지 입력 기한 NOT NULL (4-6 B)',
+        '`GIFT_ORDER_YN` = N이면 선물 컬럼(받는 사람 이름·휴대폰 암호문·해시, 메시지, 토큰 해시, 기한, 본인 확인·수락·거절·통지·마지막 발송 일시) 모두 NULL, `GIFT_LINK_SENT_CNT` = 0 (OC-114 A)',
+        '`GIFT_ORDER_YN` = Y이고 `PII_PURGED_AT` IS NULL이면 받는 사람 이름·휴대폰 암호문·해시 NOT NULL (4-6 B, 파기 조건 추가, OC-114 A)',
+        '`GIFT_ORDER_YN` = Y이고 `PAYMENT_COMPLETED_AT` NOT NULL이면 `GIFT_ADDRESS_INPUT_DUE_AT` NOT NULL, 기한이 있으면 `GIFT_ADDRESS_INPUT_DUE_AT > PAYMENT_COMPLETED_AT` (OC-113 A)',
+        '`GIFT_ACCEPTED_AT`과 `GIFT_REJECTED_AT`은 함께 NOT NULL일 수 없다 (OC-114 A)',
+        '`GIFT_ACCEPTED_AT` NOT NULL이면 `GIFT_RECIPIENT_VERIFIED_AT` NOT NULL (OC-111 A)',
         '(`GIFT_ORDER_YN` = N 또는 `GIFT_ACCEPTED_AT` NOT NULL)이고 `PII_PURGED_AT` IS NULL이면 수령인 이름, 수령인 휴대폰 암호문·해시, 우편번호, 도로명 주소, 법정동 코드, 수령 장소, 도서산간 구분 NOT NULL. '
         '상세 주소는 회원 쪽도 선택이라 빼고, 공동현관·배송 요청은 일찍 지우는 값이라 뺀다 (선행 7, OC-84 A와 같은 형식, OC-103 A)',
         '`ENTRANCE_ACCESS_ENC` NOT NULL이면 `ENTRANCE_ACCESS_METHOD_CD` IN (\'PASSWORD\', \'OTHER\') (파기 뒤에는 암호문만 NULL, OC-100 A)',
@@ -529,12 +538,12 @@ CODES = {
 }
 REUSE = {'DELIVERY_PLACE_CD': 'DELIVERY_PLACE', 'TAXATION_TYPE_CD': 'TAXATION_TYPE (상품)', 'WITHDRAWAL_RESTRICTION_CD': 'WITHDRAWAL_RESTRICTION (상품)'}
 
-CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자'), ('ORD_ORDER', '금액·세금계산서'), ('ORD_ORDER', '배송지')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자·금액·세금계산서·배송지 그룹 확정
+CONFIRMED_GROUPS = {('ORD_CART', g) for g in ('식별·소유자', '담은 상품', '담은 경로', '쿠폰 선택', '보관 기간', '가격 인하 알림', '재입고 알림')} | {('ORD_ORDER', '식별'), ('ORD_ORDER', '상태·보류'), ('ORD_ORDER', '주문자'), ('ORD_ORDER', '금액·세금계산서'), ('ORD_ORDER', '배송지'), ('ORD_ORDER', '선물하기')}  # 2026-11-25 사용자 지시: 장바구니 컬럼 확정, 주문 식별·상태·보류·주문자·금액·세금계산서·배송지·선물하기 그룹 확정
 CONFIRMED_TABLES = set()
 
 CONFIRM = [
  ('테이블 이름', '10개 모두 후보. 상품 도메인처럼 이름 결정 질문을 거쳐 확정한다.', '전체'),
- ('결정 단계 미정 사항', '선물하기 세부 7개, 표시 내용 이력 FK, 배송 요청 문구 파기 시점, 체형 동의 철회, 상태 값 목록, 반품 수량 한도 포함 여부 등은 `주문_컬럼검토_결정.pdf`의 OC 질문으로 정한다.', 'OC 질문'),
+ ('결정 단계 미정 사항', '선물하기 세부(한정판 제외, 공급 시기 약정, 철회·교환 주체), 표시 내용 이력 FK, 배송 요청 문구 파기 시점, 체형 동의 철회, 상태 값 목록, 반품 수량 한도 포함 여부 등은 `주문_컬럼검토_결정.pdf`의 OC 질문으로 정한다.', 'OC 질문'),
  ('영업일 달력', '"3영업일" 계산용 영업일 달력 테이블(1-8 A)은 주문 도메인 테이블이 아니다. 소속(`SYS` / `CMM`)을 정한 뒤 그 도메인에 둔다.', 'SYS 또는 CMM'),
  ('다른 도메인 FK', '`CLAIM_ID`, `NON_SALE_ITEM_ID`, `PROMOTION_ID`(사은품·할인 배분), `MEMBER_COUPON_ID`, 주문 `DELIVERY_FEE_MEMBER_COUPON_ID`, 장바구니 `SELECTED_MEMBER_COUPON_ID`, 장바구니·주문 상품의 `EXHIBITION_ID`·`DISPLAY_CONTENT_ID`·`AFFILIATE_ID`는 해당 도메인 테이블이 정해지면 FK로 건다.', 'CLM, WMS, PRM, DSP'),
  ('기획전·제휴처 소속', '기획전 테이블의 소속(DSP / PRM)은 전시·프로모션 도메인을 설계할 때 정한다 (OC-45 C). 크리에이터·제휴처 마스터의 소속(SYS / STL)과 개인 크리에이터의 개인정보 항목·보유 기간·원천징수(세무 확인)는 정산 도메인을 설계할 때 정한다 (OC-46 C).', 'DSP, PRM, SYS, STL'),
@@ -553,6 +562,6 @@ CONFIRM = [
  ('임원 할인과 연도 기준', '임원은 특수관계인이라 저가 판매가 부당행위계산 부인(법인세법 52조) 대상인지 [확인 필요: 세무]. 회원 임직원 연도별 할인 테이블의 연도가 소득세 과세기간(1~12월)과 같은지 확인한다. 재판매 1년 금지(소득세법 시행령 17조의5 2항 3호)는 임직원 할인 약관과 재판매 탐지(8-3 A)의 근거다.', '회원 `MBR`, 관리자 `ADM`'),
  ('적립금 원장 적립 사유', '배분 때 구매 적립분과 기타 적립분을 나누려면 적립금 원장의 적립 건마다 구입 실적 적립인지 구분하는 값이 있어야 한다 (OC-26 A).', '적립금 원장 도메인'),
  ('공급 시기와 임직원 할인 과세', '공급 시기(부가가치세법 15조: 인도되는 때)로 출고 일시와 배송 완료 일시 중 무엇을 쓸지, 임직원 할인 차액의 과세 여부(10조 4항, 29조 4항)와 기타 적립분 결제의 과세 처리. [확인 필요: 세무]', '정산 `STL`'),
- ('정책값 추가', '비회원 주문 조회 잠금 실패 횟수와 잠금 시간 (OC-23 A), 실패 횟수 초기화 시간 (OC-86 A), IP별 조회 실패 허용 횟수와 집계 시간 (OC-87 B), 주문 요청 IP 보관 기간 3개월 (OC-92 C), 고객 주문 목록 최대 조회 기간 (OC-90 A). 비회원 키당 장바구니 행 수 상한 (회원과 따로, OC-40 A).', '`CMM_CODE` 주문 정책 그룹'),
+ ('정책값 추가', '선물 배송지 입력 기한 일수(결제 완료 기준, OC-113 A), 선물 링크 최대 발송 횟수와 최소 간격 (OC-112 A). 비회원 주문 조회 잠금 실패 횟수와 잠금 시간 (OC-23 A), 실패 횟수 초기화 시간 (OC-86 A), IP별 조회 실패 허용 횟수와 집계 시간 (OC-87 B), 주문 요청 IP 보관 기간 3개월 (OC-92 C), 고객 주문 목록 최대 조회 기간 (OC-90 A). 비회원 키당 장바구니 행 수 상한 (회원과 따로, OC-40 A).', '`CMM_CODE` 주문 정책 그룹'),
  ('재판매 탐지 고지', '정규화 주소 해시를 쓰는 목적을 개인정보 처리방침에 적을지.', '`DELIVERY_ADDRESS_HASH`'),
 ]
