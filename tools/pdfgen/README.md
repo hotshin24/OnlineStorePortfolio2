@@ -26,6 +26,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 | `pay/` | `data.py` 결제 테이블·컬럼·코드 값 (단일 출처, 확정 표시·`CONFIRM` 포함, 원장·로그·대사의 FK 없는 값 참조는 `ref()`)<br>`render.py`(`ord/style.css`를 함께 씀, `col_review.py`의 `C`를 읽어 PYC 범위 계산), `col_review.py`(PYC-n, 새 결정은 `C` 끝에), `erd_pay.py` | `결제_테이블이름_검토.pdf`, `결제_컬럼정의서_검토용.pdf`, `결제_컬럼검토_결정.pdf` (공통코드 PDF는 아직 없음, `CODE_ID` 미발번) |
 | `ord_decision/` | `gen.py`, `d1~3.py`, `md.py`, `orig/`(결정 당시 원문) 주문결정 본문과 설계 패턴. 나중에 바뀐 결정은 `gen.py`의 `CHANGES`에 변경 안내를 적는다 (지금 5-5, 9-2, 3-9, 4-6) | `주문결정_NN-NN_*.pdf` 80개, `주문도메인_설계패턴_80.pdf` |
 | `pay_decision/` | `gen.py`, `fields.py`(12개 분야 이름·소개·패턴 수), `orig/`(2026-11-25 대화 원문, 패턴마다 질문과 답변, `history_1~4.md` 부록). `ord_decision/`의 `md.py`·`style.css`를 함께 쓴다. 선택지·추천·답은 원문에서 읽고, 답이 한 글자가 아니었던 2-1·7-1·12-4는 `CHOSEN`, 결정 단계 기록은 `NOTE`, 나중에 바뀐 결정의 변경 안내는 `CHANGES`(지금 4-3, 10-1)에 적는다 | `결제결정_NN-NN_*.pdf` 76개, `결제도메인_설계패턴_76.pdf` |
+| `dlv_pattern/` | `gen.py` 배송 도메인 설계 패턴 검토본 (5개 축, 세부 81개, 결정 전). 데이터가 스크립트 안에 있고 `ord_decision/style.css`를 함께 쓴다. 세부 개수를 assert로 검사한다 | `배송도메인_설계패턴_81.pdf` |
 | `screen/` | `cart.html`, `order.html`, `admin_order.html`, `admin_payment.html` 화면 와이어프레임 (HTML 원본을 직접 고침) | `docs/pdf/화면/장바구니_화면.pdf`, `주문서_화면.pdf`, `관리자_주문_화면.pdf`, `관리자_결제_화면.pdf` |
 | `util/` | `pdf2txt.swift` PDF 텍스트 추출 (검증용)<br>`pg.swift` 쪽수 확인·쪽 PNG | |
 
@@ -57,6 +58,7 @@ python3 tools/pdfgen/pay_decision/gen.py $OUT/pay_dec      # dec/*.html, pattern
   - 상품: `docs/pdf/테이블_컬럼/상품/`, 공통코드(cmm) → `docs/pdf/테이블_컬럼/공통/공통코드_CMM_CODE_상품도메인.pdf`, 결정·설계 패턴 → `docs/pdf/결정/상품결정/`, `docs/pdf/설계패턴/`.
   - 주문: `docs/pdf/테이블_컬럼/주문/`, 정책명세 → `docs/pdf/정책명세/주문도메인_정책명세.pdf`, 결정 → `docs/pdf/결정/주문결정/`, 설계 패턴 → `docs/pdf/설계패턴/주문도메인_설계패턴_80.pdf`.
   - 결제: `docs/pdf/테이블_컬럼/결제/`, 정책명세 → `docs/pdf/정책명세/결제도메인_정책명세.pdf`, 결정 → `docs/pdf/결정/결제결정/`, 설계 패턴 → `docs/pdf/설계패턴/결제도메인_설계패턴_76.pdf`.
+  - 배송: 설계 패턴 → `docs/pdf/설계패턴/배송도메인_설계패턴_81.pdf` (`python3 tools/pdfgen/dlv_pattern/gen.py <출력.html>` 뒤 Chrome으로 PDF).
 - 결정 기록 범위 표기: 상품 "PC-1~PC-n"은 `prd/col_review.py`, `prd/render.py`, `prd/cmm.py`, 주문 "OC-16~OC-n"은 `ord/col_review.py`, `ord/render.py`, `policy/ord_content.py` 세 곳에 있어 함께 바꾼다. 결제 "PYC-1~PYC-n"은 `pay/render.py`가 `col_review.py`의 `C`에서 계산한다.
 - Python 3.9는 한글이 든 약 1000바이트 넘는 소스 줄에서 "Non-UTF-8 code" 오류를 낸다. 긴 문자열은 나눠 쓴다 (`awk '{if (length($0)>950) print NR}'`로 확인).
 
@@ -80,7 +82,7 @@ swift tools/pdfgen/util/pdf2txt.swift 이전.pdf 이전.txt
 
 ## 저장소에 없는 생성 스크립트
 
-선행결정, 회원결정 1~47번 본문, 회원·전체 설계패턴, 후보테이블, 용어집, 법률검토 PDF의 생성 스크립트는 여기 없다 (상품·주문·결제 설계패턴은 `prd_decision/`, `ord_decision/`, `pay_decision/`에 있다). 지시규칙은 2026-11-22에 PDF 내용을 바탕으로 `rules/`에 새로 만들었다. 앞의 문서들은 세션 임시 폴더에서 만들었고, 그 폴더가 지워져서 최종본을 확인할 수 없다. 법률검토 PDF는 저장소에 올리지 않는 문서다. L10~L12는 로컬 전용 `docs/pdf/법률검토/_src/`에 생성 스크립트가 있다 (`build.sh`).
+선행결정, 회원결정 1~47번 본문, 회원·전체 설계패턴, 후보테이블, 용어집, 법률검토 PDF의 생성 스크립트는 여기 없다 (상품·주문·결제 설계패턴은 `prd_decision/`, `ord_decision/`, `pay_decision/`, 배송은 `dlv_pattern/`에 있다). 지시규칙은 2026-11-22에 PDF 내용을 바탕으로 `rules/`에 새로 만들었다. 앞의 문서들은 세션 임시 폴더에서 만들었고, 그 폴더가 지워져서 최종본을 확인할 수 없다. 법률검토 PDF는 저장소에 올리지 않는 문서다. L10~L12는 로컬 전용 `docs/pdf/법률검토/_src/`에 생성 스크립트가 있다 (`build.sh`).
 
 ## ERD (mmd, drawio)
 
