@@ -25,7 +25,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 | `ord/` | `data.py` 주문 테이블·컬럼·코드 값 (단일 출처, `CONFIRMED_GROUPS` 확정 표시)<br>`render.py`, `col_review.py`(OC-n), `erd_ord.py` | `주문_테이블이름_검토.pdf`, `주문_컬럼정의서_검토용.pdf`, `주문_컬럼검토_결정.pdf` (공통코드 PDF는 아직 없음, `CODE_ID` 미발번) |
 | `pay/` | `data.py` 결제 테이블·컬럼·코드 값 (단일 출처, 확정 표시·`CONFIRM` 포함, 원장·로그·대사의 FK 없는 값 참조는 `ref()`)<br>`render.py`(`ord/style.css`를 함께 씀, `col_review.py`의 `C`를 읽어 PYC 범위 계산), `col_review.py`(PYC-n, 새 결정은 `C` 끝에), `erd_pay.py` | `결제_테이블이름_검토.pdf`, `결제_컬럼정의서_검토용.pdf`, `결제_컬럼검토_결정.pdf` (공통코드 PDF는 아직 없음, `CODE_ID` 미발번) |
 | `ord_decision/` | `gen.py`, `d1~3.py`, `md.py`, `orig/`(결정 당시 원문) 주문결정 본문과 설계 패턴. 나중에 바뀐 결정은 `gen.py`의 `CHANGES`에 변경 안내를 적는다 (지금 5-5, 9-2, 3-9, 4-6) | `주문결정_NN-NN_*.pdf` 80개, `주문도메인_설계패턴_80.pdf` |
-| `pay_decision/` | `gen.py`, `fields.py`(12개 분야 이름·소개·패턴 수), `orig/`(2026-11-25 대화 원문, 패턴마다 질문과 답변, `history_1~4.md` 부록). `ord_decision/`의 `md.py`·`style.css`를 함께 쓴다. 선택지·추천·답은 원문에서 읽고, 답이 한 글자가 아니었던 2-1·7-1·12-4는 `CHOSEN`, 결정 단계 기록은 `NOTE`, 나중에 바뀐 결정의 변경 안내는 `CHANGES`(지금 10-1)에 적는다 | `결제결정_NN-NN_*.pdf` 76개, `결제도메인_설계패턴_76.pdf` |
+| `pay_decision/` | `gen.py`, `fields.py`(12개 분야 이름·소개·패턴 수), `orig/`(2026-11-25 대화 원문, 패턴마다 질문과 답변, `history_1~4.md` 부록). `ord_decision/`의 `md.py`·`style.css`를 함께 쓴다. 선택지·추천·답은 원문에서 읽고, 답이 한 글자가 아니었던 2-1·7-1·12-4는 `CHOSEN`, 결정 단계 기록은 `NOTE`, 나중에 바뀐 결정의 변경 안내는 `CHANGES`(지금 4-3, 10-1)에 적는다 | `결제결정_NN-NN_*.pdf` 76개, `결제도메인_설계패턴_76.pdf` |
 | `screen/` | `cart.html`, `order.html`, `admin_order.html`, `admin_payment.html` 화면 와이어프레임 (HTML 원본을 직접 고침) | `docs/pdf/화면/장바구니_화면.pdf`, `주문서_화면.pdf`, `관리자_주문_화면.pdf`, `관리자_결제_화면.pdf` |
 | `util/` | `pdf2txt.swift` PDF 텍스트 추출 (검증용)<br>`pg.swift` 쪽수 확인·쪽 PNG | |
 

@@ -72,8 +72,8 @@ table(t='PAY_PAYMENT', ko='결제 (PG 결제 시도 단위)', en='Payment',
   cd('RESULT_CONFIRM_ROUTE_CD','결과 확정 경로 코드','Result Confirmation Route Code','Y','동기 응답 / 결제창 복귀 / 웹훅 뒤 조회 / 대사 뒤 조회 / PG 조회 / 우리 판정 / 수동 (3-2 C, 3-5 C, PYC-28 A, PYC-29 A, PYC-44 A). '
    '승인·실패·만료이면 NOT NULL, 그 밖의 상태이면 NULL (PYC-46 A). 이상 승인으로 다시 확정되면 새 경로로 덮어쓰고, 이전 경로는 `ABNORMAL_PREV_CONFIRM_ROUTE_CD`로 옮긴다 (PYC-47 B). 이 컬럼과 같은 코드 그룹을 쓰므로 값을 더하면 두 컬럼의 값 목록 CK를 함께 고친다 (PYC-50 A).'),
   ('RESULT_CONFIRM_REASON_CN','수동 확정 사유','Manual Confirmation Reason','VARCHAR2(500)','Y','','','확정 경로가 수동일 때 필수 (3-2 C).'),
-  yn('ABNORMAL_APPROVAL_YN','이상 승인 여부','Abnormal Approval Flag','N','PG는 승인했지만 우리가 받아들이지 않아 곧바로 자동 취소한 승인 행. 두 경우다: 만료·실패 뒤에 승인이 확인됨(3-8 A), 자동 승인 수단이 요청과 다른 금액으로 승인함(사유 `AMOUNT_MISMATCH`, 3-3 A, PYC-52 A). '
-   'Y이면 주문당 승인 1건 UK, 승인 금액 CHECK, 과세 분할 CHECK에서 빠진다.'),
+  yn('ABNORMAL_APPROVAL_YN','이상 승인 여부','Abnormal Approval Flag','N','PG는 승인했지만 우리가 받아들이지 않아 곧바로 취소·환불하는 승인 행. 세 경우다: 만료·실패 뒤에 승인이 확인됨(3-8 A), 자동 승인 수단이 요청과 다른 금액으로 승인함(사유 `AMOUNT_MISMATCH`, 3-3 A, PYC-52 A), '
+   '가상계좌에 설정과 다른 금액이 입금됨(사유 `AMOUNT_MISMATCH`, 승인 금액 = 실제 입금액, 4-3 A, PYC-71 A). Y이면 주문당 승인 1건 UK와 승인 금액 CHECK에서 빠진다 (과세 분할 CHECK는 요청 금액 기준이라 그대로 건다, PYC-68 A).'),
   cd('ABNORMAL_PREV_CONFIRM_ROUTE_CD','이상 승인 전 확정 경로 코드','Result Confirmation Route Code before Abnormal Approval','Y','이상 승인으로 바뀔 때 그전의 `RESULT_CONFIRM_ROUTE_CD`를 옮겨 둔다. 만료·실패 뒤 이상 승인이면 NOT NULL, 금액 불일치 이상 승인(이전 확정이 없음)과 이상 승인이 아닌 행은 NULL (PYC-52 A). '
    'PG 호출 로그는 1년 뒤 지워지므로(11-2 A) 5년 남는 결제 행에 처음 실패·만료를 확정한 경로를 남긴다 (3-2 C 예 4, PYC-47 B).'),
   yn('MANUAL_CHECK_REQUIRED_YN','결제 예외 수동 처리 필요 여부','Payment Exception Manual Handling Required Flag','N','예외 = 자동 흐름으로 끝내지 못했거나 고객 문의로 사람이 봐야 하는 결제(돈, 상태, 외부 등록) (PYC-58 A). 켜는 경로는 사유 코드의 값 목록 (3-7 A, 4-2 A, 4-3 A, 5-7 A). 처리가 끝나도 Y로 남기고, 미처리 여부는 완료 일시가 NULL인지로 본다 (PYC-19 A).'),
@@ -96,8 +96,9 @@ table(t='PAY_PAYMENT', ko='결제 (PG 결제 시도 단위)', en='Payment',
  ]),
  ('금액', [
   amt('REQUEST_AMT','결제 요청 금액','Payment Request Amount',ck='CK (> 0)',d='',desc='행을 만들 때 정한 금액. 주문 결제 금액 또는 추가 결제 금액.'),
-  amt('AUTHENTICATED_AMT','인증 금액','Authenticated Amount',null='Y',d='',desc='인증 결과로 받은 금액. 승인 전에 요청 금액과 비교한다 (3-3 A).'),
-  amt('APPROVED_AMT','승인 금액','Approved Amount',desc='가상계좌는 입금 확인 금액 (4-3 A).'),
+  amt('AUTHENTICATED_AMT','인증 금액','Authenticated Amount',null='Y',d='',desc='인증 결과로 받은 금액. 승인 전에 요청 금액과 비교한다 (3-3 A). 요청 금액과 다르면 사유가 `AMOUNT_MISMATCH`여야 한다 (CHECK, PYC-70 A).'),
+  amt('APPROVED_AMT','승인 금액','Approved Amount',desc='고객이 실제로 낸 돈 = 요청 금액 − 즉시 할인 3종. PG가 할인 전 총액을 주면 PG 응답의 즉시 할인 합을 빼서 넣는다 (PYC-69 A, PG 총액의 뜻은 [확인 필요: 계약 PG]). '
+   '취소 가능 잔액, 환불, 현금영수증의 기준. 가상계좌는 입금 확인 금액이고, 설정과 다른 금액이 들어오면 실제 입금액을 넣고 이상 승인으로 둔다 (4-3 A, PYC-71 A). 승인 상태가 아니면 0 (PYC-70 A).'),
   amt('CARD_ISSUER_INSTANT_DISCOUNT_AMT','카드사 부담 즉시 할인 금액','Card Issuer-Funded Instant Discount Amount',desc='PG 승인 응답의 카드사 즉시 할인 (토스 `discount.amount`). 부담 주체별 금액이라 부담 주체 코드는 두지 않는다 (10-1 A, PYC-11 A, PYC-15 A).'),
   amt('EASY_PAY_PROVIDER_INSTANT_DISCOUNT_AMT','간편결제사 부담 즉시 할인 금액','Easy Pay Provider-Funded Instant Discount Amount',desc='PG 승인 응답의 간편결제사 즉시 할인 (토스 `easyPay.discountAmount`). 카드사 할인과 함께 올 수 있다 (PYC-11 A).'),
   amt('PG_INSTANT_DISCOUNT_AMT','PG 부담 즉시 할인 금액','PG-Funded Instant Discount Amount',desc='PG가 비용을 대는 즉시 할인 (예: 계좌이체 즉시 할인) [확인 필요: 계약 PG]. 10-1 A의 부담 주체 PG를 담는다 (PYC-15 A).'),
@@ -105,9 +106,11 @@ table(t='PAY_PAYMENT', ko='결제 (PG 결제 시도 단위)', en='Payment',
   amt('CANCEL_PENDING_AMT','취소 처리 중 금액','Cancellation Pending Amount',desc='요청했으나 결과가 나지 않은 취소 금액 (5-1 B).'),
   amt('OUTSIDE_PG_REFUNDED_AMT','PG 밖 환불 누계','Cumulative Refunded Amount outside PG',desc='계좌 송금, 예치금 적립, 차지백 인용으로 돌려준 금액 (5-4 A, 9-3 A).'),
   ('CANCELABLE_AMT','취소 가능 잔액 (계산)','Cancelable Remaining Amount (Derived)',AMT,'N','','가상 컬럼, CK (>= 0)','`GENERATED ALWAYS AS (APPROVED_AMT - CANCELED_AMT - CANCEL_PENDING_AMT - OUTSIDE_PG_REFUNDED_AMT) VIRTUAL` (2-7 A, 5-1 B). CK로 과다 환불을 막는다.'),
+  ('PG_BALANCE_AMT','PG가 알려 준 남은 결제 금액','PG-Reported Remaining Balance Amount',AMT,'Y','','CK (>= 0)','PG가 준 취소 가능 잔액 (토스 `balanceAmount`). 승인 응답, 취소 응답, 조회 때마다 덮어쓴다. 승인 전에는 NULL (PYC-72 A). '
+   '우리 쪽 비교 값은 승인 금액 − PG 취소 누계 (PG 밖 환불은 PG 잔액에 들어가지 않는다). PG 잔액이 할인 전 총액 기준이면 남은 즉시 할인을 더해 비교한다 [확인 필요: 계약 PG]. 다르면 예외 수동 처리(사유 `STATUS_MISMATCH`)로 올리고, PG 취소를 보낼 수 있는 금액은 두 값 중 작은 쪽으로 한다.'),
   ('PARTIAL_CANCELABLE_YN','부분 취소 가능 여부','Partial Cancellation Available Flag',YN,'Y','','CK (Y/N)','PG 승인 응답 값 (PYC-8 A). N이면 부분 환불은 PG에 보내지 않고 바로 PG 밖 환불(계좌 송금·예치금, 5-4 A)로 보낸다. 응답에 이 값이 없는 PG는 NULL이고, 취소를 보내 본 결과로 판단한다.'),
   amt('CASH_RECEIPT_TARGET_AMT','현금영수증 대상 금액','Cash Receipt Target Amount',desc='PG 결제 중 현금성 부분만. 승인할 때 정한다 (6-2 A).'),
-  amt('TAXABLE_SUPPLY_AMT','과세 공급가액','Taxable Supply Amount',desc='PG로 보낸 값 그대로 (6-8 A).'),
+  amt('TAXABLE_SUPPLY_AMT','과세 공급가액','Taxable Supply Amount',desc='PG로 보낸 값 그대로. 세 금액의 합 = 요청 금액 (6-8 A, PYC-68 A). 즉시 할인의 부담 주체별 세금 처리는 [확인 필요: 세무].'),
   amt('VAT_AMT','부가가치세 금액','Value-Added Tax Amount'),
   amt('TAX_FREE_AMT','면세 금액','Tax-Free Amount'),
  ]),
@@ -246,7 +249,10 @@ table(t='PAY_PAYMENT', ko='결제 (PG 결제 시도 단위)', en='Payment',
         '`MANUAL_CHECK_REQUIRED_YN` = Y ⇔ `MANUAL_CHECK_REASON_CD` NOT NULL (PYC-18 A)',
         '`MANUAL_CHECK_RESOLVED_AT` NOT NULL ⇔ `MANUAL_CHECK_RESOLVER_ADMIN_USER_ID` NOT NULL. 완료 일시가 있으면 `MANUAL_CHECK_REQUIRED_YN` = Y (PYC-19 A)',
         '`ESCROW_APPLIED_YN` = Y이면 수단은 `VIRTUAL_ACCOUNT` 또는 `ACCOUNT_TRANSFER`이고 두 상태 코드 NOT NULL. N이면 결제대금예치 컬럼 모두 NULL (6-9 A)',
-        '`TAXABLE_SUPPLY_AMT + VAT_AMT + TAX_FREE_AMT = APPROVED_AMT` (승인 뒤, 이상 승인 행 제외, 6-8 A, PYC-52 A)'])
+        '`TAXABLE_SUPPLY_AMT + VAT_AMT + TAX_FREE_AMT = REQUEST_AMT` (행을 만들 때부터 항상, 6-8 A, PYC-68 A)',
+        '상태가 `APPROVED`가 아니면 `APPROVED_AMT`, 즉시 할인 3종, `CANCELED_AMT`, `CANCEL_PENDING_AMT`, `OUTSIDE_PG_REFUNDED_AMT`, `CASH_RECEIPT_TARGET_AMT` = 0이고 `PG_BALANCE_AMT` NULL (PYC-70 A, PYC-72 A)',
+        '`CASH_RECEIPT_TARGET_AMT` <= `APPROVED_AMT` (PYC-70 A)',
+        '`AUTHENTICATED_AMT` NOT NULL이고 `AUTHENTICATED_AMT` ≠ `REQUEST_AMT`이면 `PAYMENT_FAILURE_REASON_CD` = `AMOUNT_MISMATCH` (실패 행과 이상 승인 행, 3-3 A, PYC-70 A)'])
 
 table(t='PAY_REFUND_REQUEST', ko='환불 요청', en='Refund Request',
  desc='환불 1건당 1행. 클레임 도메인이 수단별 금액을 정해 요청하고, 결제 도메인이 결제 취소 행과 원장 복원 행을 만든다. 각 행은 이 요청을 가리킨다. 클레임 없는 환불(주문 변경, 자동 취소 등)도 같은 길로 처리한다 (1-3 A).',
@@ -357,7 +363,7 @@ table(t='PAY_PAYMENT_CANCEL', ko='결제 취소 (부분 취소·PG 밖 환불·�
       'IX `IX_PAY_PAYMENT_CANCEL_NEXT_INQUIRY_AT` (함수 기반: `NEXT_INQUIRY_AT`이 있는 행만), `IX_PAY_PAYMENT_CANCEL_NEXT_RETRY_AT` (함수 기반: 상태 `REQUESTED`·`UNKNOWN`·`FAILED`이고 예외 수동 처리이 아닌 행만, 5-9 A), `IX_PAY_PAYMENT_CANCEL_REFUND_DUE_DT` (함수 기반: 이행 전 행만, 5-8 A)',
       'IX `IX_PAY_PAYMENT_CANCEL_CLAIM_ID`, `IX_PAY_PAYMENT_CANCEL_ORDER_CHANGE_HIST_ID`, `IX_PAY_PAYMENT_CANCEL_CHARGEBACK_ID` (FK), `IX_PAY_PAYMENT_CANCEL_PII_RETENTION_END_DT`',
       'IX `IX_PAY_PAYMENT_CANCEL_MANUAL_CHECK_OPEN` (함수 기반: 처리 필요 Y이고 완료 전인 행만 `CREATED_AT`), `IX_PAY_PAYMENT_CANCEL_MANUAL_CHECK_RESOLVER_ADMIN_USER_ID` (FK) (PYC-20 A)'],
- check=['원인 FK는 사유에 맞는 하나만: `CLAIM_REFUND` → `CLAIM_ID`, `ORDER_CHANGE_ADJUSTMENT` → `ORDER_CHANGE_HIST_ID`, `CHARGEBACK` → `CHARGEBACK_ID`, 나머지 → 셋 다 NULL (5-2 A, 9-3 A)',
+ check=['`TAXABLE_SUPPLY_AMT + VAT_AMT + TAX_FREE_AMT = CANCEL_AMT` (6-8 A, PYC-68 A)', '원인 FK는 사유에 맞는 하나만: `CLAIM_REFUND` → `CLAIM_ID`, `ORDER_CHANGE_ADJUSTMENT` → `ORDER_CHANGE_HIST_ID`, `CHARGEBACK` → `CHARGEBACK_ID`, 나머지 → 셋 다 NULL (5-2 A, 9-3 A)',
         '`REFUND_METHOD_CD` = `CHARGEBACK` ⇔ 사유 `CHARGEBACK` (9-3 A)',
         '`REFUND_METHOD_CD` = `BANK_TRANSFER`이면 환불 계좌 컬럼 NOT NULL(파기 전). `DEPOSIT_CREDIT`이면 `DEPOSIT_CREDIT_CONSENTED_AT` NOT NULL (5-5 A, 5-6 A)',
         '`CANCEL_PROCESS_STATUS_CD` = `COMPLETED`이면 `COMPLETED_AT` NOT NULL. 환불 방법이 `BANK_TRANSFER`이고 완료면 `ACCOUNT_HOLDER_VERIFY_RESULT_CD` = `MATCHED` (5-6 A)',
@@ -946,7 +952,7 @@ CODES = {
    ('OTHER','기타','Other','다른 값에 맞지 않음. 세부 원인은 PG 실패 코드·메시지에 남김. 비율을 감시해 반복되면 새 값으로 올림 (PYC-43 A) · `ATTR1` ALL · `ATTR2` ERROR_OTHER')),
  'MANUAL_CHECK_REASON_CD': vals(
    ('DEPOSIT_CORRECTION','은행 입금 정정','Bank Deposit Correction','승인된 가상계좌 입금을 은행이 정정·취소함. 돈 없이 결제 완료된 주문이 출고될 수 있어 가장 급하다. 운영자는 주문 출고를 막고 PG와 입금 사실을 확인한다 (4-2 A) · `ATTR2` MONEY_RISK'),
-   ('DEPOSIT_AMOUNT_MISMATCH','설정과 다른 입금 금액','Deposit Amount Mismatch','가상계좌에 설정과 다른 금액이 들어와 승인으로 바꾸지 않음. 운영자는 고객에게 환불 계좌를 받아 돌려주고 다시 결제를 안내한다 (4-3 A) · `ATTR2` MONEY_RISK'),
+   ('DEPOSIT_AMOUNT_MISMATCH','설정과 다른 입금 금액','Deposit Amount Mismatch','가상계좌에 설정과 다른 금액이 들어와 이상 승인(사유 `AMOUNT_MISMATCH`, 승인 금액 = 실제 입금액)으로 둠. 주문은 결제 완료가 되지 않는다. 운영자는 고객에게 환불 계좌를 받아 취소 행으로 전액 돌려주고 다시 결제를 안내한다 (4-3 A, PYC-71 A) · `ATTR2` MONEY_RISK'),
    ('INQUIRY_LIMIT_EXCEEDED','조회 한도 초과','Inquiry Limit Exceeded','결과 불명을 최대 횟수까지 조회해도 확정되지 않음. 운영자는 PG에 문의해 수동 확정한다 (3-7 A, PYC-48 A) · `ATTR2` STATUS_UNCERTAIN'),
    ('STATUS_MISMATCH','PG 상태 불일치','PG Status Mismatch','`PG_PAYMENT_STATUS_VAL`과 우리 상태가 어긋남. 운영자는 PG에 다시 조회해 반영하거나 취소를 들여온다 (PYC-16 A) · `ATTR2` STATUS_UNCERTAIN'),
    ('PG_CODE_UNMAPPED','PG 코드 대응 없음','PG Code Unmapped','PG 결제 상태나 실패 코드가 PG 코드 대응 테이블에 없어 처리하지 못함. 운영자는 대응을 더한 뒤 같은 코드로 걸린 행을 다시 처리한다 (PYC-2 B, PYC-55 A) · `ATTR2` STATUS_UNCERTAIN'),
@@ -980,7 +986,7 @@ CODES = {
  'ESCROW_CONFIRM_STATUS_CD': vals(('WAITING','확정 대기','Waiting',''),('CONFIRMED','구매 확정','Confirmed',''),('REJECTED','구매 거절','Rejected',''),('AUTO_CONFIRMED','자동 확정','Auto Confirmed','PG 기한 경과')),
  'ACCOUNT_HOLDER_VERIFY_RESULT_CD': vals(('MATCHED','일치','Matched','송금 가능'),('MISMATCHED','불일치','Mismatched','계좌 다시 받음'),('ERROR','조회 오류','Error','다시 조회')),
  'CASH_RECEIPT_ISSUE_ROUTE_CD': vals(('PG_AGENT','PG 대행 발급','PG Agent',''),('MERCHANT_DIRECT','자사 직접 발급','Merchant Direct','')),
- 'PAYMENT_REFUND_REASON_CD': vals(('AMOUNT_MISMATCH_AUTO_CANCEL','금액 불일치 자동 취소','Amount Mismatch Auto Cancel','3-3 A'),('ABNORMAL_APPROVAL_AUTO_CANCEL','이상 승인 자동 취소','Abnormal Approval Auto Cancel','3-8 A'),('LATE_DEPOSIT_REFUND','만료 뒤 입금 환불','Late Deposit Refund','4-4 A'),('CHARGEBACK','차지백 인용','Chargeback Accepted','9-3 A'),('PG_CONSOLE_CANCEL','PG 관리자 화면 취소 들여오기','PG Console Cancel Import','5-7 A'),('MANUAL_ADJUSTMENT','운영자 조정','Manual Adjustment','')),
+ 'PAYMENT_REFUND_REASON_CD': vals(('AMOUNT_MISMATCH_AUTO_CANCEL','금액 불일치 자동 취소','Amount Mismatch Auto Cancel','3-3 A. 가상계좌 금액 불일치 입금의 환불도 이 값 (PYC-71 A)'),('ABNORMAL_APPROVAL_AUTO_CANCEL','이상 승인 자동 취소','Abnormal Approval Auto Cancel','3-8 A'),('LATE_DEPOSIT_REFUND','만료 뒤 입금 환불','Late Deposit Refund','4-4 A'),('CHARGEBACK','차지백 인용','Chargeback Accepted','9-3 A'),('PG_CONSOLE_CANCEL','PG 관리자 화면 취소 들여오기','PG Console Cancel Import','5-7 A'),('MANUAL_ADJUSTMENT','운영자 조정','Manual Adjustment','')),
  'REFUND_REQUEST_STATUS_CD': vals(('REQUESTED','요청','Requested',''),('PROCESSING','처리 중','Processing',''),('COMPLETED','완료','Completed',''),('PARTIALLY_FAILED','일부 실패','Partially Failed','예외 수동 처리')),
  'ADDITIONAL_PAYMENT_REASON_CD': vals(('EXCHANGE_SHIPPING_FEE','교환 배송비','Exchange Shipping Fee',''),('REMOTE_AREA_FEE','도서산간 추가 배송비','Remote Area Fee',''),('OVER_REFUND_RECOVERY','과다 환불 회수','Over-Refund Recovery','5-7 A')),
  'PAYMENT_CANCEL_REASON_CD': vals(('CLAIM_REFUND','클레임 환불','Claim Refund','CLAIM_ID 필수'),('ORDER_CHANGE_ADJUSTMENT','주문 변경 차액','Order Change Adjustment','ORDER_CHANGE_HIST_ID 필수'),
@@ -1037,12 +1043,12 @@ REUSE_NO_ROWS = {'ABNORMAL_PREV_CONFIRM_ROUTE_CD': ('PAY_PAYMENT', 'RESULT_CONFI
                  'CARD_ACQUIRER_CD': ('PAY_PAYMENT', 'CARD_COMPANY_CD'),
                  'AFFECTED_PAYMENT_METHOD_CD': ('PAY_PAYMENT', 'PAYMENT_METHOD_CD')}
 
-CONFIRMED_GROUPS = {('PAY_PAYMENT', '식별'), ('PAY_PAYMENT', '상태·결과'), ('PAY_PAYMENT', '결제 수단')}
+CONFIRMED_GROUPS = {('PAY_PAYMENT', '식별'), ('PAY_PAYMENT', '상태·결과'), ('PAY_PAYMENT', '결제 수단'), ('PAY_PAYMENT', '금액')}
 CONFIRMED_TABLES = set()
 # PG사(또는 PG를 거쳐 카드사·국세청)에서 받는 값과, 계약서·코드표에서 옮겨 적는 PG 값. 정의서에서 번호를 굵게 표시한다 (2026-11-26 사용자 지시).
 PG_SOURCED = {(t, c) for t, cs in [
     ('PAY_PAYMENT', 'PG_PAYMENT_STATUS_VAL PG_RESULT_CD PG_RESULT_MESSAGE_CN PG_TRANSACTION_NO PG_RECEIPT_URL AUTHENTICATED_AMT APPROVED_AMT CARD_ISSUER_INSTANT_DISCOUNT_AMT EASY_PAY_PROVIDER_INSTANT_DISCOUNT_AMT PG_INSTANT_DISCOUNT_AMT '
-     'AUTHENTICATED_AT APPROVED_AT EASY_PAY_INNER_METHOD_CD EASY_PAY_INNER_CARD_AMT EASY_PAY_INNER_CASH_AMT PG_EASY_PAY_PROVIDER_RAW_VAL '
+     'PG_BALANCE_AMT AUTHENTICATED_AT APPROVED_AT EASY_PAY_INNER_METHOD_CD EASY_PAY_INNER_CARD_AMT EASY_PAY_INNER_CASH_AMT PG_EASY_PAY_PROVIDER_RAW_VAL '
      'CARD_COMPANY_CD CARD_ACQUIRER_CD PG_CARD_COMPANY_RAW_VAL MASKED_CARD_NUMBER_VAL CARD_TYPE_CD CARD_APPROVAL_NO PG_CARD_IDENTIFIER_VAL '
      'INSTALLMENT_MONTHS_CNT INTEREST_FREE_TYPE_CD INTEREST_FREE_FUNDER_CD INTEREST_FREE_INSTALLMENT_CNT '
      'PG_AUTH_RESULT_VAL IDENTITY_VERIFICATION_METHOD_CD VIRTUAL_ACCOUNT_BANK_CD VIRTUAL_ACCOUNT_NUMBER_VAL DEPOSIT_DUE_AT DEPOSITOR_NM '
@@ -1078,4 +1084,6 @@ CONFIRM = [
  ('세무·법무·계약 PG', '공급 시기와 작성일자, 수정 사유 목록, 국세 증빙 기산일, 카드성 예치금 출금 제한, 고객 사유 지연, 개인사업자 번호, 간편결제사·통신사·인증 방식 목록.', '빨간 표시 컬럼'),
  ('간편결제 포인트의 현금영수증 대상 여부', '간편결제 앱에서 현금성으로 낸 금액에 적립 포인트가 섞이는지, 계약 PG가 포인트와 충전금을 나눠 주는지. 나눠 주고 적립 포인트가 대상이 아니면 포인트로 낸 금액 컬럼을 더한다 (PYC-65 B).', '`EASY_PAY_INNER_CASH_AMT`'),
  ('카드 승인번호 수신 여부', '간편결제 앱에서 고른 카드에서도 PG가 카드 승인번호를 주는지. 주지 않으면 카드 정보 CHECK에서 승인번호를 뺀다 (PYC-62 A).', '`CARD_APPROVAL_NO`'),
+ ('즉시 할인의 세금 처리', '카드사·간편결제사가 보전하는 즉시 할인이 공급가액에 포함되는지, 우리 부담이 섞인 PG 즉시 할인이 에누리인지. 결과에 따라 요청할 때 보내는 세금 금액 계산이 바뀔 수 있다 (PYC-68 A).', '`TAXABLE_SUPPLY_AMT`, `VAT_AMT`'),
+ ('PG 총액과 남은 금액의 뜻', '계약 PG의 총액(토스 `totalAmount`)과 남은 금액(`balanceAmount`)이 즉시 할인 전 금액인지. 승인 금액을 넣는 방법과 남은 금액 비교식이 이것으로 정해진다 (PYC-69 A, PYC-72 A).', '`APPROVED_AMT`, `PG_BALANCE_AMT`'),
 ]
