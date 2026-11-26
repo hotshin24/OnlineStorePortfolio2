@@ -2,7 +2,7 @@
 # 사용: python3 render.py <출력폴더>
 import sys, os, re, html, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, CONFIRMED_GROUPS, CONFIRMED_TABLES
+from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, REUSE_NO_ROWS, CONFIRMED_GROUPS, CONFIRMED_TABLES, PG_SOURCED
 JSON_CODES = {}
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from col_review import C as _PYC
@@ -22,10 +22,13 @@ for t in T:
     for c in t['cols']:
         assert len(c) == 8, (t['t'], c[0])
         assert len(c[0].encode()) <= 128
+_pgm = PG_SOURCED - {(t['t'], c[0]) for t in T for c in t['cols']}
+assert not _pgm, _pgm
 missing = [(t['t'], c[0]) for t in T for c in t['cols'] if '값 목록' in c[6] and c[0] not in CODES]
 assert not missing, missing
 def code_id(col, code): return ''
 
+RV_CSS = 'tr.rv td{background:#fff4d6;font-size:8pt;border-top:1px solid #d9a521;border-bottom:2px solid #d9a521;color:#5a4300} tr.rv td:first-child{border-left:4px solid #d9a521} tr.rv td.p{padding-left:14px;font-weight:700}'
 CSS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ord', 'style.css'), encoding='utf-8').read()
 def il(s):
     s = html.escape(str(s)); p = s.split('`')
@@ -33,7 +36,7 @@ def il(s):
     return re.sub(r'\[(확인 필요[^\]]*)\]', r'<span class="warn">[\1]</span>', s)
 def ln1(ko, en): return f'{il(ko)} <span class="en" style="display:inline-block">({il(en)})</span>'
 def pn(p): return html.escape(p).replace('_', '_<wbr>')
-def page(title, body): return f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>{title}</title><style>{CSS}</style></head><body>{body}</body></html>'
+def page(title, body): return f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>{title}</title><style>{CSS}{RV_CSS}</style></head><body>{body}</body></html>'
 BOX = '☐'
 ON = '☑'
 def ckcell(on): return f'<td class="ck on">{ON}</td>' if on else f'<td class="ck">{BOX}</td>'
@@ -95,10 +98,11 @@ NOTE = ('<div class="box"><b>검토 방법</b><br>'
         '· 회색 행: 공통 컬럼 (개인정보 보유 4개, 시스템 6개, 논리 삭제 3개). 선행 결정으로 정해져 있다. 논리 삭제는 설정 테이블 3개와 PG 장애 기록만이다.<br>'
         '· NULL 칸: N = NOT NULL, Y = NULL 허용. 파기 대상 개인정보 컬럼은 NULL 허용이고 필수 여부는 애플리케이션이 검증한다 (선행 7).<br>'
         '· 코드 컬럼은 바로 아래 └ 행에 값 목록을 둔다. 코드 컬럼에는 코드 문자열을 저장한다.<br>'
+        f'· <b>굵은 번호</b>: PG사에서 오는 값 ({len(PG_SOURCED)}개). PG 응답·웹훅·거래 파일·차지백 통보로 받거나(PG를 거쳐 온 카드사·국세청 값 포함), PG 계약서·코드표에서 옮겨 적는 값이다. 카드사 가맹점번호는 카드사 직가맹 계약서에서 온다.<br>'
         '· 정렬은 지시 규칙 8 (테이블 그룹은 남색 제목, 컬럼 그룹은 초록 줄). PK는 첫 컬럼, 공통 컬럼은 끝. 그룹 구성과 순서도 제안이다.</div>')
 toc = '<h2>목차</h2>'
 THEAD = '<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:33%"><col style="width:38%"><col style="width:8%"><col style="width:8%"><col style="width:8%"></colgroup><tr><th>No</th><th>테이블</th><th>논리명</th><th>업무 컬럼</th><th>공통 컬럼</th><th>합계</th></tr>'
-secs = ''; tot_b = tot_s = 0
+secs = ''; tot_b = tot_s = 0; POS = {}
 for i, t in enumerate(T, 1):
     fc = full_cols(t); nb = len(t['cols']); ns = len(fc) - nb; tot_b += nb; tot_s += ns
     if t['t'] in GFIRST:
@@ -118,11 +122,23 @@ for i, t in enumerate(T, 1):
         if g != prev:
             secs += f'<tr class="grp"><td colspan="10">{il(g)}</td></tr>'; prev = g
         vals = CODES.get(p, []) if ('값 목록' in ck) else []
+        on_ = t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)
+        POS[(t['t'], p)] = f'{i}-{k}'
+        reuse_row = ''
+        if p in REUSE_NO_ROWS:
+            rt, rc = REUSE_NO_ROWS[p]; nv = len(vals); vals = []
+            ds = (ds + ' ' if ds else '') + '값 목록은 아래 행.'
+            where = POS[(rt, rc)] + (' (이 테이블)' if rt == t['t'] else f' ({rt})')
+            reuse_row = (f'<tr class="rv"><td class="n">{i}-{k}-↺</td><td class="p">↺ 값 목록 재사용</td>'
+                         f'<td colspan="6">공통코드 그룹 <code>{REUSE[p]}</code> (값 {nv}개) · 값 행은 <b>{where}</b> <code>{rc}</code> 아래에 있다. '
+                         f'값을 더하면 두 컬럼의 값 목록 CK를 함께 고친다.</td>' + ckcell(on_) + '<td class="memo"></td></tr>')
         if vals: ds = (ds + ' ' if ds else '') + ('값 목록은 아래 행 (그룹 `' + REUSE[p] + '` 재사용).' if p in REUSE else 'JSON 안의 코드 값 목록은 아래 행.' if p in JSON_CODES else '값 목록은 아래 행.')
         on = t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)
         cls = ' class="sys"' if kind == 's' else (' class="cf"' if '[확인' in ds + ck + en else '')
-        secs += (f'<tr{cls}><td class="n">{i}-{k}</td><td class="p">{pn(p)}</td><td>{ln1(ko, en)}</td><td class="ty">{il(ty)}</td>'
+        no = f'<b style="font-weight:800;color:#111">{i}-{k}</b>' if kind == 'b' and (t['t'], p) in PG_SOURCED else f'{i}-{k}'
+        secs += (f'<tr{cls}><td class="n">{no}</td><td class="p">{pn(p)}</td><td>{ln1(ko, en)}</td><td class="ty">{il(ty)}</td>'
                  f'<td class="n">{nl}</td><td class="p">{il(df)}</td><td class="wr">{il(ck)}</td><td>{il(ds)}</td>' + ckcell(on) + '<td class="memo"></td></tr>')
+        secs += reuse_row
         for vi, v in enumerate(vals, 1):
             _c = 'cv' + (' first' if vi == 1 else '') + (' last' if vi == len(vals) else '')
             secs += (f'<tr class="{_c}"><td class="n">{i}-{k}-{vi}</td><td class="p">└ {pn(v[0])}</td><td>{ln1(v[1], v[2])}</td>'

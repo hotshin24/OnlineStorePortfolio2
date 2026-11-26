@@ -87,6 +87,8 @@ ROUTE = {
     ('PAY_CASH_RECEIPT', 'PAY_CASH_RECEIPT'): ([(1110, 220), (1220, 220), (1220, 279)], 'exitX=0.78;exitY=0;entryX=1;entryY=0.5;'),
     ('PAY_TAX_INVOICE', 'PAY_TAX_INVOICE'): ([(550, 220), (660, 220), (660, 279)], 'exitX=0.78;exitY=0;entryX=1;entryY=0.5;'),
     ('PAY_CHARGEBACK', 'ADM_USER'): ([(1900, 449), (1900, 700), (2700, 700)], 'exitX=1;exitY=0.5;entryX=0.5;entryY=0;'),
+    ('PAY_PAYMENT', 'ADM_USER'): ([(606, 395), (2800, 395)], 'exitX=0.85;exitY=0;entryX=0.8125;entryY=0;'),
+    ('PAY_PAYMENT_CANCEL', 'ADM_USER'): ([(2600, 627)], 'exitX=1;exitY=0.75;entryX=0.1875;entryY=0;'),
 }
 def pts(ch, p):
     if (ch, p) not in ROUTE: return '', ''

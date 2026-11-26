@@ -17,6 +17,15 @@ def plain(s): return re.sub(r'<br>', ' ', s).replace('**', '').replace('`', '')
 
 # 대화에서 답이 한 글자가 아니었던 것: 2-1은 "1 a, 2 a"의 2번, 7-1은 충돌 확인 뒤 다시 고른 절충안 C, 12-4는 질문 두 개에 "a"
 CHOSEN = {'2-1': 'A', '7-1': 'C', '12-4': 'A'}
+# 나중에 바뀐 결정: 결정 문서 맨 위에 변경 안내를 붙인다 (ord_decision/gen.py의 CHANGES와 같은 방식)
+CHANGES = {
+ '10-1': ('2026-11-26 결제 컬럼 검토 PYC-11 A, PYC-15 A로 일부 변경',
+          '선택한 A(결제 행에 즉시 할인 컬럼 그룹을 두고, 주문 금액과 상품 배분은 건드리지 않음)는 그대로다. 바뀐 것은 할인 금액을 담는 방식이다. '
+          '토스페이먼츠는 카드사 할인과 간편결제사 할인을 한 결제에 함께 돌려줄 수 있고 취소 내역도 부담 주체별로 준다는 외부 검토 지적에 따라, '
+          '즉시 할인 금액 1개와 부담 주체 코드 대신 부담 주체별 금액 3개(카드사, 간편결제사, PG)를 결제 행과 취소 행에 둔다. 부담 주체 코드(INSTANT_DISCOUNT_FUNDER_CD)는 없앴다. '
+          'CHECK는 요청 금액 = 승인 금액 + 할인 금액 3개의 합이다. PG 행사 코드·이름은 그대로다. '
+          '기록은 docs/pdf/테이블_컬럼/결제/결제_컬럼검토_결정.pdf의 PYC-11, PYC-15.'),
+}
 NOTE = {
  '1-5': '1-4를 고른 뒤 사용자가 여신전문금융업법과 시행령을 법률 폴더에 올리고 검토를 지시했다. 검토 결과를 반영해 1-5를 다시 올렸고, 이 문서의 원문은 다시 올린 것이다. 처음 올린 원문과 검토 결과는 설계 패턴 문서 부록 3에 있다.',
  '2-1': '사용자 답 "1 a, 2 a" 중 2번이 2-1이다 (1번은 CLAUDE.md 개선안 A).',
@@ -100,9 +109,13 @@ for (g, gi, ps) in F:
         fn = f'결제결정_{int(a):02d}-{int(c):02d}_' + re.sub(r'[^0-9A-Za-z가-힣]', '', p[1])
         m = METHOD.get(p[0]) or next(o[1] for o in p[3] if o[0] == p[5])
         q, ans = orig(p[0])
+        chg = ''
+        if p[0] in CHANGES:
+            h, x = CHANGES[p[0]]
+            chg = f'<div class="ans" style="border-left-color:#b03a00;background:#fff6e0">변경 안내: {t(h)}</div><p>{t(x)}</p>'
         b = [f'<h1>결제 도메인 결정 {p[0]}. {t(p[1])}</h1>',
              f'<div class="meta">{META} · 분야: {t(g)} · 답변 2026-11-25 · 모든 결정은 사용자가 선택함 (파란 행 = 선택한 안, 굵은 글씨 = 추천안)</div>',
-             f'<h2>결정 요약</h2><table><tr><th style="width:50px">번호</th><th style="width:150px">질문</th><th style="width:34px;white-space:nowrap">결정</th><th>내용</th></tr><tr><td class="lab">{p[0]}</td><td>{t(p[1])}</td><td><b>{p[5]}</b></td><td>{t(m)}</td></tr></table>',
+             chg + f'<h2>결정 요약</h2><table><tr><th style="width:50px">번호</th><th style="width:150px">질문</th><th style="width:34px;white-space:nowrap">결정</th><th>내용</th></tr><tr><td class="lab">{p[0]}</td><td>{t(p[1])}</td><td><b>{p[5]}</b></td><td>{t(m)}</td></tr></table>',
              '<h2>결정 당시 올린 원문 (2026-11-25 대화 그대로)</h2><p class="note">설명, 예시, 선택지 표(파란 행 = 선택한 안, 굵은 기호 = 추천안), 추천 이유, 고르면 생기는 것을 그때 올린 그대로 싣는다.</p>',
              md.render(q, chosen=None if p[0] == '7-1' else p[5], shift=1),
              f'<h2>결정 과정</h2><div class="ans">사용자 답변: {p[5]}</div>',

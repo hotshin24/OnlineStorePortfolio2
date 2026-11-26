@@ -1,0 +1,216 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>관리자 결제 화면 (컬럼 대응)</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+body { font-family: "Apple SD Gothic Neo", sans-serif; font-size: 9pt; color: #222; margin: 0; }
+h1 { font-size: 15pt; color: #1f4e79; margin: 0 0 2px; }
+.meta { color: #666; font-size: 8pt; margin-bottom: 8px; }
+.wrap { display: flex; gap: 14px; align-items: flex-start; }
+.screen { width: 57%; border: 2px solid #333; border-radius: 6px; background: #fff; }
+.bar { background: #222; color: #fff; padding: 6px 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.steps { font-size: 8pt; color: #bbb; } .steps b { color: #fff; }
+.cols { display: flex; gap: 10px; padding: 10px; }
+.left { flex: 1.6; } .right { flex: 1; }
+.sec { border: 1px solid #d5d9df; border-radius: 4px; padding: 7px 9px; margin-bottom: 8px; position: relative; }
+.sec h3 { margin: 0 0 5px; font-size: 9.5pt; }
+.n { display: inline-block; min-width: 15px; height: 15px; line-height: 15px; border-radius: 8px; background: #d9480f; color: #fff; font-size: 7.5pt; text-align: center; font-weight: 700; padding: 0 2px; margin-right: 3px; vertical-align: middle; }
+.row { display: flex; justify-content: space-between; margin: 3px 0; }
+.item { display: flex; gap: 8px; border-top: 1px dashed #ddd; padding: 5px 0; }
+.item:first-of-type { border-top: 0; }
+.thumb { width: 40px; height: 48px; background: #e9ecef; border-radius: 3px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #888; }
+.muted { color: #888; font-size: 8pt; } .strike { text-decoration: line-through; color: #999; }
+.tag { display: inline-block; border: 1px solid #1f4e79; color: #1f4e79; font-size: 7pt; padding: 0 3px; border-radius: 2px; margin-left: 3px; }
+.warn { color: #c92a2a; font-size: 8pt; }
+.in { border: 1px solid #ced4da; border-radius: 3px; padding: 2px 6px; color: #555; background: #fafafa; margin: 2px 0; font-size: 8.5pt; }
+.chk { margin: 2px 0; font-size: 8.5pt; }
+.btn { background: #1f4e79; color: #fff; text-align: center; padding: 8px; border-radius: 4px; font-weight: 700; font-size: 11pt; }
+.total { font-size: 12pt; font-weight: 700; color: #d9480f; }
+.map { width: 43%; }
+table { border-collapse: collapse; width: 100%; font-size: 7.6pt; }
+th, td { border: 1px solid #c9ced6; padding: 2px 4px; vertical-align: top; text-align: left; }
+th { background: #edf0f4; }
+code { font-family: Menlo, monospace; font-size: 6.9pt; }
+td.k { width: 18px; text-align: center; }
+.note { font-size: 7.8pt; color: #444; margin-top: 6px; }
+.pg { break-before: page; }
+table.tight { font-size:7.1pt; } table.tight code { font-size:6.4pt; } table.tight td { padding:1px 3px; }
+
+.screen.wide { width: 58%; }
+.grid { width:100%; border-collapse: collapse; font-size: 7.6pt; }
+.grid th, .grid td { border: 1px solid #d5d9df; padding: 2px 4px; }
+.grid th { background: #f1f3f5; }
+.flt { display:flex; flex-wrap:wrap; gap:4px; font-size:8pt; margin-bottom:6px; }
+.flt .in { margin:0; }
+.badge { display:inline-block; font-size:7pt; padding:0 3px; border-radius:2px; background:#e7f5ff; color:#1864ab; }
+.badge.red { background:#fff5f5; color:#c92a2a; }
+.badge.gray { background:#f1f3f5; color:#495057; }
+.tabs { font-size:8pt; border-bottom:1px solid #ccc; margin-bottom:4px; } .tabs b { border-bottom:2px solid #1f4e79; }
+.btn2 { display:inline-block; border:1px solid #1f4e79; color:#1f4e79; font-size:7.5pt; padding:0 5px; border-radius:3px; }
+</style></head><body>
+</head><body>
+<h1>관리자 결제 목록 (와이어프레임) · 화면 요소별 조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-26 · 결제 도메인 컬럼 정의서(제안, PYC-1~PYC-59) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">결제 관리 &gt; <b>결제 조회</b></span></div><div style="padding:10px">
+<div class="sec"><h3><span class="n">1</span>검색</h3>
+<div class="flt"><span class="in">생성 일시 ▾ 2026-11-01 ~ 2026-11-26 (필수, 최대 3개월)</span><span class="in"><span class="n">2</span>주문번호 / 결제번호 / PG 거래번호</span><span class="in"><span class="n">3</span>회원 ID</span></div>
+<div class="flt"><span class="in"><span class="n">4</span>표시 상태 ▾ 미결제, 확인 중, 결제 실패, 결제 기한 만료, 취소 처리 중, 전체 취소, 부분 취소, 결제 완료</span></div>
+<div class="flt"><span class="in"><span class="n">5</span>결제 수단 ▾ 전체</span><span class="in">PG ▾ 전체</span><span class="in">용도 ▾ 주문 / 추가</span><span class="in"><span class="n">6</span>☐ 예외 수동 처리 미처리 ☐ 이상 승인 ☐ 결제대금예치</span><span class="in"><span class="n">7</span>실패·만료 사유 ▾</span><span class="btn2">검색</span></div>
+</div>
+<div class="sec"><h3><span class="n">8</span>목록 (3,912건) <span class="muted" style="float:right"><span class="n">9</span>[엑셀 다운로드] (사유 입력)</span></h3>
+<table class="grid"><tr><th>결제번호</th><th>주문번호</th><th>차수</th><th>용도</th><th>수단 / PG</th><th>요청</th><th>승인</th><th>취소 누계</th><th>표시 상태</th><th>승인 일시</th><th>표시</th></tr>
+<tr><td>20261124-K3F8QZ003</td><td>20261124-K3F8QZ</td><td>3</td><td>주문</td><td>카드 / 토스</td><td>324,500</td><td>324,500</td><td>30,000</td><td><span class="badge">부분 취소</span></td><td>11-24 21:04</td><td></td></tr>
+<tr><td>20261124-K3F8QZ002</td><td>20261124-K3F8QZ</td><td>2</td><td>주문</td><td>카드 / 토스</td><td>324,500</td><td>-</td><td>-</td><td><span class="badge gray">결제 실패</span></td><td>-</td><td><span class="badge red">확인 완료</span></td></tr>
+<tr><td>20261124-7MZQ2P001</td><td>20261124-7MZQ2P</td><td>1</td><td>주문</td><td>가상계좌 / 토스</td><td>129,000</td><td>-</td><td>-</td><td><span class="badge gray">미결제</span></td><td>-</td><td><span class="badge red">확인 필요</span></td></tr>
+<tr><td>20261123-XR4HN9002</td><td>20261123-XR4HN9</td><td>2</td><td>추가</td><td>간편결제 / 토스</td><td>3,000</td><td>3,000</td><td>-</td><td><span class="badge">결제 완료</span></td><td>11-23 18:40</td><td></td></tr>
+<tr><td>20261122-Q8W3TA001</td><td>20261122-Q8W3TA</td><td>1</td><td>주문</td><td>카드 / KCP</td><td>99,000</td><td>99,000</td><td>99,000</td><td><span class="badge gray">전체 취소</span></td><td>11-22 09:56</td><td><span class="badge red">이상 승인</span></td></tr>
+<tr><td>20261121-HC6PVE001</td><td>20261121-HC6PVE</td><td>1</td><td>주문</td><td>카드 / 토스</td><td>58,000</td><td>-</td><td>-</td><td><span class="badge gray">확인 중</span></td><td>-</td><td></td></tr>
+</table>
+<div class="muted" style="margin-top:4px"><span class="n">10</span>같은 주문의 실패·재시도·추가 결제가 모두 행으로 보입니다. 주문번호를 누르면 같은 주문의 결제만 모아 봅니다.</div>
+</div></div></div><div class="map"><table><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr>
+<tr><td class="k">1</td><td>생성 일시 기간</td><td>결제는 주문 참조 파티션이라 기간이 없으면 모든 파티션을 읽음. <code>CREATED_AT</code> LOCAL 인덱스. 승인 일시로 찾을 때는 (<code>MEMBER_ID</code>, <code>APPROVED_AT</code>) 또는 <code>APPROVED_AT</code> 조건 [제안: 최대 기간은 화면 규칙]</td><td>11-1 A</td></tr>
+<tr><td class="k">2</td><td>주문번호·결제번호·PG 거래번호</td><td>주문번호 → <code>ORD_ORDER.ORDER_NO</code> UK → <code>ORDER_ID</code>. <code>PAYMENT_NO</code> UK (GLOBAL, 18자 형식 CK). PG 거래번호는 (<code>PG_CD</code>, <code>PG_TRANSACTION_NO</code>) 함수 기반 UK</td><td>2-8 B, PYC-22 A</td></tr>
+<tr><td class="k">3</td><td>회원</td><td>(<code>MEMBER_ID</code>, <code>CREATED_AT</code>) LOCAL 인덱스. 비회원 결제는 <code>MEMBER_ID</code> NULL이라 주문번호로 찾음</td><td>9-2 A</td></tr>
+<tr><td class="k">4</td><td>표시 상태 8개</td><td>가상 컬럼 <code>PAYMENT_DISPLAY_STATUS_CD</code> (결제 상태 + 취소 처리 중 금액·취소 누계로 계산). 원래 상태는 <code>PAYMENT_STATUS_CD</code> 7개</td><td>PYC-31 A, PYC-32 A</td></tr>
+<tr><td class="k">5</td><td>수단·PG·용도</td><td><code>PAYMENT_METHOD_CD</code>, <code>PG_CD</code>, <code>PAYMENT_PURPOSE_CD</code> (기간 안에서 거름)</td><td>1-4 A, 2-2 C</td></tr>
+<tr><td class="k">6</td><td>예외 수동 처리·이상 승인·예치</td><td>미처리 예외은 <code>IX_PAY_PAYMENT_MANUAL_CHECK_OPEN</code> (처리 필요 Y이고 완료 일시가 빈 행만, 기간 없이도 빠름). <code>ABNORMAL_APPROVAL_YN</code>, <code>ESCROW_APPLIED_YN</code></td><td>PYC-19 A, 3-8 A, 6-9 A</td></tr>
+<tr><td class="k">7</td><td>실패·만료 사유</td><td><code>PAYMENT_FAILURE_REASON_CD</code> 19개. 공통코드 <code>ATTR2</code> 그룹(고객 행동, 결제사 거절 등)으로 묶어 고름</td><td>PYC-26 A, PYC-42 A</td></tr>
+<tr><td class="k">8</td><td>목록 열</td><td><code>PAYMENT_NO</code>, 주문번호(주문 조인), <code>PAYMENT_SN</code>, <code>PAYMENT_PURPOSE_CD</code>, <code>PAYMENT_METHOD_CD</code>, <code>PG_CD</code>, <code>REQUEST_AMT</code>, <code>APPROVED_AMT</code>, <code>CANCELED_AMT</code>, <code>PAYMENT_DISPLAY_STATUS_CD</code>, <code>APPROVED_AT</code>, 표시(<code>MANUAL_CHECK_*</code>, <code>ABNORMAL_APPROVAL_YN</code>)</td><td>목록 표시</td></tr>
+<tr><td class="k">9</td><td>엑셀 다운로드</td><td>사유를 받고 관리자 작업 로그에 남김. 결제 행에는 마스킹 값만 있어 개인정보는 휴대폰 결제 번호 암호문 정도이고 목록에 내보내지 않음</td><td>선행 5, 3-2 C</td></tr>
+<tr><td class="k">10</td><td>같은 주문의 시도</td><td>(<code>ORDER_ID</code>, <code>PAYMENT_SN</code>) UK. 결제 행 1개 = 시도 1번이고 재시도·추가 결제도 행</td><td>2-1 A, PYC-21 A</td></tr>
+</table><div class="note"><b>목록에서 고치지 않는 값:</b> 결제 상태는 PG 결과를 적용하는 함수 하나만 바꿉니다(3-5 C). 관리자가 상태를 바꾸는 길은 예외 처리함의 수동 확정뿐입니다(PYC-48 A).<br><b>주문 화면과의 관계:</b> 주문 상세의 [결제] 탭은 이 목록을 주문 ID로 거른 것입니다.</div></div></div>
+
+<div class="pg"></div><h1>관리자 결제 상세 (와이어프레임) · 화면 요소별 저장·조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-26 · 결제 도메인 컬럼 정의서(제안, PYC-1~PYC-59) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">결제 관리 &gt; 결제 조회 &gt; <b>결제 상세</b></span></div><div class="cols"><div class="left">
+<div class="sec"><h3><span class="n">1</span>20261124-K3F8QZ003 <span class="badge">부분 취소</span> <span class="muted">주문 20261124-K3F8QZ · 3차 시도 · 주문 결제 · APP / iOS</span>
+<span style="float:right"><span class="btn2"><span class="n">2</span>PG에 조회</span> <span class="btn2">환불 요청</span></span></h3></div>
+<div class="sec"><h3><span class="n">3</span>상태·결과</h3>
+<div style="font-size:8pt">결제 상태 승인 (결제 완료) · PG 원래 상태 <code>PARTIAL_CANCELED</code> · 취소 상태 부분 취소<br>
+확정 경로 동기 응답 · 확정 일시 11-24 21:04:11 · 실패·만료 사유 - · PG 실패 코드 -<br>
+<span class="n">4</span>이상 승인 N (이상 승인 전 확정 경로 -)</div></div>
+<div class="sec"><h3><span class="n">5</span>단계별 일시</h3>
+<div style="font-size:8pt">생성 21:03:30 → 인증 완료 21:03:58 → 승인 요청 21:03:59 → 승인 21:04:11 <span class="muted">(결과 불명 발생 -, 조회 0회)</span></div></div>
+<div class="sec"><h3><span class="n">6</span>같은 주문의 결제 시도</h3>
+<table class="grid"><tr><th>차수</th><th>수단</th><th>표시 상태</th><th>사유</th><th>확정 경로</th><th>일시</th><th>확인</th></tr>
+<tr><td>1</td><td>카드</td><td><span class="badge gray">결제 실패</span></td><td>고객 중단</td><td>결제창 복귀</td><td>21:01:12</td><td></td></tr>
+<tr><td>2</td><td>카드</td><td><span class="badge gray">결제 실패</span></td><td>PG 오류</td><td>동기 응답</td><td>21:02:51</td><td>완료</td></tr>
+<tr><td><b>3</b></td><td>카드</td><td><span class="badge">부분 취소</span></td><td>-</td><td>동기 응답</td><td>21:04:11</td><td></td></tr>
+</table></div>
+<div class="sec"><h3><span class="n">7</span>취소 내역</h3>
+<table class="grid"><tr><th>차수</th><th>사유</th><th>방법</th><th>금액</th><th>상태</th><th>요청 / 완료</th><th>환불 기한</th></tr>
+<tr><td>1</td><td>클레임 환불</td><td>PG 취소</td><td>30,000</td><td><span class="badge">완료</span></td><td>11-28 10:00 / 10:00</td><td>12-01 (이행)</td></tr>
+</table>
+<div class="muted"><span class="n">8</span>[환불 요청 #88213 보기] · PG 매출전표 / 취소 영수증 링크</div></div>
+<div class="sec"><h3><span class="n">9</span>부가 정보 (펼침)</h3>
+<div class="muted">▸ 현금영수증 신청 (해당 없음) ▸ 결제대금예치 (해당 없음) ▸ 부정 결제 판정: 통과 · 점수 12 (규칙 일치 없음) ▸ 결제 혜택 ▸ 추가 결제 원인 ▸ 미성년 한도 적용 N · 요청 IP ▸ <span class="n">10</span>PG 호출 로그 (1년) · 관리자 작업 로그</div></div>
+</div><div class="right">
+<div class="sec"><h3><span class="n">11</span>금액</h3>
+<div class="row"><span>요청 금액</span><span>324,500</span></div><div class="row muted"><span>카드사 / 간편결제사 / PG 즉시 할인</span><span>0 / 0 / 0</span></div>
+<div class="row"><span>승인 금액</span><span>324,500</span></div><hr>
+<div class="row"><span>PG 취소 누계</span><span>30,000</span></div><div class="row"><span>취소 처리 중</span><span>0</span></div><div class="row"><span>PG 밖 환불 누계</span><span>0</span></div>
+<div class="row"><b>취소 가능 잔액</b><b class="total">294,500</b></div>
+<div class="row muted"><span>과세 / 부가세 / 면세</span><span>295,000 / 29,500 / 0</span></div></div>
+<div class="sec"><h3><span class="n">12</span>결제 수단</h3>
+<div style="font-size:8pt">카드 · 신한카드 (매입 신한카드)<br>5428-****-****-1234 · 신용 · 개인 · 일시불<br>승인번호 30012345 · 본인 확인 카드사·PG (앱카드)</div></div>
+<div class="sec"><h3><span class="n">13</span>PG·가맹점</h3>
+<div style="font-size:8pt">토스 · MID tosspay_main (일반) · 정산 PG 정산 (하위가맹)<br>PG 거래번호 tgen_20261124210411…<br>카드사 가맹점번호 -</div></div>
+<div class="sec"><h3><span class="n">14</span>예외 수동 처리</h3><div class="muted">해당 없음 (이 행은 처리 대상이 된 적 없음)</div></div>
+</div></div></div><div class="map"><table class="tight"><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr>
+<tr><td class="k">1</td><td>결제 머리</td><td><code>PAYMENT_NO</code>, <code>PAYMENT_DISPLAY_STATUS_CD</code>, <code>ORDER_ID</code>(주문번호), <code>PAYMENT_SN</code>, <code>PAYMENT_PURPOSE_CD</code>, <code>SALES_CHANNEL_CD</code>, <code>OS_CD</code></td><td>2-1 A, PYC-32 A</td></tr>
+<tr><td class="k">2</td><td>PG에 조회</td><td>조회 결과를 적용 함수로 반영. 조회는 <code>PAY_PG_API_LOG</code>에 남고, 상태가 바뀌면 확정 경로 <code>PG_INQUIRY</code></td><td>3-5 C, 3-7 A</td></tr>
+<tr><td class="k">3</td><td>상태·결과</td><td><code>PAYMENT_STATUS_CD</code>, <code>PG_PAYMENT_STATUS_VAL</code>, <code>PAYMENT_CANCEL_STATUS_CD</code>(가상), <code>RESULT_CONFIRM_ROUTE_CD</code> 7개, <code>RESULT_CONFIRMED_AT</code>, <code>PAYMENT_FAILURE_REASON_CD</code>, <code>PG_RESULT_CD</code>·<code>PG_RESULT_MESSAGE_CN</code></td><td>3-2 C, PYC-16 A, PYC-44 A</td></tr>
+<tr><td class="k">4</td><td>이상 승인</td><td><code>ABNORMAL_APPROVAL_YN</code>(늦은 승인, 자동 승인 금액 불일치), <code>ABNORMAL_PREV_CONFIRM_ROUTE_CD</code> (늦은 승인일 때만 값, CHECK)</td><td>3-8 A, PYC-47 B, PYC-52 A</td></tr>
+<tr><td class="k">5</td><td>단계별 일시</td><td><code>CREATED_AT</code>, <code>AUTHENTICATED_AT</code>, <code>APPROVAL_REQUESTED_AT</code>, <code>APPROVED_AT</code>, <code>FAILED_AT</code>, <code>EXPIRED_AT</code>, <code>UNKNOWN_OCCURRED_AT</code>, 조회 <code>INQUIRY_CNT</code>·<code>LAST_INQUIRY_AT</code>. 상태 이력 테이블 대신</td><td>3-2 C, 3-7 A</td></tr>
+<tr><td class="k">6</td><td>같은 주문의 시도</td><td>같은 <code>ORDER_ID</code>의 결제 행 (UK (<code>ORDER_ID</code>, <code>PAYMENT_SN</code>)). 사유·경로·확인 완료 표시</td><td>PYC-21 A, PYC-33 A</td></tr>
+<tr><td class="k">7</td><td>취소 내역</td><td><code>PAY_PAYMENT_CANCEL</code>: <code>CANCEL_SN</code>, <code>PAYMENT_CANCEL_REASON_CD</code>, <code>REFUND_METHOD_CD</code>, <code>CANCEL_AMT</code>, <code>CANCEL_PROCESS_STATUS_CD</code>, <code>REQUESTED_AT</code>·<code>COMPLETED_AT</code>, <code>REFUND_DUE_DT</code>·<code>REFUND_FULFILLED_AT</code></td><td>5-1 B, 5-8 A</td></tr>
+<tr><td class="k">8</td><td>환불 요청·영수증</td><td><code>REFUND_REQUEST_ID</code> → 환불 요청 상세. <code>PG_RECEIPT_URL</code>, <code>PG_CANCEL_RECEIPT_URL</code></td><td>1-3 A</td></tr>
+<tr><td class="k">9</td><td>부가 정보</td><td><code>CASH_RECEIPT_*</code>, <code>ESCROW_*</code>, <code>FDS_*</code>, <code>PG_PROMOTION_*</code>, <code>ADDITIONAL_PAYMENT_REASON_CD</code>·<code>CLAIM_ID</code>, <code>MINOR_LIMIT_APPLIED_YN</code>, <code>PAYMENT_REQUEST_IP</code>. 해당할 때만 펼침</td><td>6-1 C, 6-9 A, 9-1 A, 5-10 A, 9-4 A</td></tr>
+<tr><td class="k">10</td><td>로그</td><td><code>PAY_PG_API_LOG</code> (값 참조, 1년), 관리자 작업 로그</td><td>7-1 C, 11-2 A</td></tr>
+<tr><td class="k">11</td><td>금액</td><td><code>REQUEST_AMT</code>, 즉시 할인 3개, <code>APPROVED_AMT</code>, <code>CANCELED_AMT</code>, <code>CANCEL_PENDING_AMT</code>, <code>OUTSIDE_PG_REFUNDED_AMT</code>, <code>CANCELABLE_AMT</code>(가상), <code>TAXABLE_SUPPLY_AMT</code>·<code>VAT_AMT</code>·<code>TAX_FREE_AMT</code></td><td>2-7 A, 5-1 B, 10-1 A, 6-8 A</td></tr>
+<tr><td class="k">12</td><td>결제 수단</td><td><code>PAYMENT_METHOD_CD</code>, 카드 그룹(<code>CARD_COMPANY_CD</code>, <code>CARD_ACQUIRER_CD</code>, <code>MASKED_CARD_NUMBER_VAL</code>, <code>CARD_TYPE_CD</code>, <code>INSTALLMENT_MONTHS_CNT</code> 등), <code>IDENTITY_*</code>. 다른 수단 그룹은 그 수단일 때만 값</td><td>2-4 A, 2-5 A, 9-5 A</td></tr>
+<tr><td class="k">13</td><td>PG·가맹점</td><td><code>PG_CD</code>, <code>PG_MID_VAL</code>, <code>MID_PURPOSE_CD</code>, <code>SETTLEMENT_METHOD_CD</code>, <code>PG_TRANSACTION_NO</code>, <code>CARD_MERCHANT_NO</code></td><td>2-6, 2-8 B</td></tr>
+<tr><td class="k">14</td><td>예외 수동 처리</td><td><code>MANUAL_CHECK_REQUIRED_YN</code>, <code>MANUAL_CHECK_REASON_CD</code>, <code>MANUAL_CHECK_RESOLVED_AT</code>, <code>MANUAL_CHECK_RESOLVER_ADMIN_USER_ID</code>. 처리는 예외 처리함에서</td><td>PYC-18~19 A</td></tr>
+</table><div class="note"><b>[수동 확정] 버튼을 두지 않음:</b> 수동 확정은 예외 수동 처리를 거쳐야 합니다(CHECK, PYC-48 A). 처리 대상이 아닌 행을 고치려면 먼저 처리 대상으로 올립니다.<br><b>휴대폰 결제 번호, 현금영수증 식별 번호</b>는 마스킹 값만 보여 주고, 원문 확인은 사유를 받아 개인정보 접속 기록에 남깁니다.</div></div></div>
+
+<div class="pg"></div><h1>관리자 예외 처리함 (와이어프레임) · 화면 요소별 저장·조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-26 · 결제 도메인 컬럼 정의서(제안, PYC-1~PYC-59) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">결제 관리 &gt; <b>예외 처리함</b></span></div><div style="padding:10px">
+<div class="sec"><h3><span class="n">1</span>확인 목록</h3>
+<div class="tabs"><b>결제 행 4</b> · 취소 행 2 · <span class="n">2</span>☐ 처리 완료 포함</div>
+<table class="grid"><tr><th>사유</th><th>결제번호</th><th>결제 상태</th><th>금액</th><th>올라온 지</th><th>처리</th></tr>
+<tr><td><span class="badge red">돈</span> 은행 입금 정정</td><td>20261120-H6JK9P001</td><td>승인</td><td>55,000</td><td>6일</td><td>-</td></tr>
+<tr><td><span class="badge red">돈</span> 설정과 다른 입금 금액</td><td>20261124-7MZQ2P001</td><td>입금 대기</td><td>129,000</td><td>1일</td><td>-</td></tr>
+<tr style="background:#fff9db"><td><span class="badge">상태</span> 조회 한도 초과</td><td>20261126-T5RX2M001</td><td>결과 불명</td><td>72,000</td><td>3시간</td><td>-</td></tr>
+<tr><td><span class="badge">상태</span> PG 상태 불일치</td><td>20261123-M8NB4K002</td><td>승인</td><td>39,000</td><td>2일</td><td>-</td></tr>
+</table></div>
+<div class="sec"><h3><span class="n">3</span>선택한 건: 20261126-T5RX2M001 · 조회 한도 초과 <span style="float:right"><span class="btn2">PG에 다시 조회</span> <span class="btn2">결제 상세</span></span></h3>
+<div style="font-size:8pt">결과 불명 발생 11-26 11:05 · 조회 12회 · 마지막 조회 14:05 (응답 없음) · PG 원래 상태 <code>IN_PROGRESS</code></div></div>
+<div class="sec"><h3><span class="n">4</span>처리</h3>
+<div class="chk">처리 방법 ◉ 수동 확정 ○ 확정 없이 완료 (예: 고객에게 안내만 함)</div>
+<div class="chk"><span class="n">5</span>확정 결과 ○ 승인 ◉ 실패 ○ 만료 &nbsp; 실패·만료 사유 <span class="in" style="display:inline-block">PG 오류 ▾</span></div>
+<div class="in"><span class="n">6</span>수동 확정 사유 (필수): PG 고객센터 확인 결과 승인 내역 없음, 문의번호 1234</div>
+<div style="text-align:right;margin-top:4px"><span class="btn2"><span class="n">7</span>처리 완료</span> <span class="muted">처리자: 로그인 관리자</span></div></div>
+<div class="sec"><h3><span class="n">8</span>취소 행 탭 (예)</h3>
+<table class="grid"><tr><th>사유</th><th>취소번호</th><th>결제번호</th><th>취소 금액</th><th>재시도</th><th>환불 기한</th></tr>
+<tr><td>재시도 한도 초과</td><td>20261124-K3F8QZ003-C002</td><td>20261124-K3F8QZ003</td><td>40,000</td><td>5/5</td><td>11-30</td></tr>
+<tr><td>환급 기한 임박</td><td>20261122-Q8W3TA001-C001</td><td>20261122-Q8W3TA001</td><td>99,000</td><td>-</td><td>11-28 (계좌 미수령)</td></tr>
+</table></div>
+</div></div><div class="map"><table><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr>
+<tr><td class="k">1</td><td>결제 행 목록</td><td><code>IX_PAY_PAYMENT_MANUAL_CHECK_OPEN</code> (처리 필요 Y이고 <code>MANUAL_CHECK_RESOLVED_AT</code>이 빈 행만 <code>CREATED_AT</code>). 사유 <code>MANUAL_CHECK_REASON_CD</code> 9개를 급한 순서의 그룹(<code>ATTR2</code>)으로 정렬: 돈 문제(은행 입금 정정, 설정과 다른 입금 금액), 상태(조회 한도 초과, PG 상태 불일치, PG 코드 대응 없음), 외부 처리(PG 관리자 화면 취소 CHECK 위반, 에스크로 등록 실패), 문의·기타(고객 문의, 기타)</td><td>PYC-18 A, PYC-19 A, PYC-53~57 A</td></tr>
+<tr><td class="k">2</td><td>처리 완료 포함</td><td>처리 필요 표시는 처리 뒤에도 Y로 남음. 완료 건은 <code>MANUAL_CHECK_RESOLVED_AT</code> NOT NULL. 같은 행이 다시 올라오면 사유·완료 정보를 덮어쓰고 이전 처리는 관리자 작업 로그에</td><td>PYC-19 A</td></tr>
+<tr><td class="k">3</td><td>선택한 건</td><td><code>UNKNOWN_OCCURRED_AT</code>, <code>INQUIRY_CNT</code>, <code>LAST_INQUIRY_AT</code>, <code>PG_PAYMENT_STATUS_VAL</code>. 다시 조회해 확정되면 자동으로 끝남</td><td>3-7 A, PYC-16 A</td></tr>
+<tr><td class="k">4</td><td>처리 방법</td><td>수동 확정이면 상태를 바꾸고, 확정 없이 완료면 완료 정보만 남김</td><td>3-2 C</td></tr>
+<tr><td class="k">5</td><td>확정 결과·사유</td><td><code>PAYMENT_STATUS_CD</code>(앞으로만 가는 조건부 UPDATE), 실패·만료면 <code>FAILED_AT</code>/<code>EXPIRED_AT</code>와 <code>PAYMENT_FAILURE_REASON_CD</code>(상태별 사유 CHECK). 승인이면 승인 금액·일시·PG 거래번호 필수</td><td>3-5 C, PYC-40 A</td></tr>
+<tr><td class="k">6</td><td>수동 확정 사유</td><td><code>RESULT_CONFIRM_REASON_CN</code> (경로 <code>MANUAL</code>이면 필수, CHECK)</td><td>3-2 C</td></tr>
+<tr><td class="k">7</td><td>처리 완료</td><td>한 번에 기록: <code>RESULT_CONFIRM_ROUTE_CD</code> = <code>MANUAL</code>, <code>RESULT_CONFIRMED_AT</code>, <code>MANUAL_CHECK_RESOLVED_AT</code>, <code>MANUAL_CHECK_RESOLVER_ADMIN_USER_ID</code>. 경로가 수동이면 완료 일시 필수(CHECK). 관리자 작업 로그에도 남김</td><td>PYC-19 A, PYC-48 A</td></tr>
+<tr><td class="k">8</td><td>취소 행 탭</td><td><code>IX_PAY_PAYMENT_CANCEL_MANUAL_CHECK_OPEN</code>. 사유 <code>CANCEL_MANUAL_CHECK_REASON_CD</code> 3개(재시도 한도 초과, 환급 기한 임박, 기타), <code>CANCEL_NO</code>, <code>CANCEL_AMT</code>, <code>RETRY_CNT</code>, <code>REFUND_DUE_DT</code>. 완료 정보 컬럼은 결제 행과 같은 이름</td><td>PYC-20 A, 5-9 A, 4-4 A</td></tr>
+</table><div class="note"><b>정렬:</b> 사유의 공통코드 정렬 순(급한 그룹 먼저), 같은 사유 안에서는 올라온 순서입니다.<br><b>자동 취소 실패, 만료 뒤 입금</b>은 결제 행이 아니라 취소 행 탭에 올라옵니다(취소 행이 재시도와 확인을 맡음).</div></div></div>
+
+<div class="pg"></div><h1>관리자 환불 요청 상세 (와이어프레임) · 화면 요소별 저장·조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-26 · 결제 도메인 컬럼 정의서(제안, PYC-1~PYC-59) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">결제 관리 &gt; 환불 관리 &gt; <b>환불 요청 상세</b></span></div><div style="padding:10px">
+<div class="sec"><h3><span class="n">1</span>환불 요청 #88213 <span class="badge red">일부 실패</span> <span class="muted">주문 20261124-K3F8QZ · 요청 11-27 16:00</span></h3>
+<div style="font-size:8pt"><span class="n">2</span>근거 클레임 #20431 (반품) · 주문 변경 이력 - · 결제 자체 사유 -</div></div>
+<div class="sec"><h3><span class="n">3</span>금액 배분</h3>
+<table class="grid"><tr><th>구분</th><th>금액</th><th>처리 행</th><th>상태</th></tr>
+<tr><td>총 환불액</td><td><b>50,000</b></td><td></td><td></td></tr>
+<tr><td>PG 환불 (카드)</td><td>40,000</td><td>결제 취소 20261124-K3F8QZ003-C002</td><td><span class="badge red">실패</span></td></tr>
+<tr><td>적립금 복원</td><td>2,000</td><td>적립금 원장 #551203</td><td><span class="badge">완료</span></td></tr>
+<tr><td>예치금 복원</td><td>8,000</td><td>예치금 원장 #102394</td><td><span class="badge">완료</span></td></tr>
+</table></div>
+<div class="sec"><h3><span class="n">4</span>결제 취소 20261124-K3F8QZ003-C002 <span style="float:right"><span class="btn2">지금 재시도</span></span></h3>
+<div style="font-size:8pt">결제 20261124-K3F8QZ003 · 취소 차수 2 · 사유 클레임 환불 · 방법 PG 취소<br>
+<span class="n">5</span>상태 실패 · 재시도 3회 · 다음 재시도 11-27 16:30 · PG 실패 코드 <code>PROVIDER_ERROR</code> "카드사 일시 오류"<br>
+<span class="n">6</span>과세 36,364 / 부가세 3,636 / 면세 0 · 즉시 할인 취소 0 · 현금영수증 대상 취소 0</div></div>
+<div class="sec"><h3><span class="n">7</span>환불 기한</h3>
+<div style="font-size:8pt">기산일 11-27 · 기한 11-30 · 이행 - · 지연 일수 - · 고객 사유 지연 N</div></div>
+<div class="sec"><h3><span class="n">8</span>계좌 환불일 때 (가상계좌 결제의 예)</h3>
+<div style="font-size:8pt">환불 계좌 국민 ***-****-1234 · 예금주 홍*동 · 예금주 확인 일치 11-27 · ☐ 예치금으로 받기 동의 <span class="btn2">계좌 원문 보기 (사유)</span></div></div>
+</div></div><div class="map"><table><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr>
+<tr><td class="k">1</td><td>요청 머리</td><td><code>PAY_REFUND_REQUEST</code>: <code>REFUND_REQUEST_ID</code>, <code>ORDER_ID</code>, <code>REFUND_REQUEST_STATUS_CD</code>(요청 / 처리 중 / 완료 / 일부 실패), <code>REQUESTED_AT</code>, <code>COMPLETED_AT</code>. 처리 대상 함수 기반 인덱스</td><td>1-3 A</td></tr>
+<tr><td class="k">2</td><td>근거</td><td><code>CLAIM_ID</code>, <code>ORDER_CHANGE_HIST_ID</code>, <code>PAYMENT_REFUND_REASON_CD</code> 중 정확히 하나 (CHECK)</td><td>1-3 A, 선행 6</td></tr>
+<tr><td class="k">3</td><td>금액 배분</td><td><code>REFUND_TOTAL_AMT</code> = <code>PG_REFUND_AMT</code> + <code>POINT_RESTORE_AMT</code> + <code>DEPOSIT_RESTORE_AMT</code>. 처리 행은 이 요청을 가리키는 결제 취소 행과 원장 복원 행</td><td>1-3 A, 5-3 A</td></tr>
+<tr><td class="k">4</td><td>결제 취소 행</td><td><code>PAY_PAYMENT_CANCEL</code>: <code>CANCEL_NO</code>, <code>PAYMENT_ID</code>, <code>CANCEL_SN</code>, <code>PAYMENT_CANCEL_REASON_CD</code>, <code>REFUND_METHOD_CD</code>. [지금 재시도]도 같은 취소 요청 키로 중복 방지</td><td>5-1 B, 3-4 A</td></tr>
+<tr><td class="k">5</td><td>처리 상태·재시도</td><td><code>CANCEL_PROCESS_STATUS_CD</code>(요청 / 완료 / 실패 / 결과 불명), <code>RETRY_CNT</code>, <code>NEXT_RETRY_AT</code>, <code>PG_RESULT_CD</code>, <code>PG_RESULT_MESSAGE_CN</code>. 한도를 넘으면 예외 처리함 취소 행 탭으로</td><td>5-9 A, PYC-20 A</td></tr>
+<tr><td class="k">6</td><td>세금·할인 취소</td><td><code>TAXABLE_SUPPLY_AMT</code>·<code>VAT_AMT</code>·<code>TAX_FREE_AMT</code>, 즉시 할인 취소 3개, <code>CASH_RECEIPT_TARGET_CANCEL_AMT</code>. 결제 행 누계는 완료 때 반영</td><td>6-8 A, 10-1 A, 6-4 A</td></tr>
+<tr><td class="k">7</td><td>환불 기한</td><td><code>REFUND_BASE_DT</code>, <code>REFUND_DUE_DT</code>, <code>REFUND_FULFILLED_AT</code>, <code>REFUND_DELAY_DAYS_CNT</code>, <code>CUSTOMER_CAUSED_DELAY_YN</code></td><td>5-8 A</td></tr>
+<tr><td class="k">8</td><td>계좌 환불</td><td><code>REFUND_BANK_CD</code>, <code>REFUND_ACCOUNT_NUMBER_ENC</code>(원문은 사유를 받아 복호화, 접속 기록), <code>MASKED_REFUND_ACCOUNT_NUMBER_VAL</code>, <code>REFUND_ACCOUNT_HOLDER_NM</code>, <code>ACCOUNT_HOLDER_VERIFY_RESULT_CD</code>, <code>DEPOSIT_CREDIT_CONSENTED_AT</code></td><td>4-4 A, 선행 5</td></tr>
+</table><div class="note"><b>환불 금액은 클레임 도메인이 정합니다.</b> 결제 도메인은 요청을 받아 수단별로 배분하고 처리 행을 만듭니다(1-3 A). 이 화면에서 총 환불액은 고치지 않습니다.<br><b>PG 밖 환불</b>(계좌 송금, 예치금 적립)도 같은 취소 행으로 남고 결제 행의 PG 밖 환불 누계에 더해집니다.</div></div></div>
+
+<div class="pg"></div><h1>관리자 대사 불일치 · PG 운영 현황 (와이어프레임) · 화면 요소별 저장·조회 컬럼</h1><div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · 2026-11-26 · 결제 도메인 컬럼 정의서(제안, PYC-1~PYC-59) 기준 · 관리자(백오피스) 화면 · 동그라미 번호 = 오른쪽 표 · 화면 배치는 설명용이고 결정 대상이 아님</div><div class="wrap"><div class="screen wide"><div class="bar"><span>OUR BRAND 관리자</span><span class="steps">결제 관리 &gt; <b>대사 · PG 운영</b></span></div><div style="padding:10px">
+<div class="sec"><h3><span class="n">1</span>대사 실행 2026-11-26 · 토스 · 거래 파일 <span class="muted">대상 18,240건 · 불일치 3건</span></h3>
+<table class="grid"><tr><th>유형</th><th>결제번호 / PG 거래번호</th><th>우리 값</th><th>PG 값</th><th>해결</th></tr>
+<tr><td>PG에만 있음</td><td>tgen_20261125…</td><td>-</td><td>승인 12,000</td><td><span class="badge red">미해결</span></td></tr>
+<tr><td>상태 다름</td><td>20261125-R4TY7W001</td><td>만료</td><td>승인</td><td><span class="badge red">미해결</span></td></tr>
+<tr><td>금액 다름</td><td>20261125-M8NB4K001</td><td>39,000</td><td>38,000</td><td><span class="badge">해결 · 관리자 kim</span></td></tr>
+</table>
+<div class="row" style="font-size:8pt;margin-top:3px"><span><span class="n">2</span>선택: 상태 다름 → [대사 뒤 조회로 반영] [메모와 함께 해결]</span></div></div>
+<div class="sec"><h3><span class="n">3</span>PG 감시 지표 (최근 1시간, 5분 집계)</h3>
+<table class="grid"><tr><th>PG</th><th>수단</th><th>API</th><th>호출</th><th>성공률</th><th>시간 초과</th><th>평균 / p95</th></tr>
+<tr><td>토스</td><td>카드</td><td>승인</td><td>1,204</td><td>97.8%</td><td>2</td><td>820 / 1,900ms</td></tr>
+<tr><td>토스</td><td>가상계좌</td><td>발급</td><td>310</td><td>99.7%</td><td>0</td><td>1.1 / 2.3s</td></tr>
+<tr style="background:#fff5f5"><td>KCP</td><td>카드</td><td>승인</td><td>402</td><td>91.2%</td><td>9</td><td>2.9 / 7.8s</td></tr>
+</table></div>
+<div class="sec"><h3><span class="n">4</span>장애 기록 <span style="float:right"><span class="btn2">새 장애 기록</span></span></h3>
+<div style="font-size:8pt">KCP · 영향 수단 카드 · 시작 13:40 · 감지 자동 감지 · 조치 PG 전환 · 처리 관리자 lee <span class="btn2">종료 처리</span></div></div>
+<div class="sec"><h3><span class="n">5</span>보조 지표</h3>
+<div style="font-size:8pt">웹훅 수신함 미처리 4건 · 실패·만료 사유 중 기타 비율 1.8% (기준 3%) · 대응 없는 PG 코드 0건</div></div>
+</div></div><div class="map"><table><tr><th style="width:16px">No</th><th style="width:66px">화면 요소</th><th>저장·조회 위치</th><th style="width:52px">근거</th></tr>
+<tr><td class="k">1</td><td>대사 실행·불일치</td><td><code>PAY_RECONCILIATION_RUN</code>(실행 1회), <code>PAY_RECONCILIATION_MISMATCH</code>: <code>MISMATCH_TYPE_CD</code> 11개, <code>PAYMENT_ID</code>·<code>PG_TRANSACTION_NO</code>, <code>OUR_AMT</code>·<code>COUNTERPART_AMT</code>, <code>OUR_STATUS_VAL</code>·<code>COUNTERPART_STATUS_VAL</code>, <code>MISMATCH_RESOLUTION_STATUS_CD</code>. 미해결 함수 기반 인덱스</td><td>7-3 B</td></tr>
+<tr><td class="k">2</td><td>불일치 해결</td><td><code>MISMATCH_RESOLUTION_METHOD_CD</code>, <code>RESOLVED_AT</code>, <code>RESOLVER_ADMIN_USER_ID</code>, <code>RESOLUTION_MEMO_CN</code>. 상태 다름을 조회로 반영하면 결제 행 확정 경로 <code>RECONCILIATION_INQUIRY</code>(만료 → 승인이면 이상 승인 자동 취소)</td><td>7-3 B, PYC-28 A, 3-8 A</td></tr>
+<tr><td class="k">3</td><td>감시 지표</td><td><code>PAY_PG_METRIC_5MIN</code>: (<code>PG_CD</code>, <code>PAYMENT_METHOD_SCOPE_CD</code>, <code>PG_API_TYPE_CD</code>, <code>AGGREGATION_START_AT</code>), <code>CALL_CNT</code>, <code>SUCCESS_CNT</code>, <code>TIMEOUT_CNT</code>, <code>AVERAGE_ELAPSED_MILLISECOND_CNT</code>, <code>P95_ELAPSED_MILLISECOND_CNT</code>, <code>FAILURE_CODE_COUNT_JSON</code>. 기준값은 정책값</td><td>7-6 B</td></tr>
+<tr><td class="k">4</td><td>장애 기록</td><td><code>PAY_PG_INCIDENT</code>: <code>PG_CD</code>, <code>AFFECTED_PAYMENT_METHOD_CD</code>(전체면 NULL), <code>STARTED_AT</code>, <code>ENDED_AT</code>, <code>INCIDENT_DETECTION_METHOD_CD</code>, <code>INCIDENT_ACTION_CD</code>, <code>HANDLER_ADMIN_USER_ID</code>, <code>MEMO_CN</code>. 전환은 운영자가 PG 설정에서</td><td>7-5 A</td></tr>
+<tr><td class="k">5</td><td>보조 지표</td><td>웹훅 미처리는 <code>PAY_PG_WEBHOOK_INBOX.WEBHOOK_PROCESSING_STATUS_CD</code> = 수신·조회 실패 건수. 기타 비율은 결제 행 <code>PAYMENT_FAILURE_REASON_CD</code>에서 직접 셈. 대응 없는 코드는 <code>PAY_PG_CODE_MAPPING</code>에 없는 PG 코드</td><td>7-2 A, PYC-43 A, PYC-2 B</td></tr>
+</table><div class="note"><b>이 화면에 없는 메뉴:</b> 적립금·예치금 원장과 출금 요청, 현금영수증·세금계산서, 차지백, PG 설정(수단별 PG 설정, 카드사 가맹점 계약, PG 코드 대응), 웹훅 수신함·PG 호출 로그 원본 조회는 같은 형식으로 나중에 그립니다.</div></div></div>
+</body></html>
