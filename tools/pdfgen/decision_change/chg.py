@@ -131,7 +131,7 @@ for no, (title, rows) in D.items():
         h += '<div class="box">이 결정의 아래 항목은 컬럼정의서 검토(C-1~C-99)에서 사용자가 다시 골라 바뀌거나 보완됐다. 다음 쪽부터의 원래 기록과 다르면 이 쪽이 우선한다.</div>'
         h += '<table><tr><th>항목</th><th>결정 당시</th><th>변경 후</th><th>컬럼 검토 결정</th><th>근거 조문</th></tr>'
     else:
-        h += '<div class="meta">2026-11-22 법률 검토 결정 반영 · 다음 쪽부터는 결정 당시 기록 그대로다 · 상세는 <code>docs/pdf/법률검토/법률검토_결정.pdf</code></div>'
+        h += '<div class="meta">2026-11-22 법률 검토 결정 반영 · 다음 쪽부터는 결정 당시 기록 그대로다 · 상세는 <code>docs/pdf/법률검토/회원도메인_법률검토.pdf</code></div>'
         h += '<div class="box">이 결정의 아래 항목은 법률 검토(L1~L9)에서 사용자가 다시 골라 바뀌었다. 다음 쪽부터의 원래 기록과 다르면 이 쪽이 우선한다.</div>'
         if any(r[3].startswith('컬럼 검토') for r in rows): h = h.replace('</div><div class="box">', ' · 컬럼 검토 보완은 <code>docs/pdf/테이블_컬럼/회원/회원_컬럼검토_결정.pdf</code></div><div class="box">', 1).replace('법률 검토(L1~L9)에서 사용자가 다시 골라 바뀌었다.', '법률 검토(L1~L9)에서 사용자가 다시 골라 바뀌었고, [보완] 행은 컬럼 검토에서 보완됐다.')
         h += '<table><tr><th>항목</th><th>결정 당시</th><th>변경 후</th><th>' + ('검토 결정' if any(r[3].startswith('컬럼 검토') for r in rows) else '법률 검토 결정') + '</th><th>근거 조문</th></tr>'

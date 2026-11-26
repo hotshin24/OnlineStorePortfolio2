@@ -1,0 +1,63 @@
+---
+title: 배송 도메인 (DLV) 관계 요약
+---
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/dlv/erd_dlv.py (2026-11-27). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보. FK 없이 값만 두는 참조(주문·클레임 ID, 5-1 B, 로그의 출고 요청·패키지 ID, 추적 이벤트의 정정 대상)는 그리지 않았다
+%% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, |o..o{ FK 예정 참조(WMS 테이블이 정해지면 FK). 선 이름은 컬럼
+%% 다른 도메인 상자: 상품·시스템·창고 (모두 후보)
+erDiagram
+    %% ---- 출고 요청·출고
+    DLV_SHIPMENT_REQUEST["DLV_SHIPMENT_REQUEST 출고 요청"] {
+    }
+    DLV_SHIPMENT_REQUEST_ITEM["DLV_SHIPMENT_REQUEST_ITEM 출고 요청 상품"] {
+    }
+    DLV_SHIPMENT["DLV_SHIPMENT 출고"] {
+    }
+    %% ---- 패키지·추적·사고
+    DLV_PARCEL["DLV_PARCEL 패키지"] {
+    }
+    DLV_PARCEL_ITEM["DLV_PARCEL_ITEM 패키지 상품"] {
+    }
+    DLV_TRACKING_EVENT["DLV_TRACKING_EVENT 배송 추적 이벤트"] {
+    }
+    DLV_PARCEL_ACCIDENT["DLV_PARCEL_ACCIDENT 배송 사고"] {
+    }
+    %% ---- 이력
+    DLV_STATUS_HIST["DLV_STATUS_HIST 출고 요청·출고 상태 이력"] {
+    }
+    %% ---- 기준 데이터
+    DLV_COURIER_RATE["DLV_COURIER_RATE 택배사 운임표"] {
+    }
+    DLV_REMOTE_AREA_POSTCODE["DLV_REMOTE_AREA_POSTCODE 도서산간 우편번호 기준표"] {
+    }
+    %% ---- 연동
+    DLV_COURIER_INTERFACE_LOG["DLV_COURIER_INTERFACE_LOG 택배사 연동 요약 로그"] {
+    }
+    %% ---- 다른 도메인
+    PRD_SKU["PRD_SKU (상품 도메인, 이름 후보)"] {
+    }
+    SYS_EXTERNAL_VENDOR["SYS_EXTERNAL_VENDOR (시스템 도메인, 이름 후보)"] {
+    }
+    WMS_NON_SALE_ITEM["WMS_NON_SALE_ITEM (창고 도메인, 이름 후보)"] {
+    }
+    WMS_WAREHOUSE["WMS_WAREHOUSE (창고 도메인, 이름 후보)"] {
+    }
+    %% ---- 관계
+    DLV_PARCEL_ACCIDENT |o--o{ DLV_SHIPMENT_REQUEST : "SOURCE_PARCEL_ACCIDENT_ID"
+    DLV_SHIPMENT_REQUEST ||--o{ DLV_SHIPMENT_REQUEST_ITEM : "SHIPMENT_REQUEST_ID"
+    PRD_SKU |o--o{ DLV_SHIPMENT_REQUEST_ITEM : "SKU_ID"
+    DLV_REMOTE_AREA_POSTCODE |o--o{ DLV_SHIPMENT : "REMOTE_AREA_POSTCODE_ID"
+    DLV_SHIPMENT ||--o{ DLV_PARCEL : "SHIPMENT_ID"
+    SYS_EXTERNAL_VENDOR ||--o{ DLV_PARCEL : "EXTERNAL_VENDOR_ID"
+    DLV_PARCEL |o--o{ DLV_PARCEL : "REISSUED_FROM_PARCEL_ID"
+    DLV_COURIER_RATE |o--o{ DLV_PARCEL : "COURIER_RATE_ID"
+    DLV_PARCEL ||--o| DLV_PARCEL_ITEM : "PARCEL_ID"
+    DLV_SHIPMENT_REQUEST_ITEM ||--o| DLV_PARCEL_ITEM : "SHIPMENT_REQUEST_ITEM_ID"
+    DLV_PARCEL ||--o{ DLV_TRACKING_EVENT : "PARCEL_ID"
+    DLV_PARCEL ||--o{ DLV_PARCEL_ACCIDENT : "PARCEL_ID"
+    DLV_SHIPMENT_REQUEST |o--o{ DLV_STATUS_HIST : "SHIPMENT_REQUEST_ID"
+    DLV_SHIPMENT |o--o{ DLV_STATUS_HIST : "SHIPMENT_ID"
+    SYS_EXTERNAL_VENDOR ||--o{ DLV_COURIER_RATE : "EXTERNAL_VENDOR_ID"
+    %% ---- FK 예정 참조
+    WMS_WAREHOUSE |o..o{ DLV_SHIPMENT_REQUEST : "WAREHOUSE_ID (FK 예정)"
+    WMS_WAREHOUSE |o..o{ DLV_SHIPMENT : "WAREHOUSE_ID (FK 예정)"
+    WMS_NON_SALE_ITEM |o..o{ DLV_SHIPMENT_REQUEST_ITEM : "NON_SALE_ITEM_ID (FK 예정)"
