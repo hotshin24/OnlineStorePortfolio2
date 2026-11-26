@@ -2,7 +2,7 @@
 # 사용: python3 render.py <출력폴더>
 import sys, os, re, html, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, REUSE_NO_ROWS, CONFIRMED_GROUPS, CONFIRMED_TABLES, PG_SOURCED
+from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, REUSE_NO_ROWS, SAME_NAME_FOLD, CONFIRMED_GROUPS, CONFIRMED_TABLES, PG_SOURCED
 JSON_CODES = {}
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from col_review import C as _PYC
@@ -102,7 +102,7 @@ NOTE = ('<div class="box"><b>검토 방법</b><br>'
         '· 정렬은 지시 규칙 8 (테이블 그룹은 남색 제목, 컬럼 그룹은 초록 줄). PK는 첫 컬럼, 공통 컬럼은 끝. 그룹 구성과 순서도 제안이다.</div>')
 toc = '<h2>목차</h2>'
 THEAD = '<table style="table-layout:fixed"><colgroup><col style="width:5%"><col style="width:33%"><col style="width:38%"><col style="width:8%"><col style="width:8%"><col style="width:8%"></colgroup><tr><th>No</th><th>테이블</th><th>논리명</th><th>업무 컬럼</th><th>공통 컬럼</th><th>합계</th></tr>'
-secs = ''; tot_b = tot_s = 0; POS = {}
+secs = ''; tot_b = tot_s = 0; POS = {}; FIRST = {}
 for i, t in enumerate(T, 1):
     fc = full_cols(t); nb = len(t['cols']); ns = len(fc) - nb; tot_b += nb; tot_s += ns
     if t['t'] in GFIRST:
@@ -125,6 +125,16 @@ for i, t in enumerate(T, 1):
         on_ = t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)
         POS[(t['t'], p)] = f'{i}-{k}'
         reuse_row = ''
+        same = None
+        if SAME_NAME_FOLD and vals and kind == 'b' and p not in REUSE:
+            if p in FIRST and FIRST[p] != t['t']: same = (FIRST[p], p)
+            else: FIRST.setdefault(p, t['t'])
+        if same:
+            rt, rc = same; nv = len(vals); vals = []
+            ds = (ds + ' ' if ds else '') + '값 목록은 아래 행.'
+            reuse_row = (f'<tr class="rv"><td class="n">{i}-{k}-↺</td><td class="p">↺ 같은 컬럼의 값 목록</td>'
+                         f'<td colspan="6">같은 이름 컬럼의 값 목록 (값 {nv}개) · 값 행은 <b>{POS[(rt, rc)]} ({rt})</b> <code>{rc}</code> 아래에 있다 (PYC-86 A).</td>'
+                         + ckcell(on_) + '<td class="memo"></td></tr>')
         if p in REUSE_NO_ROWS:
             rt, rc = REUSE_NO_ROWS[p]; nv = len(vals); vals = []
             ds = (ds + ' ' if ds else '') + '값 목록은 아래 행.'
