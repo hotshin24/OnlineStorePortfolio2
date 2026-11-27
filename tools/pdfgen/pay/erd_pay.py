@@ -24,7 +24,9 @@ RELS = []
 for t in O.T:
     for c in _cols(t):
         p = _fk(c)
-        if p: RELS.append((t['t'], c[0], p, c[4] == 'N', 'PK' in c[6]))
+        # 1:1은 PK가 이 FK 하나뿐일 때(공유 PK)만. 복합 PK의 한 컬럼은 1:N이다 (운송장 상품, 차감 기록).
+        pks = [x for x in _cols(t) if re.search(r'\bPK\d*\b', x[6])]
+        if p: RELS.append((t['t'], c[0], p, c[4] == 'N', len(pks) == 1 and pks[0][0] == c[0]))
 # FK 미정 참조 (다른 도메인 테이블이 정해지면 FK): (자식, 컬럼, 대상 후보)
 REF = [('PAY_PAYMENT', 'CLAIM_ID', 'CLM_CLAIM'), ('PAY_REFUND_REQUEST', 'CLAIM_ID', 'CLM_CLAIM'), ('PAY_PAYMENT_CANCEL', 'CLAIM_ID', 'CLM_CLAIM')]
 for ch, col, p in REF:
@@ -83,6 +85,11 @@ POS = {
 ROUTE = {
     ('PAY_POINT_LEDGER', 'PAY_POINT_LEDGER'): ([(396, 1025), (524, 1025)], 'exitX=0.3;exitY=0;entryX=0.7;entryY=0;'),
     ('PAY_DEPOSIT_LEDGER', 'PAY_DEPOSIT_LEDGER'): ([(396, 1225), (524, 1225)], 'exitX=0.3;exitY=0;entryX=0.7;entryY=0;'),
+    # 차감 기록은 원장 두 행(차감한 원장, 차감된 적립·입금 건)을 잇는 교차 테이블이라 FK 선 두 개를 위아래로 나눠 그린다 (합치면 선이 짧아 까마귀발이 이름에 가린다)
+    ('PAY_POINT_DEDUCTION', 'PAY_POINT_LEDGER', 'DEDUCTING_POINT_LEDGER_ID'): ([], 'exitX=0;exitY=0.3;entryX=1;entryY=0.3;', -10),
+    ('PAY_POINT_DEDUCTION', 'PAY_POINT_LEDGER', 'ACCRUAL_POINT_LEDGER_ID'): ([], 'exitX=0;exitY=0.7;entryX=1;entryY=0.7;', 10),
+    ('PAY_DEPOSIT_DEDUCTION', 'PAY_DEPOSIT_LEDGER', 'DEDUCTING_DEPOSIT_LEDGER_ID'): ([], 'exitX=0;exitY=0.3;entryX=1;entryY=0.3;', -10),
+    ('PAY_DEPOSIT_DEDUCTION', 'PAY_DEPOSIT_LEDGER', 'CREDIT_DEPOSIT_LEDGER_ID'): ([], 'exitX=0;exitY=0.7;entryX=1;entryY=0.7;', 10),
     ('PAY_PAYMENT_CANCEL', 'CLM_CLAIM'): ([(1040, 870)], 'exitX=0.5;exitY=1;entryX=1;entryY=0.85;'),
     ('PAY_CASH_RECEIPT', 'PAY_CASH_RECEIPT'): ([(1110, 220), (1220, 220), (1220, 279)], 'exitX=0.78;exitY=0;entryX=1;entryY=0.5;'),
     ('PAY_TAX_INVOICE', 'PAY_TAX_INVOICE'): ([(550, 220), (660, 220), (660, 279)], 'exitX=0.78;exitY=0;entryX=1;entryY=0.5;'),
@@ -90,10 +97,16 @@ ROUTE = {
     ('PAY_PAYMENT', 'ADM_USER'): ([(606, 395), (2800, 395)], 'exitX=0.85;exitY=0;entryX=0.8125;entryY=0;'),
     ('PAY_PAYMENT_CANCEL', 'ADM_USER'): ([(2600, 627)], 'exitX=1;exitY=0.75;entryX=0.1875;entryY=0;'),
 }
-def pts(ch, p):
-    if (ch, p) not in ROUTE: return '', ''
-    ps, extra = ROUTE[(ch, p)]
-    return '<Array as="points">' + ''.join(f'<mxPoint x="{x}" y="{y}"/>' for x, y in ps) + '</Array>', extra
+def pts(ch, p, col=None):
+    """꺾는 점, 나가고 들어가는 위치, 선 이름 위치. ROUTE 값 3번째 항목은 선 이름 거리(px, 위 -, 아래 +) 또는 (선 위 위치, 거리)."""
+    r = ROUTE.get((ch, p, col)) or ROUTE.get((ch, p))
+    if not r: return '', '', ''
+    ps, extra = r[0], r[1]
+    lab = ''
+    if len(r) > 2:  # 숫자면 선에서 떨어뜨리는 거리, (x, y)면 x는 선 위 위치(-1 시작 ~ 1 끝)
+        lx, ly = r[2] if isinstance(r[2], tuple) else (None, r[2])
+        lab = (f' x="{lx}"' if lx is not None else '') + f' y="{ly}"'
+    return ('<Array as="points">' + ''.join(f'<mxPoint x="{x}" y="{y}"/>' for x, y in ps) + '</Array>' if ps else ''), extra, lab
 
 def summary_cells():
     cells, nid = [], [0]
@@ -125,16 +138,17 @@ def summary_cells():
             st = 'rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#555555;fontSize=12;'
         cells.append(f'<mxCell id="{vid[n]}" value="{esc(label)}" style="{st}" vertex="1" parent="1"><mxGeometry x="{x}" y="{y}" width="{w}" height="{h}" as="geometry"/></mxCell>')
     merged = {}
-    for ch, col, p, req, one in RELS:
-        m = merged.setdefault((ch, p), [[], False, False]); m[0].append(col); m[1] = m[1] or req; m[2] = m[2] or one
+    for ch, col, p, req, one in RELS:  # 같은 (자식, 부모) FK는 선 하나로 합친다. ROUTE에 (자식, 부모, 컬럼) 키가 있으면 따로 그린다.
+        k = (ch, p, col) if (ch, p, col) in ROUTE else (ch, p, None)
+        m = merged.setdefault(k, [[], False, False]); m[0].append(col); m[1] = m[1] or req; m[2] = m[2] or one
     base = 'endFill=0;startFill=0;html=1;fontSize=9;fontColor=#444444;labelBackgroundColor=#ffffff;'
-    for (ch, p), (cols, req, one) in merged.items():
+    for (ch, p, kc), (cols, req, one) in merged.items():
         end = 'ERmandOne' if req else 'ERzeroToOne'
         start = 'ERzeroToOne' if one else 'ERmany'
         st = '' if req else 'dashed=1;'
-        pt, extra = pts(ch, p)
-        cells.append(f'<mxCell id="{new("e")}" value="{esc(" / ".join(cols))}" style="endArrow={end};startArrow={start};{base}strokeColor=#666666;{st}{extra}" edge="1" parent="1" source="{vid[ch]}" target="{vid[p]}"><mxGeometry relative="1" as="geometry">{pt}</mxGeometry></mxCell>')
+        pt, extra, lab = pts(ch, p, kc)
+        cells.append(f'<mxCell id="{new("e")}" value="{esc(" / ".join(cols))}" style="endArrow={end};startArrow={start};{base}strokeColor=#666666;{st}{extra}" edge="1" parent="1" source="{vid[ch]}" target="{vid[p]}"><mxGeometry relative="1"{lab} as="geometry">{pt}</mxGeometry></mxCell>')
     for ch, col, p in REF:
-        pt, extra = pts(ch, p)
-        cells.append(f'<mxCell id="{new("r")}" value="{esc(col + " (FK 미정)")}" style="endArrow=ERzeroToOne;startArrow=ERmany;{base}strokeColor=#aaaaaa;dashed=1;dashPattern=2 4;{extra}" edge="1" parent="1" source="{vid[ch]}" target="{vid[p]}"><mxGeometry relative="1" as="geometry">{pt}</mxGeometry></mxCell>')
+        pt, extra, lab = pts(ch, p)
+        cells.append(f'<mxCell id="{new("r")}" value="{esc(col + " (FK 미정)")}" style="endArrow=ERzeroToOne;startArrow=ERmany;{base}strokeColor=#aaaaaa;dashed=1;dashPattern=2 4;{extra}" edge="1" parent="1" source="{vid[ch]}" target="{vid[p]}"><mxGeometry relative="1"{lab} as="geometry">{pt}</mxGeometry></mxCell>')
     return cells
