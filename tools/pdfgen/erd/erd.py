@@ -1,4 +1,4 @@
-# 회원 도메인 ERD와 상품·주문·결제·배송 도메인 관계 요약 생성 (상품은 tools/pdfgen/prd/erd_prd.py, 주문은 tools/pdfgen/ord/erd_ord.py, 결제는 tools/pdfgen/pay/erd_pay.py, 배송은 tools/pdfgen/dlv/erd_dlv.py): Mermaid(mmd, 전체 컬럼판과 관계 요약판)와 draw.io(전체 ERD 1개 파일, 도메인별 페이지: 관계 요약, 컬럼 포함)
+# 회원 도메인 ERD와 상품·주문·결제·배송 도메인 관계 요약 생성 (상품은 tools/pdfgen/prd/erd_prd.py, 주문은 tools/pdfgen/ord/erd_ord.py, 결제는 tools/pdfgen/pay/erd_pay.py, 배송은 tools/pdfgen/dlv/erd_dlv.py, 재고는 tools/pdfgen/inv/erd_inv.py): Mermaid(mmd, 전체 컬럼판과 관계 요약판)와 draw.io(전체 ERD 1개 파일, 도메인별 페이지: 관계 요약, 컬럼 포함)
 # 사용법 (저장소 루트에서): python3 tools/pdfgen/erd/erd.py
 # 단일 출처: tools/pdfgen/cols/data.py (컬럼), cols/order.py (테이블·컬럼 순서, 규칙 8)
 import os, re, sys, html
@@ -17,6 +17,8 @@ _spec = importlib.util.spec_from_file_location('erd_pay', os.path.join(HERE, '..
 PAY = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(PAY)
 _spec = importlib.util.spec_from_file_location('erd_dlv', os.path.join(HERE, '..', 'dlv', 'erd_dlv.py'))
 DLV = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(DLV)
+_spec = importlib.util.spec_from_file_location('erd_inv', os.path.join(HERE, '..', 'inv', 'erd_inv.py'))
+INV = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(INV)
 
 TODAY = date.today().isoformat()
 BY = {t['t']: t for t in T}
@@ -277,6 +279,7 @@ def drawio():
             + diagram('ord-summary', '주문 (ORD) 관계 요약', ORD.summary_cells(), 3200, 1600)
             + diagram('pay-summary', '결제 (PAY) 관계 요약', PAY.summary_cells(), 3200, 1700)
             + diagram('dlv-summary', '배송 (DLV) 관계 요약', DLV.summary_cells(), 2600, 1500)
+            + diagram('inv-summary', '재고 (INV) 관계 요약', INV.summary_cells(), 2400, 1300)
             + '</mxfile>\n')
 
 if __name__ == '__main__':
@@ -296,8 +299,11 @@ if __name__ == '__main__':
     open(p6, 'w', encoding='utf-8').write(PAY.mmd_summary())
     p7 = os.path.join(ROOT, 'docs', 'mmd', '배송_DLV_관계요약.mmd')
     open(p7, 'w', encoding='utf-8').write(DLV.mmd_summary())
-    print(p1); print(p3); print(p4); print(p5); print(p6); print(p7); print(p2)
+    p8 = os.path.join(ROOT, 'docs', 'mmd', '재고_INV_관계요약.mmd')
+    open(p8, 'w', encoding='utf-8').write(INV.mmd_summary())
+    print(p1); print(p3); print(p4); print(p5); print(p6); print(p7); print(p8); print(p2)
     print(f'배송: 테이블 {len(DLV.BY)}개, 관계 {len(DLV.RELS)}개, FK 예정 참조 {len(DLV.REF)}개, 다른 도메인 {len(DLV.EXT)}개')
+    print(f'재고: 테이블 {len(INV.BY)}개, 관계 {len(INV.RELS)}개, FK 예정 참조 {len(INV.REF)}개, 다른 도메인 {len(INV.EXT)}개')
     print(f'결제: 테이블 {len(PAY.BY)}개, 관계 {len(PAY.RELS)}개, FK 미정 참조 {len(PAY.REF)}개, 다른 도메인 {len(PAY.EXT)}개')
     print(f'주문: 테이블 {len(ORD.BY)}개, 관계 {len(ORD.RELS)}개, FK 미정 참조 {len(ORD.REF)}개, 다른 도메인 {len(ORD.EXT)}개')
     print(f'상품: 테이블 {len(PRD.BY)}개, 관계 {len(PRD.RELS)}개, 다른 도메인 {len(PRD.EXT)}개')

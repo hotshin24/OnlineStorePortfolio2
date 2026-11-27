@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **주문 (ORD):** 결정 80개(10개 분야), 컬럼 검토 OC-1~OC-122 (OC-1~OC-9, OC-11~OC-14 13개는 답변 전). 테이블 10개(이름 후보), 컬럼 302개, 코드 그룹 24개(값 124개), `CODE_ID` 미발번. 확정: `ORD_CART` 전체, `ORD_ORDER`의 식별부터 법정 확인·고지까지.
 - **결제 (PAY):** 결정 76개(12개 분야), 컬럼 검토 PYC-1~PYC-86 (새 질문은 PYC-87부터). 테이블 21개(이름 후보), 컬럼 593개(업무 431 + 공통 162), 코드 그룹 67개(값 314개, 재사용 그룹 `REUSE` 3개는 세지 않음), `CODE_ID` 미발번. 확정: `PAY_PAYMENT`의 식별부터 PG·가맹점 그룹까지. 다음: `PAY_PAYMENT`의 나머지 12개 그룹과 20개 테이블. 컬럼 검토 때 다시 물을 것: `pay/data.py`의 `CONFIRM` 21개.
 - **배송 (DLV):** "패키지"는 "운송장"(`DLV_WAYBILL`, `DLV_WAYBILL_ITEM`, `DLV_WAYBILL_ACCIDENT`)으로 바꿨다 (DC-61~63, 결정 원문의 "패키지"·`PARCEL`은 당시 기록). 결정 77개(전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-63, 추천과 다른 결정 11개는 `docs/진행메모.md`). 테이블 11개(이름 후보), 컬럼 248개(업무 172 + 공통 76), 코드 그룹 27개(값 138개), `CODE_ID` 미발번. 확정: `DLV_SHIPMENT_REQUEST`의 식별·상태 그룹. 다음: `DLV_SHIPMENT_REQUEST`의 나머지 그룹과 10개 테이블. 컬럼 검토 때 다시 물을 것: `dlv/data.py`의 `CONFIRM` 12개.
-- **재고 (INV):** 결정 54개(축 8개 결정 52개 + 후속 2개, 추천과 다른 결정 4개, 변경 안내 11개는 `docs/진행메모.md`). 결정 기록만 있고 테이블·컬럼은 아직 없다. 테이블 후보 7개(이름 미정). 다음: 결정 원문(`inv/decision.py`)과 하나씩 대조하며 테이블 후보와 이름을 정한다. 확인 필요: 운영 DB 에디션 (XE 데이터 12GB 한도, 재고 원장만 5년이면 넘는다는 [가정] 추정, 주문 10년 보관도 같은 문제).
+- **재고 (INV):** 결정 94개(축 결정 54개, 테이블 T-1~T-11, 컬럼 검토 IC-1~IC-29). 테이블 8개(물리명 확정), 컬럼 174개(업무 126 + 공통 48), 코드 그룹 13개(값 77개), `CODE_ID` 미발번. 확정한 컬럼 그룹은 없다. 다음: 컬럼 검토를 `INV_STOCK` 식별 그룹부터 그룹별로 한다 (새 질문은 IC-30부터). 컬럼 검토 때 다시 물을 것: `inv/data.py`의 `CONFIRM` 14개.
 - 그다음은 나머지 8개 도메인이다.
 - 도메인을 다시 열 때 먼저 꺼낼 것 (사용자 지시로 지금은 메모만, 상세는 `docs/진행메모.md`):
   - 회원·상품: 규칙 8-C 재정렬, 상품 스타일 분류 컬럼, 회원 배송지 공동현관 코드, 선행결정 14번 변경 안내에 주문 OC-83 A 추가.
@@ -44,9 +44,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   cmp $OUT/../code_ids_prev.json $OUT/code_ids.json && echo 코드ID_변화없음
   ```
 - 상품 공통코드(`prd/cmm.py`)는 회원 빌드의 `code_ids.json` 뒤에 CODE_ID를 매긴다. 회원 빌드를 먼저 한다.
-- ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 6개와 drawio 1개를 한 번에 만든다). 생성 날짜가 모든 파일에 찍혀 다른 도메인 파일도 날짜 줄이 바뀐다.
+- ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 7개와 drawio 1개를 한 번에 만든다). 생성 날짜가 모든 파일에 찍혀 다른 도메인 파일도 날짜 줄이 바뀐다.
 - 검증: `swift tools/pdfgen/util/pdf2txt.swift <pdf> <txt>`(출력 경로 필수)로 이전 PDF와 텍스트를 비교하고, `swift tools/pdfgen/util/pg.swift <pdf> [<쪽> <png>]`로 쪽수와 쪽 모양을 본다. 합친 PDF(`merge.swift` 결과)는 한글이 추출되지 않으니 합치기 전 PDF로 비교한다.
-- drawio 확인: `/Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -p <쪽> -s 1 -o <png> docs/drawio/전체_ERD.drawio`로 쪽 이미지를 뽑아 까마귀발과 선 겹침을 본다 (쪽 번호는 1부터, 5 결제, 6 배송). mmd 텍스트로는 겹침을 알 수 없다.
+- drawio 확인: `/Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -p <쪽> -s 1 -o <png> docs/drawio/전체_ERD.drawio`로 쪽 이미지를 뽑아 까마귀발과 선 겹침을 본다 (쪽 번호는 1부터, 5 결제, 6 배송, 7 재고). mmd 텍스트로는 겹침을 알 수 없다.
 - drawio는 생성기 출력이 기준이다. draw.io 앱에서 저장하면 형식만 바뀌어 수천 줄 diff가 생기고, 앱에서 옮긴 위치는 다시 생성하면 사라진다. 남길 배치는 `POS`·`ROUTE`에 적는다.
 - 지시 규칙: `python3 tools/pdfgen/rules/rules.py <출력.html>` → `docs/pdf/지시규칙/DB설계_지시규칙_1-8.pdf`. 공통 규칙이 바뀌면 `docs/db/00_conventions.md`와 함께 고친다.
 - 배송 결정을 하나 더하면 숫자·범위(DC-1~DC-n)를 함께 고칠 곳: 이 파일의 진행 상황 줄과 저장소 구조의 `배송결정/` 개수, README 두 곳, `overview/gen.py`, `docs/진행메모.md`, `policy/dlv_content.py`의 `META`·`EFFECT`, `screen/admin_delivery.html` 쪽 메타, `dlv/data.py` 머리 주석과 해당 테이블 `basis`. 결정 수·컬럼 수·코드 값 수는 `render.py` 출력과 `CODES` 합계로 확인한다.
@@ -64,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 상품 | `prd/data.py` | `prd/col_review.py` (PC-n) | 손으로: `col_review.py`, `render.py`, `cmm.py` | `policy/prd_content.py` | `prd/erd_prd.py` | `prd/cmm.py` | `prd_decision/` |
 | 주문 | `ord/data.py` | `ord/col_review.py` (OC-n, 새 결정은 `CSS =` 앞) | 손으로: `ord/col_review.py`, `ord/render.py`, `policy/ord_content.py` | `policy/ord_content.py` | `ord/erd_ord.py` | 없음 | `ord_decision/` |
 | 결제 | `pay/data.py` | `pay/col_review.py` (PYC-n, 새 결정은 `C` 끝) | 자동 (`render.py`가 `C`를 읽음) | `policy/pay_content.py` | `pay/erd_pay.py` | 없음 | `pay_decision/` |
-| 재고 | 아직 없음 (결정은 `inv/decision.py`) | - | - | - | - | 없음 | 결정만 `inv/split.py` |
+| 재고 | `inv/data.py` (결정은 `inv/decision.py`) | `inv/decision.py` (축, T-n, IC-n 모두, 새 결정은 `C` 끝) → `split.py`(결정별), `col_record.py`(IC-n 기록) | 자동 (`render.py`가 `decision.py`의 `C`를 셈) | `policy/inv_content.py` | `inv/erd_inv.py` | 없음 | 결정만 `inv/split.py` (테이블 단계는 `재고결정_T-NN_제목`) |
 | 배송 | `dlv/data.py` | `dlv/col_review.py` (전제·축, T-n, DC-n 모두, 새 결정은 `C` 끝) → `split.py`(결정별), `col_record.py`(DC-n 기록) | 자동 (`render.py`가 DC 수를 셈) | `policy/dlv_content.py` | `dlv/erd_dlv.py` | 없음 | 패턴만 `dlv_pattern/` |
 
 - 도메인을 가로지르는 문서: `axes/`(4개 도메인 축별 설계 패턴), `overview/`(전체 개요), `glossary/`(DB·업무 용어집), `rules/`(지시 규칙), `decision_change/`(회원·선행 결정 변경 안내 쪽), `screen/`(화면 와이어프레임, HTML 원본을 직접 고침).
@@ -81,6 +81,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - 대화에서 선택지로 내지 않고 뺀 안도 빠뜨리지 않고 D 행 등으로 남기고, 방식 칸 앞에 "(대화에서는 선택지로 내지 않은 안)"을 붙인다 (2026-11-27 사용자 지시).
   - `dlv/split.py`는 결정 날짜를 번호로 정한다 (DC-29부터 2026-11-27). 다른 날 결정하면 날짜 규칙을 고친다.
   - `inv/decision.py` 튜플은 11개 항목이다: (번호, 제목, 대상(축), 무엇을 정하나, 설명·예시, 선택지, 추천, 이유, 선택, 답변, 반영). 배송과 달리 "무엇을 정하나"와 "설명·예시"가 따로 있고, 본문은 간단한 마크다운(문단, `- ` 목록, `1. ` 목록, `**굵게**`)으로 렌더링한다. 문자열은 Python 3.9 긴 줄 오류를 피하려고 120자 조각으로 나눠 적었으니 손으로 더할 때도 나눈다. 새 결정은 `C` 끝에 붙인다.
+  - 재고 IC-n 결정 기록은 대화 원문(질문, 무엇을 정하나, 예시, 선택지 표, 추천 이유)을 그대로 `inv/decision.py`의 `C` 끝에 옮긴다. 답을 받은 뒤 보충한 설명·예시도 넣고, 반영 칸에 "답을 받은 뒤 보충했다"를 적는다 (IC-23~IC-29).
+  - 재고 ERD(`inv/erd_inv.py`, drawio 7쪽): 확보 처리 이력은 확보 아래, 스냅샷·월 마감은 한 줄 아래(Y0 기준 760)에 있고, 입고 예정 → 현재고 선은 y=1080으로 돌아간다. 같은 쌍의 FK 두 개(확보 처리 이력 → 입고 예정)는 컬럼 키 `ROUTE`로 따로 그린다.
   - `inv/split.py`는 모든 결정 날짜를 2026-11-27로 찍는다. 다른 날 결정을 더하면 배송 `split.py`처럼 번호별로 날짜를 나눈다.
   - `screen/admin_delivery.html`은 5쪽을 넘기지 않는다. 고친 뒤 `pg.swift`로 쪽수를 확인한다.
   - 사용자가 화면을 그려 달라고 하면 `screen/admin_order.html` 형식의 PDF로 만든다 (2026-11-26 사용자 지시). 대화창 텍스트 그림으로 대신하지 않는다.
@@ -102,6 +104,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 모든 질문에는 A/B/C 기호가 붙은 선택지를 준다. 가/나 등 다른 기호는 섞지 않는다.
 - 패턴 검토 단계에서는 질문에만 답한다.
   - 체크박스나 결정 목록은 사용자가 결정 단계로 넘어가자고 할 때만 꺼낸다.
+- 질문을 여러 묶음으로 나눠 물을 때는 답을 모두 받은 다음 한 번에 반영하고 PDF도 한 번만 만든다. 묶음마다 파일을 고치지 않는다 (2026-11-27 사용자 지시).
+- 모든 질문에 "무엇을 정하나"와 구체적인 예시(수량, 상품명)를 넣는다. 묶음이 길어지면 설명을 줄이지 말고 묶음을 나눈다 (2026-11-27 사용자 지시).
 - 개수를 물으면 개수만 답한다.
 - 목록을 재정리할 때는 제목 목록을 먼저 쓰고, 그다음 제목별 상세 설명을 쓴다.
 - 응답과 문서는 한국어로 쓴다.
@@ -163,6 +167,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 2. Oracle 문법
 - 21c 기능까지 쓴다 (네이티브 `JSON` 타입 등). 19c 이식성은 보장하지 않는다.
 - SQL `BOOLEAN`은 없다 (23ai 전용). Y/N 값은 `CHAR(1)` + CHECK로 처리한다.
+- 가상 컬럼의 식은 다른 가상 컬럼을 가리킬 수 없다. 원래 컬럼으로 다시 쓴다 (재고 IC-23 A의 `GENERAL_ORDERABLE_QTY`).
 
 ### 3. 네이밍
 - 따옴표 없는 대문자 snake_case를 쓴다. 테이블명은 단수형이다.
@@ -308,8 +313,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 저장소 구조
 
-- `docs/pdf/결정/`: 결정 하나당 PDF 하나 (당시 선택지·장단점 표, 고른 안은 파란 행, 사용자 답변, 충돌 확인·변경 과정). `선행결정/` 17개, `회원결정/` 47개, `상품결정/` 53개, `주문결정/` 80개·`결제결정/` 76개(`*_NN-NN_제목.pdf`, 분야-순번), `배송결정/` 77개(`배송결정_<번호>_제목.pdf`, DC는 두 자리), `재고결정/` 54개(`재고결정_NN-NN_제목.pdf`).
-  - 나중에 바뀐 결정은 첫 쪽에 변경 안내가 있다: 회원결정 20개와 선행결정 3·5·14번(원본 커밋 PDF 앞에 붙임), 주문결정 5-5, 9-2, 3-9, 4-6, 결제결정 4-3, 10-1, 배송결정 DC-27, DC-29, DC-30, DC-49, DC-51, DC-59, 재고결정 11개(`inv/decision.py`의 `CHANGED`).
+- `docs/pdf/결정/`: 결정 하나당 PDF 하나 (당시 선택지·장단점 표, 고른 안은 파란 행, 사용자 답변, 충돌 확인·변경 과정). `선행결정/` 17개, `회원결정/` 47개, `상품결정/` 53개, `주문결정/` 80개·`결제결정/` 76개(`*_NN-NN_제목.pdf`, 분야-순번), `배송결정/` 77개(`배송결정_<번호>_제목.pdf`, DC는 두 자리), `재고결정/` 94개(`재고결정_NN-NN_제목.pdf`, 테이블 단계 `재고결정_T-NN_제목.pdf`, 컬럼 검토 `재고결정_IC-NN_제목.pdf`).
+  - 나중에 바뀐 결정은 첫 쪽에 변경 안내가 있다: 회원결정 20개와 선행결정 3·5·14번(원본 커밋 PDF 앞에 붙임), 주문결정 5-5, 9-2, 3-9, 4-6, 결제결정 4-3, 10-1, 배송결정 DC-27, DC-29, DC-30, DC-49, DC-51, DC-59, 재고결정 19개(`inv/decision.py`의 `CHANGED`).
 - `docs/pdf/설계패턴/`: 도메인별 설계 패턴 검토본, 축별 정리본 4개(`axes/`), 전체 개요(`overview/`). `*_N개축.pdf`는 사용자가 받은 외부 정리본이라 덮어쓰지 않는다. 재고 패턴 검토(축 8개, 세부 66개)는 대화에만 있고 PDF·생성기가 없다 (만들려면 사용자 지시).
 - `docs/pdf/테이블_컬럼/`: 도메인별 테이블 이름 검토본(회원은 확정본), 컬럼정의서 검토본, 컬럼 검토 결정 기록. `공통/`은 공통코드 `CMM_CODE`(회원, 상품).
 - `docs/pdf/정책명세/`(조문 형식), `docs/pdf/화면/`(와이어프레임), `docs/pdf/지시규칙/`, `docs/pdf/용어집/`(DB 용어집, 업무 용어집), `docs/pdf/후보테이블/`(2026-11-21 기준 89개, 설계한 도메인은 `테이블_컬럼/`이 기준).

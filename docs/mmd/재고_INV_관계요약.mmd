@@ -1,0 +1,50 @@
+---
+title: 재고 도메인 (INV) 관계 요약
+---
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/inv/erd_inv.py (2026-11-27). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 T-10 A로 확정. FK 없이 두는 참조(다른 도메인 ID 2-4 A, 재고 예외의 확보 ID T-1 A, 정정의 원래 원장 ID T-6 B)는 그리지 않았다
+%% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, |o..o{ FK 예정 참조(WMS 테이블이 정해지면 FK). 선 이름은 컬럼
+%% 다른 도메인 상자: 상품·창고 (창고는 후보)
+erDiagram
+    %% ---- 수량·원장
+    INV_STOCK["INV_STOCK 현재고"] {
+    }
+    INV_STOCK_LEDGER["INV_STOCK_LEDGER 수불 원장"] {
+    }
+    %% ---- 확보·입고 예정
+    INV_STOCK_COMMITMENT["INV_STOCK_COMMITMENT 재고 확보"] {
+    }
+    INV_STOCK_COMMITMENT_EVENT["INV_STOCK_COMMITMENT_EVENT 재고 확보 처리 이력"] {
+    }
+    INV_INBOUND_PLAN["INV_INBOUND_PLAN 입고 예정"] {
+    }
+    %% ---- 마감·대사
+    INV_STOCK_SNAPSHOT["INV_STOCK_SNAPSHOT 재고 스냅샷"] {
+    }
+    INV_MONTHLY_CLOSING["INV_MONTHLY_CLOSING 재고 월 마감"] {
+    }
+    INV_STOCK_EXCEPTION["INV_STOCK_EXCEPTION 재고 예외"] {
+    }
+    %% ---- 다른 도메인
+    PRD_SKU["PRD_SKU (상품 도메인)"] {
+    }
+    WMS_NON_SALE_ITEM["WMS_NON_SALE_ITEM (창고 도메인, 이름 후보)"] {
+    }
+    WMS_WAREHOUSE["WMS_WAREHOUSE (창고 도메인, 이름 후보)"] {
+    }
+    %% ---- 관계
+    PRD_SKU |o--o{ INV_STOCK : "SKU_ID"
+    INV_STOCK ||--o{ INV_STOCK_LEDGER : "STOCK_ID"
+    INV_STOCK_EXCEPTION |o--o{ INV_STOCK_LEDGER : "STOCK_EXCEPTION_ID"
+    INV_INBOUND_PLAN |o--o{ INV_STOCK_LEDGER : "INBOUND_PLAN_ID"
+    INV_STOCK ||--o{ INV_STOCK_COMMITMENT : "STOCK_ID"
+    INV_INBOUND_PLAN |o--o{ INV_STOCK_COMMITMENT : "INBOUND_PLAN_ID"
+    INV_STOCK_COMMITMENT ||--o{ INV_STOCK_COMMITMENT_EVENT : "STOCK_COMMITMENT_ID"
+    INV_INBOUND_PLAN |o--o{ INV_STOCK_COMMITMENT_EVENT : "FROM_INBOUND_PLAN_ID"
+    INV_INBOUND_PLAN |o--o{ INV_STOCK_COMMITMENT_EVENT : "TO_INBOUND_PLAN_ID"
+    INV_STOCK ||--o{ INV_INBOUND_PLAN : "STOCK_ID"
+    INV_STOCK ||--o{ INV_STOCK_SNAPSHOT : "STOCK_ID"
+    INV_STOCK |o--o{ INV_STOCK_EXCEPTION : "STOCK_ID"
+    INV_INBOUND_PLAN |o--o{ INV_STOCK_EXCEPTION : "INBOUND_PLAN_ID"
+    %% ---- FK 예정 참조
+    WMS_WAREHOUSE |o..o{ INV_STOCK : "WAREHOUSE_ID (FK 예정)"
+    WMS_NON_SALE_ITEM |o..o{ INV_STOCK : "NON_SALE_ITEM_ID (FK 예정)"

@@ -17,7 +17,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 | `cmm/` | `cmm.py` (`cols/data.py`의 코드를 읽음) | `공통코드_CMM_CODE_회원도메인.pdf` (그룹 48개, 값 322개), `code_ids.json` (가상 CODE_ID) |
 | `col_decision/` | `col_decision.py` 컬럼 검토 결정 C-1~C-99 (선택지·답변) | `회원_컬럼검토_결정.pdf` |
 | `rules/` | `rules.py` 지시 규칙 1~8 (정렬 예시는 `cols/order.py`에서 읽음) | `DB설계_지시규칙_1-8.pdf` |
-| `policy/` | `content.py` 조문 내용<br>`render.py` 렌더러<br>`prd_content.py`, `ord_content.py`, `pay_content.py`, `dlv_content.py`와 렌더러 `render_domain.py` (상품·주문·결제·배송) | `회원도메인_정책명세.pdf`, `상품도메인_정책명세.pdf`, `주문도메인_정책명세.pdf`, `결제도메인_정책명세.pdf`, `배송도메인_정책명세.pdf` |
+| `policy/` | `content.py` 조문 내용<br>`render.py` 렌더러<br>`prd_content.py`, `ord_content.py`, `pay_content.py`, `dlv_content.py`, `inv_content.py`와 렌더러 `render_domain.py` (상품·주문·결제·배송·재고) | `회원도메인_정책명세.pdf`, `상품도메인_정책명세.pdf`, `주문도메인_정책명세.pdf`, `결제도메인_정책명세.pdf`, `배송도메인_정책명세.pdf`, `재고도메인_정책명세.pdf` |
 | `decision_change/` | `chg.py` 변경 안내 쪽<br>`merge.swift` PDF 앞에 쪽 붙이기 | 회원결정 3·8·10·12·13·17·20·21·22·25·26·27·28·30·31·32·35·39·43·47번, 선행결정 3·5·14번의 첫 쪽 |
 | `erd/` | `erd.py` ERD 생성 (`cols/data.py`·`order.py`를 읽고 `prd/erd_prd.py`, `ord/erd_ord.py`, `pay/erd_pay.py`, `dlv/erd_dlv.py`를 불러 씀, `build.sh`와 별도 실행) | `docs/mmd/*.mmd` 6개, `docs/drawio/전체_ERD.drawio` |
 | `prd/` | `data.py` 상품 테이블·컬럼·코드 값 (단일 출처, 확정 표시 포함)<br>`cmm.py` 공통코드 (회원 `code_ids.json` 뒤에 이어서 발번)<br>`render.py`, `col_review.py`(PC-n), `erd_prd.py` | `상품_테이블이름_검토.pdf`, `상품_컬럼정의서_검토용.pdf`, `상품_컬럼검토_결정.pdf`, `공통코드_CMM_CODE_상품도메인.pdf` |
@@ -27,10 +27,10 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 | `ord_decision/` | `gen.py`, `d1~3.py`, `md.py`, `orig/`(결정 당시 원문) 주문결정 본문과 설계 패턴. 나중에 바뀐 결정은 `gen.py`의 `CHANGES`에 변경 안내를 적는다 (지금 5-5, 9-2, 3-9, 4-6) | `주문결정_NN-NN_*.pdf` 80개, `주문도메인_설계패턴_80.pdf` |
 | `pay_decision/` | `gen.py`, `fields.py`(12개 분야 이름·소개·패턴 수), `orig/`(2026-11-25 대화 원문, 패턴마다 질문과 답변, `history_1~4.md` 부록). `ord_decision/`의 `md.py`·`style.css`를 함께 쓴다. 선택지·추천·답은 원문에서 읽고, 답이 한 글자가 아니었던 2-1·7-1·12-4는 `CHOSEN`, 결정 단계 기록은 `NOTE`, 나중에 바뀐 결정의 변경 안내는 `CHANGES`(지금 4-3, 10-1)에 적는다 | `결제결정_NN-NN_*.pdf` 76개, `결제도메인_설계패턴_76.pdf` |
 | `dlv/` | `data.py` 배송 테이블·컬럼·코드 값 (단일 출처, `CONFIRM`·`POLICY`·`EXTERNAL_SOURCED` 포함, 주문·클레임 ID는 `ref()`)<br>`render.py`(`pay/render.py`에서 가져옴), `col_review.py`(전제·축, T-n, DC-n 결정 77개를 대화 원문 그대로, 새 결정은 `C` 끝에), `split.py <폴더>`(결정 하나당 HTML, `names.txt`에 파일 이름), `col_record.py <출력.html>`(DC-n만 모은 컬럼 검토 결정 기록), `erd_dlv.py` | `배송_테이블이름_검토.pdf`, `배송_컬럼정의서_검토용.pdf`, `docs/pdf/결정/배송결정/배송결정_<번호>_<제목>.pdf` 77개 (공통코드 PDF는 아직 없음) |
-| `inv/` | `decision.py` 재고 결정 54개(축 8개 결정 52개 + 후속 2개)를 대화 원문 그대로 (튜플에 "무엇을 정하나"와 "설명·예시"가 따로 있음, 변경 안내 `CHANGED`, 다른 결정으로 정해진 세부 `SETTLED`), `split.py <폴더>`(결정 하나당 HTML, `names.txt`). 테이블·컬럼(`data.py`)은 아직 없음 | `docs/pdf/결정/재고결정/재고결정_<NN-NN>_<제목>.pdf` 54개 |
+| `inv/` | `decision.py` 재고 결정 94개(축 8개 결정 52개 + 후속 2개 + 테이블 T-1~T-11 + 컬럼 IC-1~IC-29)를 대화 원문 그대로 (튜플에 "무엇을 정하나"와 "설명·예시"가 따로 있음, 변경 안내 `CHANGED`, 다른 결정으로 정해진 세부 `SETTLED`), `split.py <폴더>`(결정 하나당 HTML, `names.txt`). `data.py` 테이블 7개·컬럼·코드 단일 출처(`CONFIRM`, `POLICY`, 이름 확정 `NAME_CONFIRMED`), `render.py <폴더>`(names.html, columns.html), `col_record.py <출력.html>`(IC-n 기록 → `재고_컬럼검토_결정.pdf`), `erd_inv.py`(`erd/erd.py`가 부름) | `docs/pdf/결정/재고결정/` 94개(`재고결정_<NN-NN>_<제목>.pdf`, `재고결정_T-<NN>_<제목>.pdf`, `재고결정_IC-<NN>_<제목>.pdf`), `docs/pdf/테이블_컬럼/재고/` |
 | `dlv_pattern/` | `gen.py` 배송 도메인 설계 패턴 검토본 (5개 축, 세부 81개). 데이터가 스크립트 안에 있고 `ord_decision/style.css`를 함께 쓴다. 세부 개수를 assert로 검사한다 | `배송도메인_설계패턴_81.pdf` |
 | `axes/` | `gen.py <pay\|ord\|prd\|mbr> <출력.html>` 결정을 마친 4개 도메인의 설계 패턴을 배송 문서 형식(큰 틀 축, 패턴 비교, 고른 안, 세부 표, 외부 정리본에서 바로잡은 점)으로 다시 묶은 문서. 축 구성은 사용자가 받은 외부 정리본(`*_N개축.pdf`)을 따른다. 고른 안은 `src.py`가 결제 `pay_decision/orig/`, 주문 `ord_decision/d1~d3.py`, 상품 `prd_decision/data1~3.py`에서 읽고, 회원은 `mbr.py`의 `DEC`에 직접 적었다. 도메인 모듈(`pay.py` 등)에 축·세부 배치·바뀐 내용(`CHG`)이 있고, 결정 번호가 빠지거나 겹치면 assert 오류 | `docs/pdf/설계패턴/{결제\|주문\|상품\|회원}도메인_설계패턴_축별_{76\|80\|53\|47}.pdf` |
-| `overview/` | `gen.py` 전체 도메인 설계 패턴 개요 (8쪽) (진행 현황, 공통 결정, 도메인을 가로지르는 틀, 도메인별 고른 패턴, 남은 도메인의 넘어온 결정, 2026-11-20 개요와 달라진 점). 숫자는 CLAUDE.md와 맞춘다 | `docs/pdf/설계패턴/전체도메인_설계패턴_개요.pdf` |
+| `overview/` | `gen.py` 전체 도메인 설계 패턴 개요 (진행 현황, 공통 결정, 도메인을 가로지르는 틀, 도메인별 고른 패턴, 남은 도메인의 넘어온 결정, 2026-11-20 개요와 달라진 점). 숫자는 CLAUDE.md와 맞춘다 | `docs/pdf/설계패턴/전체도메인_설계패턴_개요.pdf` |
 | `screen/` | `cart.html`, `order.html`, `admin_order.html`, `admin_payment.html`, `admin_delivery.html` 화면 와이어프레임 (HTML 원본을 직접 고침) | `docs/pdf/화면/장바구니_화면.pdf`, `주문서_화면.pdf`, `관리자_주문_화면.pdf`, `관리자_결제_화면.pdf`, `관리자_배송_화면.pdf` |
 | `glossary/` | `gen.py <db\|biz> <출력.html>` 용어집 (항목 데이터가 스크립트 안의 `DB`·`BIZ`에 있음, A4 가로) | `docs/pdf/용어집/DB용어집.pdf`, `업무용어집.pdf` |
 | `testdata/` | `gen.py <폴더>` 테스트 데이터 엑셀. `load.py`가 네 도메인 `data.py`(회원은 `cols/order.py` 순서)에서 컬럼을 읽고, 시나리오 값은 `rows.py` | `docs/테스트데이터/테스트데이터_{회원\|상품\|주문\|결제}.xlsx` |
@@ -71,7 +71,7 @@ tools/pdfgen/build.sh /tmp/pdfout --install  # docs/pdf/의 PDF 6개를 덮어�
 - 축별 설계 패턴(`axes/`)은 결정이 바뀌면 도메인 모듈의 `SHORT`·`CHG`를 고친다. 외부 정리본(`*_N개축.pdf`)은 사용자 파일이라 덮어쓰지 않는다.
 
 ### 정책명세 (`policy/`)
-- 상품·주문·결제·배송은 `policy/render_domain.py <모듈> <출력.html>`이 렌더링한다. 모듈은 조문(`P`), 다른 도메인 넘김 사항(`HANDOFF`), 미결 목록(`OPEN`)을 담는다. 조문 본문에 조 번호를 직접 쓰지 않는다 (조를 더하면 번호가 밀림).
+- 상품·주문·결제·배송·재고는 `policy/render_domain.py <모듈> <출력.html>`이 렌더링한다. 모듈은 조문(`P`), 다른 도메인 넘김 사항(`HANDOFF`), 미결 목록(`OPEN`)을 담는다. 조문 본문에 조 번호를 직접 쓰지 않는다 (조를 더하면 번호가 밀림).
 
 ### 화면 (`screen/`)
 - `screen/*.html`을 직접 고쳐 그대로 PDF로 출력한다 (A4 가로). 쪽마다 왼쪽에 와이어프레임(동그라미 번호), 오른쪽에 "화면 요소별 저장·조회 위치" 표(No, 화면 요소, 컬럼, 근거 결정)와 짧은 주석을 둔다. 스타일은 `admin_order.html`을 복사해 쓴다 (2026-11-26 사용자 지시).
@@ -98,8 +98,11 @@ python3 tools/pdfgen/pay_decision/gen.py $OUT/pay_dec      # dec/*.html, pattern
 python3 tools/pdfgen/dlv/render.py $OUT/dlv; python3 tools/pdfgen/dlv/split.py $OUT/dlv_dec      # 결정별 HTML, names.txt
 python3 tools/pdfgen/dlv/col_record.py $OUT/dlv/review.html   # DC-n 컬럼 검토 결정 기록
 python3 tools/pdfgen/policy/render_domain.py dlv_content $OUT/dlv_policy.html
-# 재고 (결정 기록만)
+# 재고
+python3 tools/pdfgen/inv/render.py $OUT/inv      # names.html, columns.html (폴더를 먼저 만든다)
 python3 tools/pdfgen/inv/split.py $OUT/inv_dec      # 결정별 HTML, names.txt → docs/pdf/결정/재고결정/
+python3 tools/pdfgen/inv/col_record.py $OUT/inv/review.html   # IC-n 컬럼 검토 결정 기록
+python3 tools/pdfgen/policy/render_domain.py inv_content $OUT/inv_policy.html
 # 화면: tools/pdfgen/screen/*.html을 그대로 PDF로 출력 (A4 가로)
 ```
 
@@ -107,6 +110,7 @@ python3 tools/pdfgen/inv/split.py $OUT/inv_dec      # 결정별 HTML, names.txt 
   - 상품: `docs/pdf/테이블_컬럼/상품/`, 공통코드(cmm) → `docs/pdf/테이블_컬럼/공통/공통코드_CMM_CODE_상품도메인.pdf`, 결정·설계 패턴 → `docs/pdf/결정/상품결정/`, `docs/pdf/설계패턴/`.
   - 주문: `docs/pdf/테이블_컬럼/주문/`, 정책명세 → `docs/pdf/정책명세/주문도메인_정책명세.pdf`, 결정 → `docs/pdf/결정/주문결정/`, 설계 패턴 → `docs/pdf/설계패턴/주문도메인_설계패턴_80.pdf`.
   - 결제: `docs/pdf/테이블_컬럼/결제/`, 정책명세 → `docs/pdf/정책명세/결제도메인_정책명세.pdf`, 결정 → `docs/pdf/결정/결제결정/`, 설계 패턴 → `docs/pdf/설계패턴/결제도메인_설계패턴_76.pdf`.
+  - 재고: `docs/pdf/테이블_컬럼/재고/` (names, columns, review → `재고_컬럼검토_결정`), 결정 → `docs/pdf/결정/재고결정/` (결정 하나당 PDF), 정책명세 → `docs/pdf/정책명세/재고도메인_정책명세.pdf`.
   - 배송: `docs/pdf/테이블_컬럼/배송/` (names, columns, review → `배송_컬럼검토_결정`), 결정 → `docs/pdf/결정/배송결정/` (결정 하나당 PDF), 정책명세 → `docs/pdf/정책명세/배송도메인_정책명세.pdf`, 설계 패턴 → `docs/pdf/설계패턴/배송도메인_설계패턴_81.pdf` (`python3 tools/pdfgen/dlv_pattern/gen.py <출력.html>` 뒤 Chrome으로 PDF).
 - 결정 기록 범위 표기: 상품 "PC-1~PC-n"은 `prd/col_review.py`, `prd/render.py`, `prd/cmm.py`, 주문 "OC-16~OC-n"은 `ord/col_review.py`, `ord/render.py`, `policy/ord_content.py` 세 곳에 있어 함께 바꾼다. 결제 "PYC-1~PYC-n"은 `pay/render.py`가, 배송 "DC-1~DC-n"은 `dlv/render.py`가 `col_review.py`의 `C`에서 계산한다.
 - Python 3.9는 한글이 든 약 1000바이트 넘는 소스 줄에서 "Non-UTF-8 code" 오류를 낸다. 긴 문자열은 나눠 쓴다 (`awk '{if (length($0)>950) print NR}'`로 확인).
