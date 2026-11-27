@@ -56,9 +56,9 @@ DEL = [
  ('DELETED_AT','논리 삭제 일시','Deleted At',TS,'Y','','','NULL이면 삭제되지 않은 행. 조회 시 `DELETED_AT IS NULL`.'),
 ]
 PII = [
- ('PII_RETENTION_REASON_CD','개인정보 보유 사유 코드','Personal Information Retention Reason Code','VARCHAR2(30)','Y','','CK (값 목록)','`CMM_CODE` 보유 기간 코드 (선행 결정 7). 주문 값 복사 (DC-27 B).'),
- ('PII_RETENTION_BASE_DT','개인정보 보유 기간 기산 일자','Personal Information Retention Base Date','DATE','Y','','','주문의 기산일(거래 종료일)을 복사한다 (DC-27 B). 이름은 후보.'),
- ('PII_RETENTION_END_DT','개인정보 파기 예정 일자','Personal Information Retention End Date','DATE','Y','','','주문(회수·교환이면 원래 주문)의 파기 예정일을 복사한다. 합포장이면 가장 늦은 날. 지나면 일 배치가 개인정보 컬럼을 NULL로 바꾸고 행을 지운다 (DC-27 B, DC-28 A).'),
+ ('PII_RETENTION_REASON_CD','개인정보 보유 사유 코드','Personal Information Retention Reason Code','VARCHAR2(30)','Y','','CK (값 목록)','`CMM_CODE` 보유 기간 코드 (선행 결정 7). 주문 값 복사 (DC-27 B). 비주문 출고는 `NON_ORDER_DELIVERY` (DC-41 A).'),
+ ('PII_RETENTION_BASE_DT','개인정보 보유 기간 기산 일자','Personal Information Retention Base Date','DATE','Y','','','주문의 기산일(거래 종료일)을 복사한다 (DC-27 B). 비주문 출고는 배송 완료(반송이면 반송 완료) 일자 (DC-41 A). 이름은 후보.'),
+ ('PII_RETENTION_END_DT','개인정보 파기 예정 일자','Personal Information Retention End Date','DATE','Y','','','주문(회수·교환이면 원래 주문)의 파기 예정일을 복사한다. 비주문 출고는 기산일 + 1년 (DC-41 A). 합포장이면 가장 늦은 날. 지나면 일 배치가 개인정보 컬럼을 NULL로 바꾸고 행을 지운다 (DC-27 B, DC-28 A).'),
  ('PII_PURGED_AT','개인정보 파기 완료 일시','Personal Information Purged At',TS,'Y','','',''),
 ]
 def full_cols(t):
@@ -78,7 +78,7 @@ longest = sorted(T, key=lambda t: -len(t['t']))[:2]
 META = '자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-27 · 배송 도메인 결정(전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-%d) 기준' % NDC
 body = ('<h1>배송 도메인 테이블 이름 (검토용)</h1>'
         f'<div class="meta">{META} · 물리명, 논리명, 설명 모두 후보 (확인 칸으로 검토)</div>'
-        f'<div class="box">배송 도메인 결정 42개(전제·축 7, 테이블 7, 컬럼 {NDC})에서 나온 테이블 {len(T)}개다 (모두 <code>DLV_</code>). 물리명도 아직 확정하지 않았다. 확정한 행은 <b>확정</b> 칸에 표시하고, 고칠 이름이나 내용은 메모 칸에 적는다.</div>'
+        f'<div class="box">배송 도메인 결정 {len(_DC)}개(전제·축 7, 테이블 7, 컬럼 {NDC})에서 나온 테이블 {len(T)}개다 (모두 <code>DLV_</code>). 물리명도 아직 확정하지 않았다. 확정한 행은 <b>확정</b> 칸에 표시하고, 고칠 이름이나 내용은 메모 칸에 적는다.</div>'
         + rows + f'</table><p><b>합계: 테이블 {len(T)}개, 컬럼 {total}개 (공통 컬럼 포함)</b></p>')
 body += ('<h2>공통 사항</h2><ul>'
          f'<li>모든 이름은 128바이트 이내. 가장 긴 것은 ' + ', '.join(f'<code>{t["t"]}</code>({len(t["t"])}바이트)' for t in longest) + '.</li>'

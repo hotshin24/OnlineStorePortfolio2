@@ -25,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **상품 (PRD):** 결정 1~53, 컬럼 검토 PC-1~PC-86·R-1~R-9. 테이블 18개(이름 후보), 컬럼 398개, 코드 그룹 40개(값 435개). `PRD_STYLE` 일부와 가격 테이블 2개만 확정.
 - **주문 (ORD):** 결정 80개(10개 분야), 컬럼 검토 OC-1~OC-122 (OC-1~OC-9, OC-11~OC-14 13개는 답변 전). 테이블 10개(이름 후보), 컬럼 302개, 코드 그룹 24개(값 124개), `CODE_ID` 미발번. 확정: `ORD_CART` 전체, `ORD_ORDER`의 식별부터 법정 확인·고지까지.
 - **결제 (PAY):** 결정 76개(12개 분야), 컬럼 검토 PYC-1~PYC-86 (새 질문은 PYC-87부터). 테이블 21개(이름 후보), 컬럼 593개(업무 431 + 공통 162), 코드 그룹 67개(값 314개, 재사용 그룹 `REUSE` 3개는 세지 않음), `CODE_ID` 미발번. 확정: `PAY_PAYMENT`의 식별부터 PG·가맹점 그룹까지. 다음: `PAY_PAYMENT`의 나머지 12개 그룹과 20개 테이블. 컬럼 검토 때 다시 물을 것: `pay/data.py`의 `CONFIRM` 21개.
-- **배송 (DLV):** 결정 42개(전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-28, 모두 추천안). 테이블 11개(이름 후보), 컬럼 232개(업무 156 + 공통 76), 코드 그룹 24개(값 114개), `CODE_ID` 미발번. 확정 표시는 아직 없다. 컬럼 검토 때 다시 물을 것: `dlv/data.py`의 `CONFIRM` 12개.
+- **배송 (DLV):** 결정 74개(전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-60, 추천과 다른 결정 10개는 `docs/진행메모.md`). 테이블 11개(이름 후보), 컬럼 248개(업무 172 + 공통 76), 코드 그룹 27개(값 138개), `CODE_ID` 미발번. 확정: `DLV_SHIPMENT_REQUEST`의 식별·상태 그룹. 다음: `DLV_SHIPMENT_REQUEST`의 나머지 그룹과 10개 테이블. 컬럼 검토 때 다시 물을 것: `dlv/data.py`의 `CONFIRM` 12개.
 - 그다음은 나머지 9개 도메인이다.
 - 도메인을 다시 열 때 먼저 꺼낼 것 (사용자 지시로 지금은 메모만, 상세는 `docs/진행메모.md`):
   - 회원·상품: 규칙 8-C 재정렬, 상품 스타일 분류 컬럼, 회원 배송지 공동현관 코드, 선행결정 14번 변경 안내에 주문 OC-83 A 추가.
@@ -46,6 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 6개와 drawio 1개를 한 번에 만든다). 생성 날짜가 모든 파일에 찍혀 다른 도메인 파일도 날짜 줄이 바뀐다.
 - 검증: `swift tools/pdfgen/util/pdf2txt.swift <pdf> <txt>`(출력 경로 필수)로 이전 PDF와 텍스트를 비교하고, `swift tools/pdfgen/util/pg.swift <pdf> [<쪽> <png>]`로 쪽수와 쪽 모양을 본다. 합친 PDF(`merge.swift` 결과)는 한글이 추출되지 않으니 합치기 전 PDF로 비교한다.
 - 지시 규칙: `python3 tools/pdfgen/rules/rules.py <출력.html>` → `docs/pdf/지시규칙/DB설계_지시규칙_1-8.pdf`. 공통 규칙이 바뀌면 `docs/db/00_conventions.md`와 함께 고친다.
+- 배송 결정을 하나 더하면 숫자·범위(DC-1~DC-n)를 함께 고칠 곳: 이 파일의 진행 상황 줄과 저장소 구조의 `배송결정/` 개수, README 두 곳, `overview/gen.py`, `docs/진행메모.md`, `policy/dlv_content.py`의 `META`·`EFFECT`, `screen/admin_delivery.html` 쪽 메타, `dlv/data.py` 머리 주석과 해당 테이블 `basis`. 결정 수·컬럼 수·코드 값 수는 `render.py` 출력과 `CODES` 합계로 확인한다.
 - 컬럼을 고치면 함께 다시 돌릴 것: ERD, 테스트 데이터(`python3 tools/pdfgen/testdata/gen.py docs/테스트데이터`), 회원 C-n이 법률 결정과 같으면 법률검토(`bash docs/pdf/법률검토/_src/build.sh <작업폴더>`). 도메인 결정이나 진행 숫자가 바뀌면 전체 개요(`overview/gen.py`)와 축별 설계 패턴(`axes/`)도 고친다.
 
 ## 문서 생성 구조
@@ -66,6 +67,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 결제·배송은 파티션 제거(ORA-02266)를 막지 않도록 다른 도메인 ID를 `ref()`(FK 없이 인덱스만)로 두고, ERD는 이를 그리지 않는다.
   - 정책명세 조문 본문에 조 번호를 직접 쓰지 않는다 (조를 더하면 번호가 밀림).
   - 회원 코드 값을 중간에 넣으면 뒤 CODE_ID가 밀린다. `cmm.py`의 `LATE` 목록에 넣는다.
+  - 결정 기록(`*/col_review.py`):
+    - 나중에 바뀐 결정은 배송이면 `dlv/col_review.py`의 `CHANGED`에 번호와 문구를 넣는다. `one()`이 첫 쪽에 빨간 변경 안내 상자를 그린다.
+    - 추천을 하지 않은 질문은 추천 칸을 `''`로 두면 "추천 없음"으로 나온다 (배송 DC-60).
+    - 대화에서 선택지로 내지 않고 뺀 안도 빠뜨리지 않고 D 행 등으로 남기고, 방식 칸 앞에 "(대화에서는 선택지로 내지 않은 안)"을 붙인다 (2026-11-27 사용자 지시).
+  - `dlv/split.py`는 결정 날짜를 번호로 정한다 (DC-29부터 2026-11-27). 다른 날 결정하면 날짜 규칙을 고친다.
+  - `screen/admin_delivery.html`은 5쪽을 넘기지 않는다. 고친 뒤 `pg.swift`로 쪽수를 확인한다.
   - 사용자가 화면을 그려 달라고 하면 `screen/admin_order.html` 형식의 PDF로 만든다 (2026-11-26 사용자 지시). 대화창 텍스트 그림으로 대신하지 않는다.
 
 ## 작업 방식 (반드시 지킬 것)
@@ -291,8 +298,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 저장소 구조
 
-- `docs/pdf/결정/`: 결정 하나당 PDF 하나 (당시 선택지·장단점 표, 고른 안은 파란 행, 사용자 답변, 충돌 확인·변경 과정). `선행결정/` 17개, `회원결정/` 47개, `상품결정/` 53개, `주문결정/` 80개·`결제결정/` 76개(`*_NN-NN_제목.pdf`, 분야-순번), `배송결정/` 42개(`배송결정_<번호>_제목.pdf`, DC는 두 자리).
-  - 나중에 바뀐 결정은 첫 쪽에 변경 안내가 있다: 회원결정 20개와 선행결정 3·5·14번(원본 커밋 PDF 앞에 붙임), 주문결정 5-5, 9-2, 3-9, 4-6, 결제결정 4-3, 10-1.
+- `docs/pdf/결정/`: 결정 하나당 PDF 하나 (당시 선택지·장단점 표, 고른 안은 파란 행, 사용자 답변, 충돌 확인·변경 과정). `선행결정/` 17개, `회원결정/` 47개, `상품결정/` 53개, `주문결정/` 80개·`결제결정/` 76개(`*_NN-NN_제목.pdf`, 분야-순번), `배송결정/` 74개(`배송결정_<번호>_제목.pdf`, DC는 두 자리).
+  - 나중에 바뀐 결정은 첫 쪽에 변경 안내가 있다: 회원결정 20개와 선행결정 3·5·14번(원본 커밋 PDF 앞에 붙임), 주문결정 5-5, 9-2, 3-9, 4-6, 결제결정 4-3, 10-1, 배송결정 DC-27, DC-29, DC-30, DC-49, DC-51, DC-59.
 - `docs/pdf/설계패턴/`: 도메인별 설계 패턴 검토본, 축별 정리본 4개(`axes/`), 전체 개요(`overview/`). `*_N개축.pdf`는 사용자가 받은 외부 정리본이라 덮어쓰지 않는다.
 - `docs/pdf/테이블_컬럼/`: 도메인별 테이블 이름 검토본(회원은 확정본), 컬럼정의서 검토본, 컬럼 검토 결정 기록. `공통/`은 공통코드 `CMM_CODE`(회원, 상품).
 - `docs/pdf/정책명세/`(조문 형식), `docs/pdf/화면/`(와이어프레임), `docs/pdf/지시규칙/`, `docs/pdf/용어집/`(DB 용어집, 업무 용어집), `docs/pdf/후보테이블/`(2026-11-21 기준 89개, 설계한 도메인은 `테이블_컬럼/`이 기준).

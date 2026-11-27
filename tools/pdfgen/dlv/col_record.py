@@ -10,7 +10,7 @@ def main(out):
     dc = [c for c in C if c[0].startswith('DC-')]
     done = sum(1 for c in dc if c[7])
     b = [f'<h1>배송 도메인 컬럼 검토 결정 (DC-1~DC-{len(dc)})</h1>',
-         '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-26 대화로 결정 · '
+         '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-26~27 대화로 결정 · '
          f'배송 전제·축 7개와 테이블 결정 T-1~T-7, 컬럼 정의서(제안) 기준 · {done}개 결정, {len(dc) - done}개 답변 전</div>',
          '<div class="box">배송 테이블·컬럼을 설계하며 정할 사항을 질문으로 정리했다. 질문과 선택지, 추천 이유는 당시 대화 원문 그대로이고, '
          '반영은 답을 받은 뒤 알린 내용이다. 굵은 기호가 추천안, 파란 행이 고른 안이다. '

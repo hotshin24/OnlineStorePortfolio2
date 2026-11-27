@@ -1,5 +1,5 @@
 # 배송 도메인 테이블·컬럼 정의 (제안, 확정 전)
-# 근거: 배송 결정 (2026-11-26, 대화로 결정. 전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-28)과 `docs/pdf/설계패턴/배송도메인_설계패턴_81.pdf`의 세부 번호.
+# 근거: 배송 결정 (2026-11-26, 대화로 결정. 전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-60)과 `docs/pdf/설계패턴/배송도메인_설계패턴_81.pdf`의 세부 번호.
 # 결정 기록은 dlv/col_review.py. 테이블 이름은 모두 후보다.
 # 컬럼: (물리명, 한글 논리명, 영문 논리명, 타입, NULL(N=NOT NULL, Y=허용), 기본값, 제약, 설명)
 # 테이블의 cols는 [(컬럼 그룹 이름, [컬럼...]), ...] 순서 그대로가 규칙 8 순서다 (8-C A: 그룹도 중요도 순).
@@ -46,47 +46,79 @@ CORE_KEEP = ('행: 이 요청이 만든 출고가 모두 지워진 뒤 지운다
 
 # =========================================================== 1. 출고 요청
 table(t='DLV_SHIPMENT_REQUEST', ko='출고 요청 (아직 나가지 않은 보낼 것)', en='Shipment Request',
- desc='보내야 할 것 1건. 결제 완료, 클레임 회수·교환 접수, 사고 재발송 때 만든다. 주문 1건에 1건이 기본이고, 예약 상품과 서비스 유형이 다른 상품은 따로 만든다 (DC-23 A). '
-      '출고(정방향)와 회수(역방향)를 방향 코드로 함께 담는다 (2-1 B). 주문·클레임 ID는 FK 없이 값으로 가리킨다 (5-1 B). 개인정보는 없다.',
- basis='1-1 B, 2-1 B, 3-3 C, 5-1 B, T-4 A, DC-1 B~DC-5 A, DC-22 A, DC-23 A, DC-25 A, DC-28 A, 주문 1-5 A',
+ desc='보내야 할 것 1건. 결제 완료, 클레임 회수·교환 접수, 사고·반송·출고 누락 재발송, 수선 회수·재발송, 비주문 출고(협찬·샘플·보상품) 때 만든다. 주문 1건에 1건이 기본이고, 예약 상품과 서비스 유형이 다른 상품은 따로 만든다 (DC-23 A). '
+      '출고와 회수를 출고·회수 구분 코드로 함께 담는다 (2-1 B). 주문·클레임 ID는 FK 없이 값으로 가리킨다 (5-1 B). 개인정보는 없다.',
+ basis='1-1 B, 2-1 B, 3-3 C, 5-1 B, T-4 A, DC-1 B~DC-5 A, DC-22 A, DC-23 A, DC-25 A, DC-28 A, DC-29 A~DC-31 A, DC-32 C~DC-37 A, DC-39 B~DC-45 A, DC-49 A~DC-58 A, 주문 1-5 A',
  pk='대리 PK `SEQ_DLV_SHIPMENT_REQUEST`', cache=100,
  delete=CORE_DEL, part=CORE_PART, keep=CORE_KEEP,
  cols=[
  ('식별', [
   ('SHIPMENT_REQUEST_ID','출고 요청 고유 식별 번호','Shipment Request Unique Identifier',ID,'N','','PK',
    '요청에는 업무 번호를 두지 않는다. 창고와 고객센터는 출고 번호, 주문번호, 송장번호로 부른다 (DC-1 B).'),
- ]),
- ('방향·원인', [
-  cd('DIRECTION_CD','배송 방향 코드 (출고 / 회수)','Delivery Direction Code (Outbound / Return)',
-     desc='출고는 창고에서 고객에게, 회수는 고객에게서 창고로 (2-1 B). 수령 거절 등의 반송은 회수가 아니라 출고의 상태다 (세부 2-8).'),
+  cd('SHIP_PICKUP_TYPE_CD','출고·회수 구분 코드','Shipment / Pickup Type Code',
+     desc='출고(`SHIP`)는 창고에서 고객에게, 회수(`PICKUP`)는 고객에게서 창고로 (2-1 B). 수령 거절 등의 반송은 회수가 아니라 출고의 상태다 (세부 2-8). '
+          '이름은 "배송 방향 코드"(`DIRECTION_CD`, 값 `OUTBOUND` / `RETURN`)에서 바꿨다: 논리명 DC-29 A, 물리명과 값 DC-32 C. 출고·요청 상품처럼 식별 그룹에 둔다 (DC-30 B). 요청 대상(주문·클레임·재발송 근거·비주문)도 DC-44 C로 식별 그룹에 합쳤다.'),
   cd('REQUEST_REASON_CD','출고 요청 원인 코드','Shipment Request Reason Code',n=30,
-     desc='방향과 원인 조합은 테이블 수준 CK로 고정한다.'),
-  ref('ORDER_ID','대상 주문 식별 번호','Target Order Identifier','N',
-      '회수·교환·사고 재발송도 원래 주문을 채운다. 매일 검증 배치가 주문에 없는 값을 찾는다 (5-1 B).'),
+     desc='출고·회수 구분과 원인 조합은 테이블 수준 CK로 고정한다.'),
+  ('SHIPMENT_REQUEST_KEY_VAL','출고 요청 생성 중복 방지 키','Shipment Request Creation Idempotency Key Value','VARCHAR2(100)','N','','UK',
+   '요청을 만드는 쪽이 원인 + 원천 ID + 분할 구분으로 만든 값 (예: `ORDER:{주문 ID}:{분할 구분}`, `CLAIM:{클레임 ID}:{구분}`, `ACCIDENT:{사고 ID}`, `NON_ORDER:{발급 값}`). '
+   '결제 완료 처리·클레임 접수·사고 재발송이 재시도돼도 같은 요청이 두 번 생기지 않게 한다 (DC-31 A, 주문 3-3 A와 같은 방식). '
+   '반송 재발송은 `RETURNED:{패키지 ID}`, 출고 누락 재발송은 `MISSING:{패키지 ID}:{순번}`. 같은 키로 다시 오면 기존 요청을 돌려준다. [확인 필요: 분할 구분 값(기본·예약 상품·서비스 유형)과 키 형식은 애플리케이션 규칙]'),
+  ref('ORDER_ID','대상 주문 식별 번호','Target Order Identifier','Y',
+      '회수·교환·사고 재발송도 원래 주문을 채운다. 비주문 출고만 NULL이고 다른 원인은 NOT NULL (CK, DC-40 A). 매일 검증 배치가 주문에 없는 값을 찾는다 (5-1 B).'),
   ref('CLAIM_ID','대상 클레임 식별 번호','Target Claim Identifier',
-      desc='클레임 테이블 이름은 클레임 설계 뒤 확정. 반품 회수·교환 회수·교환 재발송이면 NOT NULL, 주문이면 NULL (CK).'),
+      desc='클레임 테이블 이름은 클레임 설계 뒤 확정. 반품 회수·교환 회수·교환 재발송·수선 회수·수선 재발송이면 NOT NULL, 주문이면 NULL (CK).'),
   fk('SOURCE_PARCEL_ACCIDENT_ID','재발송 원인 배송 사고 식별 번호','Source Parcel Accident Identifier for Reshipment','DLV_PARCEL_ACCIDENT','Y','',
      '원인이 사고 재발송이면 NOT NULL, 다른 원인이면 NULL (CK). 배송 안의 FK라 걸 수 있다 (5-1 B).'),
+  fk('SOURCE_PARCEL_ID','재발송 원인 패키지 식별 번호 (반송·출고 누락)','Source Parcel Identifier for Reshipment (Returned / Missing Item)','DLV_PARCEL','Y','',
+     '원인이 반송 재발송·출고 누락 재발송이면 NOT NULL, 다른 원인이면 NULL (CK). 반송 재발송은 반송 완료(`RETURNED`)된 박스, 출고 누락 재발송은 상품이 빠진 박스를 가리킨다 (DC-33 A, DC-37 A, 세부 2-8). '
+     '반송과 출고 누락은 택배사 사고가 아니라 사고 행을 만들지 않는다. 반송 재발송 배송비 부담은 주문·클레임이 정한다 (넘김 사항). 출고 누락의 원래 패키지 상품 `PACKED_QTY`는 당시 기록이라 고치지 않는다.'),
+  fk('PRECEDING_PICKUP_REQUEST_ID','선행 회수 출고 요청 식별 번호','Preceding Pickup Shipment Request Identifier','DLV_SHIPMENT_REQUEST','Y','',
+     '교환 재발송이 기다릴 교환 회수 요청 (자기 참조, DC-34 A). 회수가 창고에 도착한 뒤 출고하면 채우고, 맞교환(회수 전에 먼저 보냄)이면 NULL. '
+     '원인이 교환 재발송이 아니면 NULL (CK). 가리킨 행이 같은 클레임의 교환 회수인지는 애플리케이션이 검사한다. 맞교환 여부는 클레임 정책 (세부 2-7). 수선 재발송은 수선 완료 때 만들어 쓰지 않는다 (DC-43 B).'),
+  cd('NON_ORDER_TYPE_CD','비주문 출고 유형 코드','Non-Order Shipment Type Code','Y',
+     desc='협찬, 임직원 샘플, 보상품, 기타. 원인이 비주문 출고이면 NOT NULL, 다른 원인이면 NULL (CK) (DC-42 A). 유형별 출고 수·비용 집계에 쓴다.'),
+  ('NON_ORDER_REASON_DESC','비주문 출고 사유 설명','Non-Order Shipment Reason Description','VARCHAR2(500)','Y','','',
+   '어느 캠페인, 누구의 요청으로 보내는지 (예: "12월 겨울 코트 인플루언서 협찬, 마케팅팀 요청"). 매출 없이 재고가 나가는 출고라 정산·재고 감사의 근거가 된다. '
+   '원인이 비주문 출고이면 NOT NULL, 다른 원인이면 NULL (CK) (DC-45 A). 집계는 유형 코드로 하고, 받는 사람 개인정보는 적지 않는다.'),
+  ref('MEMBER_ID','비주문 출고 받는 회원 식별 번호','Non-Order Shipment Recipient Member Identifier',
+      desc='받는 사람이 회원이면 채운다 (인플루언서·임직원 회원, 회원 11). 원인이 비주문 출고가 아니면 NULL (CK). 주문 출고는 주문을 조인해 회원을 찾으므로 두지 않는다 (DC-31 ⑤, DC-42 A).'),
  ]),
  ('상태', [
   cd('SHIPMENT_REQUEST_STATUS_CD','출고 요청 상태 코드','Shipment Request Status Code',n=30,
      desc='창고 작업 단계(피킹·검수·포장)는 "창고 작업 중" 하나로 두고 세부는 WMS가 갖는다 (DC-2 A). 바뀔 때마다 상태 이력에 남긴다 (T-1 C).'),
   ('REQUESTED_AT','출고 요청 일시','Shipment Requested At',TS,'N','SYSTIMESTAMP','',
-   '공급 조치 기록 (전자상거래법 15조 1항). 정방향 주문이면 주문 상품 `SHIPMENT_REQUESTED_AT`과 같은 값을 같은 트랜잭션에서 쓴다 (주문 1-5 A).'),
- ]),
- ('기한·약속', [
+   '공급 조치 기록 (전자상거래법 15조 1항). 주문 출고이면 주문 상품 `SHIPMENT_REQUESTED_AT`과 같은 값을 같은 트랜잭션에서 쓴다 (주문 1-5 A).'),
+  ('STATUS_CHANGED_AT','출고 요청 상태 변경 일시 (마지막)','Shipment Request Status Changed At',TS,'N','SYSTIMESTAMP','',
+   '상태가 마지막으로 바뀐 시각. 상태 코드와 같은 UPDATE에서 갱신한다. "창고 작업 중 6시간 이상" 같은 정체 감시를 상태 이력 조인 없이 한다 (DC-49 A, 주문 7-7 A와 같은 방식). 같은 시각이 상태 이력에도 남는다.'),
+  ('WAREHOUSE_RELEASED_AT','창고 작업 지시 일시','Warehouse Released At',TS,'Y','','',
+   'WMS에 작업 지시를 넘긴 시각 (처음 "창고 작업 중"이 된 때). 출고 마감 시각(정책값) 안에 넘겼는지, 결품이 작업 지시 전인지 후인지를 가린다 (DC-49 A). '
+   '구분이 출고이고 상태가 창고 작업 중·일부 출고·출고 완료이면 NOT NULL, 구분이 회수이면 NULL (CK).'),
+  ('REQUEST_COMPLETED_AT','출고 요청 완료 일시 (회수면 창고 도착)','Shipment Request Completed At',TS,'Y','','',
+   '상태가 출고 완료(회수면 회수 완료 = 마지막 박스 창고 도착)가 된 시각 (분할 출고면 마지막 출고). 적용 기한 `SHIP_DUE_DT`를 지켰는지 이 행 안에서 판정한다. 상태가 출고 완료 또는 회수 완료이면 NOT NULL, 그 밖에는 NULL (CK) (DC-49 A, DC-58 A). '
+   '회수에도 쓰므로 `SHIP_COMPLETED_AT`이 아니라 이 이름으로 둔다 (DC-32 C의 `SHIP` / `PICKUP` 구분). 취소로 끝나면 `CANCELED_AT`이 종결 시각이다.'),
   ('DEADLINE_BASE_DT','법정 출고 기한 기산 일자','Legal Shipping Deadline Base Date','DATE','Y','','',
-   '대금을 받은 날 (전자상거래법 15조 1항). 원인이 주문이면 NOT NULL, 다른 원인이면 NULL (CK) (DC-3 A).'),
+   '대금을 받은 날 (전자상거래법 15조 1항). 원인이 주문이면 NOT NULL, 다른 원인이면 NULL (CK) (DC-3 A). 기한·약속 컬럼은 DC-53 B로 상태 그룹에 합쳤고, 요청을 만들 때 정한 뒤 고치지 않는다(약정 공급일 제외).'),
   ('LEGAL_SHIP_DEADLINE_DT','법정 출고 기한 일자','Legal Shipping Deadline Date','DATE','Y','','',
    '기산일 + 3영업일. 요청을 만들 때 영업일 달력으로 계산해 저장하고, 나중에 공휴일을 등록해도 고치지 않는다 (DC-3 A). 원인이 주문이면 NOT NULL (CK).'),
+  ('ORIGINAL_AGREED_SUPPLY_DT','최초 약정 공급 일자','Original Agreed Supply Date','DATE','Y','','',
+   '처음 약속한 공급일. 약정 공급 일자와 함께 채우고 이후 고치지 않는다. 약정 공급 일자가 NOT NULL이면 NOT NULL (CK) (DC-56 A). 지연 일수를 배송 행만으로 낸다. 예약 상품은 주문 상품 `INITIAL_PROMISED_SUPPLY_DT`와 같은 값이다.'),
   ('AGREED_SUPPLY_DT','약정 공급 일자','Agreed Supply Date','DATE','Y','','',
-   '예약 상품의 출고 예정일, 선물 주문은 수락일 + 3영업일 (전자상거래법 13조 2항 4호). 있으면 법정 기한 대신 적용한다. 예약 상품은 이 날까지 "출고 가능일 대기" 상태다.'),
+   '예약 상품의 출고 예정일, 선물 주문은 수락일 + 3영업일 (전자상거래법 13조 2항 4호). 있으면 법정 기한 대신 적용한다. 예약 상품은 이 날까지 "출고 가능일 대기" 상태다. 바꿀 때는 주문 상품 `CURRENT_PROMISED_SUPPLY_DT`도 같은 트랜잭션에서 고친다.'),
+  cd('AGREED_SUPPLY_BASIS_CD','약정 공급 근거 코드','Agreed Supply Basis Code','Y',
+     desc='약정일이 법정 기한보다 우선하는 근거 (예약 상품 / 선물 수락 / 기타, 전자상거래법 13조 2항 4호). 약정 공급 일자가 NOT NULL이면 NOT NULL, NULL이면 NULL (CK) (DC-57 A). 예약·선물별 지연율을 배송만으로 센다.'),
+  ('INTERNAL_SHIP_TARGET_DT','내부 목표 출고 일자 (회수면 회수 접수 목표)','Internal Shipping Target Date','DATE','Y','','',
+   '법정 기한이 없는 요청(교환·사고·반송·출고 누락·수선 재발송, 회수, 비주문 출고)의 회사 목표일. 요청일 + 원인별 N영업일(원인 코드 `ATTR1` 정책값)을 만들 때 계산해 저장하고 고치지 않는다. '
+   '원인이 주문이면 NULL, 다른 원인이면 NOT NULL (CK) (DC-54 A). 법정 기한과 컬럼을 나눠 15조 준수 통계에 섞이지 않게 한다.'),
   ('SHIP_DUE_DT','적용 출고 기한 일자 (가상 컬럼)','Applied Shipping Due Date (Virtual)','DATE','Y','','가상 컬럼',
-   '`GENERATED ALWAYS AS (NVL(AGREED_SUPPLY_DT, LEGAL_SHIP_DEADLINE_DT)) VIRTUAL`. 기한 임박·초과 감시 인덱스에 쓴다 (DC-3 A, 세부 5-9). 둘 다 NULL이면(회수 등) NULL.'),
+   '`GENERATED ALWAYS AS (NVL(AGREED_SUPPLY_DT, NVL(LEGAL_SHIP_DEADLINE_DT, INTERNAL_SHIP_TARGET_DT))) VIRTUAL`. 기한 임박·초과 감시 인덱스에 쓴다 (DC-3 A, DC-54 A, 세부 5-9). 모든 요청이 값을 갖는다.'),
   cd('DELIVERY_SERVICE_TYPE_CD','배송 서비스 유형 코드','Delivery Service Type Code',
      desc='주문 상품 값을 복사한다 (주문 OC-106 A). 유형이 다른 상품은 요청을 나눈다 (DC-23 A). 약정 조건(주문 마감 시각, 약정 일수, 보상 방식)은 공통코드 `ATTR`에 둔다 (DC-4 A).'),
   ('GUARANTEED_ARRIVAL_DT','약정 도착 일자','Guaranteed Arrival Date','DATE','Y','','',
    '도착 보장이면 NOT NULL, 일반이면 NULL (CK). 건별 약속이라 복사해 둔다 (DC-4 A).'),
+  ('GUARANTEE_SHIP_CUTOFF_AT','도착 보장 출고 마감 일시','Guaranteed Arrival Shipping Cutoff At',TS,'Y','','',
+   '약정 도착일을 지키려면 이 시각까지 출고해야 하는 시각. 요청을 만들 때 그 당시 정책(`ATTR1` 마감 시각, `ATTR2` 약정 일수)으로 계산해 저장한다. '
+   '도착 보장이면 NOT NULL, 일반이면 NULL (CK) (DC-55 A). "도착 보장 위험"은 이 값 < 지금이고 아직 출고 전인 요청이다. 정책이 바뀌어도 지난 건은 그대로다.'),
  ]),
  ('출고 창고', [
   ('WAREHOUSE_ID','출고 창고 식별 번호 (회수면 도착 창고)','Warehouse Identifier (Destination for Return)',ID,'N','','FK 예정 → `WMS_WAREHOUSE` (후보)',
@@ -108,10 +140,10 @@ table(t='DLV_SHIPMENT_REQUEST', ko='출고 요청 (아직 나가지 않은 보�
    '적용 기한을 넘길 것 같아 고객에게 진행 상황을 알린 시각 (전자상거래법 15조 3항, DC-25 A). 알림 발송 내용은 알림 도메인.'),
  ]),
  ('회수 재접수', [
-  ('RETURN_PICKUP_RETRY_CNT','회수 재접수 횟수','Return Pickup Retry Count','NUMBER(2)','N','0','CK (>= 0)',
-   '회수 실패 뒤 택배사에 다시 접수한 횟수. 재접수마다 새 출고·패키지(새 송장)를 만든다. 정책값 한도를 넘으면 예외 수동 처리로 올린다 (DC-22 A). 출고 방향이면 0 (CK).'),
-  cd('LAST_PICKUP_FAIL_REASON_CD','마지막 회수 실패 사유 코드','Last Return Pickup Failure Reason Code','Y',n=30,
-     desc='출고 방향이면 NULL (CK) (DC-22 A).'),
+  ('PICKUP_RETRY_CNT','회수 재접수 횟수','Pickup Retry Count','NUMBER(2)','N','0','CK (>= 0)',
+   '회수 실패 뒤 택배사에 다시 접수한 횟수. 재접수마다 새 출고·패키지(새 송장)를 만든다. 정책값 한도를 넘으면 예외 수동 처리로 올린다 (DC-22 A). 구분이 출고이면 0 (CK). 반품·교환 회수 모두에 쓰여 `RETURN_PICKUP_RETRY_CNT`에서 이름을 바꿨다 (DC-36 A).'),
+  cd('LAST_PICKUP_FAIL_REASON_CD','마지막 회수 실패 사유 코드','Last Pickup Failure Reason Code','Y',n=30,
+     desc='구분이 출고이면 NULL, 상태가 회수 실패이면 NOT NULL (CK) (DC-22 A, DC-58 A). 재접수해 회수 접수 완료로 돌아가도 값은 남긴다.'),
  ]),
  ('예외 수동 처리', [
   cd('REQUEST_MANUAL_CHECK_REASON_CD','출고 요청 예외 수동 처리 사유 코드','Shipment Request Exception Manual Handling Reason Code','Y',n=30,
@@ -123,24 +155,35 @@ table(t='DLV_SHIPMENT_REQUEST', ko='출고 요청 (아직 나가지 않은 보�
  ]),
  ('동시 갱신', [rowver()]),
  ],
- idx=['UK (`SHIPMENT_REQUEST_ID`, `REQUEST_REASON_CD`) (요청 상품의 복합 FK 대상, DC-5 A 후속 A)',
-      'IX `ORDER_ID`, `CLAIM_ID` (FK 없는 값 참조, 5-1 B), `SOURCE_PARCEL_ACCIDENT_ID` (FK)',
+ idx=['UK `SHIPMENT_REQUEST_KEY_VAL` (생성 중복 방지, DC-31 A)', 'UK (`SHIPMENT_REQUEST_ID`, `REQUEST_REASON_CD`) (요청 상품의 복합 FK 대상, DC-5 A 후속 A)',
+      'IX `ORDER_ID`, `CLAIM_ID` (FK 없는 값 참조, 5-1 B), `SOURCE_PARCEL_ACCIDENT_ID`, `SOURCE_PARCEL_ID`, `PRECEDING_PICKUP_REQUEST_ID` (FK), `MEMBER_ID` (값 참조)',
       'IX (`SHIPMENT_REQUEST_STATUS_CD`, `SHIP_DUE_DT`) (기한 임박·초과 감시, 세부 5-9)',
+      'IX (`SHIPMENT_REQUEST_STATUS_CD`, `STATUS_CHANGED_AT`) (상태 정체 감시, DC-49 A)',
       'IX `IX_DLV_SHIPMENT_REQUEST_MANUAL_CHECK_OPEN` (함수 기반: `CASE WHEN MANUAL_CHECK_FLAGGED_AT IS NOT NULL AND MANUAL_CHECK_RESOLVED_AT IS NULL THEN MANUAL_CHECK_FLAGGED_AT END`, 예외 처리함)'],
- check=['방향·원인 조합: 출고 = 주문, 교환 재발송, 사고 재발송 / 회수 = 반품 회수, 교환 회수',
-        '`CLAIM_ID`: 원인이 반품 회수·교환 회수·교환 재발송이면 NOT NULL, 주문이면 NULL, 사고 재발송이면 제약 없음 (NULL이면 통과)',
+ check=['출고·회수 구분과 원인 조합: 출고 = 주문, 교환 재발송, 사고 재발송, 반송 재발송, 출고 누락 재발송, 수선 재발송, 비주문 출고 / 회수 = 반품 회수, 교환 회수, 수선 회수',
+        '`CLAIM_ID`: 원인이 반품 회수·교환 회수·교환 재발송·수선 회수·수선 재발송이면 NOT NULL, 주문이면 NULL, 사고 재발송·반송 재발송·출고 누락 재발송이면 제약 없음 (NULL이면 통과). 비주문 출고이면 유형이 보상품일 때 NOT NULL, 다른 유형이면 NULL',
+        '`ORDER_ID`: 원인이 비주문 출고이면 NULL, 다른 원인이면 NOT NULL (DC-40 A)',
+        '`NON_ORDER_TYPE_CD`, `NON_ORDER_REASON_DESC`: 원인이 비주문 출고이면 NOT NULL, 다른 원인이면 NULL (DC-45 A). `MEMBER_ID`: 원인이 비주문 출고가 아니면 NULL (비주문이면 NULL이어도 통과) (DC-42 A)',
         '`SOURCE_PARCEL_ACCIDENT_ID`: 원인이 사고 재발송이면 NOT NULL, 다른 원인이면 NULL',
-        '`DEADLINE_BASE_DT`, `LEGAL_SHIP_DEADLINE_DT`: 원인이 주문이면 둘 다 NOT NULL, 회수 방향이면 둘 다 NULL. 둘 다 있으면 기한 >= 기산일',
-        '`GUARANTEED_ARRIVAL_DT`: 서비스 유형이 도착 보장이면 NOT NULL, 일반이면 NULL',
+        '`SOURCE_PARCEL_ID`: 원인이 반송 재발송·출고 누락 재발송이면 NOT NULL, 다른 원인이면 NULL (DC-33 A, DC-37 A)',
+        '`PRECEDING_PICKUP_REQUEST_ID`: 원인이 교환 재발송이 아니면 NULL (교환 재발송이면 NULL이어도 통과 = 맞교환). 상태가 회수 도착 대기이면 NOT NULL (DC-34 A). 선행 회수 요청이 회수 완료가 되면 대기를 푼다 (DC-58 A)',
+        '`DEADLINE_BASE_DT`, `LEGAL_SHIP_DEADLINE_DT`: 원인이 주문이면 둘 다 NOT NULL, 구분이 회수이거나 원인이 비주문 출고이면 둘 다 NULL. 둘 다 있으면 기한 >= 기산일',
+        '`GUARANTEED_ARRIVAL_DT`, `GUARANTEE_SHIP_CUTOFF_AT`: 서비스 유형이 도착 보장이면 둘 다 NOT NULL, 일반이면 둘 다 NULL (DC-4 A, DC-55 A)',
+        '`INTERNAL_SHIP_TARGET_DT`: 원인이 주문이면 NULL, 다른 원인이면 NOT NULL (DC-54 A)',
+        '`ORIGINAL_AGREED_SUPPLY_DT`, `AGREED_SUPPLY_BASIS_CD`: `AGREED_SUPPLY_DT`가 NOT NULL이면 둘 다 NOT NULL, NULL이면 둘 다 NULL (DC-56 A, DC-57 A)',
         '`HOLD_RELEASED_AT`이 NOT NULL이면 `HELD_AT` NOT NULL이고 해제 >= 보류. `HELD_AT`이 NULL이면 `SHIPMENT_HOLD_REASON_CD`도 NULL',
         '상태가 취소이면 `CANCELED_AT`, 취소 사유 NOT NULL. 다른 상태이면 둘 다 NULL',
-        '방향이 출고이면 `RETURN_PICKUP_RETRY_CNT` = 0이고 `LAST_PICKUP_FAIL_REASON_CD` NULL',
+        '`REQUEST_COMPLETED_AT`: 상태가 출고 완료 또는 회수 완료이면 NOT NULL이고 >= `REQUESTED_AT`, 다른 상태이면 NULL (DC-49 A, DC-58 A)',
+        '`WAREHOUSE_RELEASED_AT`: 구분이 출고이고 상태가 창고 작업 중·일부 출고·출고 완료이면 NOT NULL, 구분이 회수이면 NULL (다른 출고 상태는 NULL이어도 통과) (DC-49 A)',
+        '구분별 허용 상태: 출고(`SHIP`)는 출고 가능일 대기·회수 도착 대기·재고 입고 대기·출고 대기·창고 작업 중·일부 출고·출고 완료·취소, 회수(`PICKUP`)는 회수 접수 대기·회수 접수 완료·회수 실패·회수 완료·취소 (DC-51 A, DC-52 B, DC-58 A)',
+        '상태가 출고 가능일 대기이면 `AGREED_SUPPLY_DT` NOT NULL (DC-51 A)',
+        '구분이 출고(`SHIP`)이면 `PICKUP_RETRY_CNT` = 0이고 `LAST_PICKUP_FAIL_REASON_CD` NULL. 상태가 회수 실패이면 `LAST_PICKUP_FAIL_REASON_CD` NOT NULL (DC-58 A)',
         '예외 수동 처리: 사유와 표시 일시는 둘 다 NULL이거나 둘 다 NOT NULL. 완료 일시가 NOT NULL이면 표시 일시 NOT NULL이고 완료 >= 표시'])
 
 # =========================================================== 2. 출고 요청 상품
 table(t='DLV_SHIPMENT_REQUEST_ITEM', ko='출고 요청 상품 (요청 안의 대상과 수량)', en='Shipment Request Item',
  desc='출고 요청 1건 안의 대상 1개. 주문 상품, 주문 사은품, 클레임 상품 중 하나를 가리키고, 실물은 SKU나 비판매 품목 중 하나다 (DC-5 A). 주문 1-5 A의 "주문 상품 단위"는 이 행으로 지켜진다.',
- basis='1-1 B, DC-5 A, DC-15 A, DC-23 A, 주문 1-5 A, 주문 4-4 A, 상품 M-12 C',
+ basis='1-1 B, DC-5 A, DC-15 A, DC-23 A, 주문 1-5 A, 주문 4-4 A, 상품 M-12 C, DC-46 A~DC-48 B',
  pk='대리 PK `SEQ_DLV_SHIPMENT_REQUEST_ITEM`', cache=100,
  delete=CORE_DEL, part=CORE_PART, keep='행: 부모 출고 요청과 함께 지운다',
  cols=[
@@ -154,7 +197,15 @@ table(t='DLV_SHIPMENT_REQUEST_ITEM', ko='출고 요청 상품 (요청 안의 대
   ref('ORDER_ITEM_ID','대상 주문 상품 식별 번호','Target Order Item Identifier',desc='원인이 주문인 판매 상품.'),
   ref('ORDER_FREEBIE_ID','대상 주문 사은품 식별 번호','Target Order Freebie Identifier',desc='원인이 주문인 사은품 (주문 4-4 A). 실물은 비판매 품목.'),
   ref('CLAIM_ITEM_ID','대상 클레임 상품 식별 번호','Target Claim Item Identifier',
-      desc='반품·교환 회수, 교환 재발송. 원래 주문 상품은 클레임이 가리킨다. 컬럼 이름은 클레임 설계 뒤 확정 [확인 필요: 클레임 상품 테이블 이름].'),
+      desc='반품·교환·수선 회수, 교환·수선 재발송. 원래 주문 상품은 클레임이 가리킨다. 반품 때 돌려받는 사은품도 클레임이 사은품 반환 행을 클레임 상품으로 만들어 이 컬럼으로 가리킨다 (DC-46 A). 컬럼 이름은 클레임 설계 뒤 확정 [확인 필요: 클레임 상품 테이블 이름].'),
+  ('TARGET_TYPE_CD','대상 구분 코드 (가상 컬럼)','Target Type Code (Virtual)','VARCHAR2(20)','Y','','가상 컬럼',
+   "`GENERATED ALWAYS AS (CASE WHEN ORDER_ITEM_ID IS NOT NULL THEN 'ORDER_ITEM' WHEN ORDER_FREEBIE_ID IS NOT NULL THEN 'ORDER_FREEBIE' "
+   "WHEN CLAIM_ITEM_ID IS NOT NULL THEN 'CLAIM_ITEM' ELSE 'NONE' END) VIRTUAL`. 원인별 대상 CK를 원인 × 대상 구분으로 쓰고, 창고 화면 필터에 쓴다 (DC-48 B)."),
+  ('ORIGINAL_PARCEL_ID','원래 패키지 식별 번호 (재발송 대상이 들어 있던 박스)','Original Parcel Identifier',ID,'Y','','FK → `DLV_PARCEL_ITEM` (복합 1)',
+   '사고·반송·출고 누락 재발송이면 NOT NULL, 다른 원인이면 NULL (CK). 원래 요청 상품과 함께 복합 FK로 패키지 상품 PK를 가리켜, 그 상품이 그 박스에 실제로 담겨 있었음을 DB가 보장한다 (DC-47 B). '
+   '부모 요청의 `SOURCE_PARCEL_ID`(반송·출고 누락)나 사고의 패키지와 같은 값인지는 애플리케이션이 검사한다.'),
+  ('ORIGINAL_SHIPMENT_REQUEST_ITEM_ID','원래 출고 요청 상품 식별 번호','Original Shipment Request Item Identifier',ID,'Y','','복합 FK 2 → `DLV_PARCEL_ITEM`',
+   '재발송하는 원래 상품 행. 원래 행과 같은 대상인지, 같은 원래 행의 재발송 요청 수량 합계가 원래 담긴 수량을 넘지 않는지는 애플리케이션이 검사한다 (DC-47 B). 창고 오류율을 상품 행 단위로 센다.'),
  ]),
  ('실물', [
   fk('SKU_ID','실물 SKU 식별 번호','Physical SKU Identifier','PRD_SKU','Y','','판매 상품. 실물 둘 중 정확히 하나 (CK). 상품 마스터라 FK를 건다.'),
@@ -170,37 +221,38 @@ table(t='DLV_SHIPMENT_REQUEST_ITEM', ko='출고 요청 상품 (요청 안의 대
  ]),
  ],
  idx=['FK `FK_DLV_SHIPMENT_REQUEST_ITEM_REQUEST_REASON` (`SHIPMENT_REQUEST_ID`, `REQUEST_REASON_CD`) → `DLV_SHIPMENT_REQUEST` UK (부모 값과 같게 보장, DC-5 A 후속 A)',
-      'IX `SHIPMENT_REQUEST_ID` (FK), `SKU_ID` (FK), `ORDER_ITEM_ID`, `ORDER_FREEBIE_ID`, `CLAIM_ITEM_ID` (값 참조)'],
- check=['대상 3개(`ORDER_ITEM_ID`, `ORDER_FREEBIE_ID`, `CLAIM_ITEM_ID`) 중 정확히 하나만 NOT NULL (선행 6)',
+      'FK `FK_DLV_SHIPMENT_REQUEST_ITEM_ORIGINAL` (`ORIGINAL_PARCEL_ID`, `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`) → `DLV_PARCEL_ITEM` PK (DC-47 B)', 'IX `SHIPMENT_REQUEST_ID` (FK), `SKU_ID` (FK), `ORDER_ITEM_ID`, `ORDER_FREEBIE_ID`, `CLAIM_ITEM_ID` (값 참조), (`ORIGINAL_PARCEL_ID`, `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`) (FK)'],
+ check=['대상 3개(`ORDER_ITEM_ID`, `ORDER_FREEBIE_ID`, `CLAIM_ITEM_ID`): 원인이 비주문 출고이면 셋 다 NULL, 다른 원인이면 정확히 하나만 NOT NULL (선행 6, DC-40 A)',
         '실물 2개(`SKU_ID`, `NON_SALE_ITEM_ID`) 중 정확히 하나만 NOT NULL. `ORDER_FREEBIE_ID`가 NOT NULL이면 `NON_SALE_ITEM_ID` NOT NULL',
         '`SHIPPED_QTY + OUT_OF_STOCK_QTY + CANCELED_QTY <= REQUEST_QTY`',
-        '원인별 대상 (DC-5 A, 후속 A): 주문이면 `ORDER_ITEM_ID`나 `ORDER_FREEBIE_ID`, 반품 회수·교환 회수·교환 재발송이면 `CLAIM_ITEM_ID`, 사고 재발송이면 원래 출고의 대상과 같은 종류(셋 중 하나, 제약 없음)'])
+        '원인 × 대상 구분 `TARGET_TYPE_CD` (DC-5 A 후속 A, DC-48 B): 주문·출고 누락 재발송 = `ORDER_ITEM`·`ORDER_FREEBIE` / 반품·교환·수선 회수, 교환·수선 재발송 = `CLAIM_ITEM` / 비주문 출고 = `NONE` / 사고·반송 재발송 = `NONE`이 아님 (원래 행과 같은 구분인지는 애플리케이션이 `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`로 검사)',
+        '`ORIGINAL_PARCEL_ID`, `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`: 둘 다 NULL이거나 둘 다 NOT NULL. 원인이 사고·반송·출고 누락 재발송이면 NOT NULL, 다른 원인이면 NULL (DC-47 B)'])
 
 # =========================================================== 3. 출고
 table(t='DLV_SHIPMENT', ko='출고 (실제로 나간 단위, 공급 기록)', en='Shipment',
  desc='창고에서 실제로 나간(회수면 택배사에 접수한) 단위 1건. 보낸 곳(받는 사람, 주소)과 일시를 한 번만 둔다 (1-1 B). 요청 1건이 출고 N건으로 나뉘거나(분할), '
-      '수령인·주소·방향·서비스 유형이 같은 요청 N건이 출고 1건으로 합쳐질 수 있다(합포장, DC-24 B). 요청과의 관계는 패키지 상품 → 요청 상품으로 이어지므로 요청 ID를 직접 두지 않는다.',
- basis='1-1 B, 2-1 B, DC-1 B, DC-6 A, DC-7 A, DC-24 B, DC-27 B, DC-28 A, 주문 OC-107 A, 전자상거래법 시행령 6조',
+      '수령인·주소·출고·회수 구분·서비스 유형이 같은 요청 N건이 출고 1건으로 합쳐질 수 있다(합포장, DC-24 B). 요청과의 관계는 패키지 상품 → 요청 상품으로 이어지므로 요청 ID를 직접 두지 않는다.',
+ basis='1-1 B, 2-1 B, DC-1 B, DC-6 A, DC-7 A, DC-24 B, DC-27 B, DC-28 A, DC-32 C, DC-41 A, 주문 OC-107 A, 전자상거래법 시행령 6조',
  pk='대리 PK `SEQ_DLV_SHIPMENT`', cache=100,
  delete=CORE_DEL, part=CORE_PART, pii=True,
  keep=('개인정보: 주문(회수·교환이면 원래 주문)의 보유 사유·기산일·파기 예정일을 복사해 주문과 같은 날 NULL로 바꾼다. 주문 파기 예정일이 바뀌면 같은 트랜잭션에서 고친다. '
-       '합포장 출고는 묶인 주문 중 가장 늦은 날을 복사한다. 배송 요청 사항은 주문 규칙(5-8 B)처럼 먼저 지운다 (DC-27 B). 행: 파기 예정일이 지난 뒤 개인정보를 지우고 같은 배치에서 행을 지운다 (DC-28 A)'),
+       '합포장 출고는 묶인 주문 중 가장 늦은 날을 복사한다. 배송 요청 사항은 주문 규칙(5-8 B)처럼 먼저 지운다 (DC-27 B). 비주문 출고는 배송 완료(반송이면 반송 완료) 일자 + 1년을 파기 예정일로 둔다. 주문 출고와 합포장되면 가장 늦은 날 (DC-40 A, DC-41 A). 행: 파기 예정일이 지난 뒤 개인정보를 지우고 같은 배치에서 행을 지운다 (DC-28 A)'),
  cols=[
  ('식별', [
   ('SHIPMENT_ID','출고 고유 식별 번호','Shipment Unique Identifier',ID,'N','','PK',''),
   ('SHIPMENT_NO','출고 번호 (창고 작업 업무 키)','Shipment Number (Warehouse Business Key)','VARCHAR2(20)','N','','UK, CK (형식)',
    '창고 작업 지시서와 출고 확인에 쓰는 유일한 배송 업무 번호 (DC-1 B). 재사용 금지. 형식 제안: 출고일 8자리 + `-` + 6자리 순번 (예: `20261126-000123`) [확인 필요: 형식].'),
-  cd('DIRECTION_CD','배송 방향 코드 (출고 / 회수)','Delivery Direction Code (Outbound / Return)',
-     desc='묶인 요청과 같다. 합포장은 같은 방향끼리만 (DC-24 B).'),
+  cd('SHIP_PICKUP_TYPE_CD','출고·회수 구분 코드','Shipment / Pickup Type Code',
+     desc='묶인 요청과 같다. 합포장은 같은 구분(출고 / 회수)끼리만 (DC-24 B).'),
  ]),
  ('상태·일시', [
   cd('SHIPMENT_STATUS_CD','출고 상태 코드 (패키지 상태 요약)','Shipment Status Code (Parcel Status Summary)',n=30,
-     desc='패키지 상태로부터 정한다. 바뀔 때마다 상태 이력에 남긴다 (T-1 C). 방향별로 쓸 수 있는 값을 CK로 막는다.'),
+     desc='패키지 상태로부터 정한다. 바뀔 때마다 상태 이력에 남긴다 (T-1 C). 출고·회수 구분별로 쓸 수 있는 값을 CK로 막는다.'),
   ('SHIPPED_AT','출고 일시 (창고 출발)','Shipped At (Left Warehouse)',TS,'Y','','',
-   '출고 방향이면 NOT NULL (CK). 주문 상품 `SHIPPED_AT`을 같은 트랜잭션에서 갱신한다 (주문 1-7 A).'),
-  ('PICKUP_REQUESTED_AT','회수 접수 일시','Return Pickup Requested At',TS,'Y','','','회수 방향이면 NOT NULL, 출고 방향이면 NULL (CK).'),
+   '구분이 출고이면 NOT NULL (CK). 주문 상품 `SHIPPED_AT`을 같은 트랜잭션에서 갱신한다 (주문 1-7 A).'),
+  ('PICKUP_REQUESTED_AT','회수 접수 일시','Return Pickup Requested At',TS,'Y','','','구분이 회수이면 NOT NULL, 구분이 출고이면 NULL (CK).'),
   ('DELIVERED_AT','배송 완료 일시 (마지막 패키지)','Delivered At (Last Parcel)',TS,'Y','','',
-   '출고의 모든 유효 패키지가 완료된 때. 주문 반영 기준이다 (세부 4-8). 회수 방향이면 창고에 도착한 때이고, 반환받은 날은 회수 패키지의 `DELIVERED_AT`이다 (DC-21 A).'),
+   '출고의 모든 유효 패키지가 완료된 때. 주문 반영 기준이다 (세부 4-8). 구분이 회수이면 창고에 도착한 때이고, 반환받은 날은 회수 패키지의 `DELIVERED_AT`이다 (DC-21 A).'),
  ]),
  ('고객 쪽 주소', [
   ('RECIPIENT_NM','수령인 이름 (회수면 보내는 사람)','Recipient Name (Return: Sender)','VARCHAR2(150)','Y','','',
@@ -230,8 +282,8 @@ table(t='DLV_SHIPMENT', ko='출고 (실제로 나간 단위, 공급 기록)', en
  ],
  idx=['IX `REMOTE_AREA_POSTCODE_ID` (FK), (`SHIPMENT_STATUS_CD`, `SHIPPED_AT`)',
       'IX `PII_RETENTION_END_DT` (파기 배치, 선행 7)'],
- check=['방향이 출고이면 `SHIPPED_AT` NOT NULL, `PICKUP_REQUESTED_AT` NULL. 회수이면 `PICKUP_REQUESTED_AT` NOT NULL',
-        '상태 값은 방향별로: 출고 = 출고, 배송 중, 일부 배송 완료, 배송 완료, 반송 중, 반송 완료 / 회수 = 회수 접수, 회수 실패, 배송 중, 배송 완료',
+ check=['구분이 출고이면 `SHIPPED_AT` NOT NULL, `PICKUP_REQUESTED_AT` NULL. 회수이면 `PICKUP_REQUESTED_AT` NOT NULL',
+        '상태 값은 출고·회수 구분별로: 출고 = 출고, 배송 중, 일부 배송 완료, 배송 완료, 반송 중, 반송 완료 / 회수 = 회수 접수, 회수 실패, 배송 중, 배송 완료',
         '상태가 배송 완료이면 `DELIVERED_AT` NOT NULL',
         '`REMOTE_AREA_CD = NONE`이면 `REMOTE_AREA_POSTCODE_ID` NULL, 다른 값이면 NOT NULL'])
 
@@ -284,7 +336,7 @@ table(t='DLV_PARCEL', ko='패키지 (박스 1개 = 송장 1개)', en='Parcel',
  ]),
  ('운임', [
   fk('COURIER_RATE_ID','적용 택배사 운임표 식별 번호','Applied Courier Rate Identifier','DLV_COURIER_RATE','Y','',
-     '포장할 때 박스 규격·지역·방향·서비스 유형으로 고른 행 (DC-11 A, DC-17 A). 운임표는 마스터라 FK를 건다.'),
+     '포장할 때 박스 규격·지역·출고·회수 구분·서비스 유형으로 고른 행 (DC-11 A, DC-17 A). 운임표는 마스터라 FK를 건다.'),
   amt('BASE_FREIGHT_AMT','기본 운임 (택배사에 내는 금액)','Base Freight Amount (Payable to Courier)','운임표에서 복사한다. 고객이 낸 배송비는 주문에 있다 (주문 6-6 A).', null='Y', d=''),
   amt('SURCHARGE_FREIGHT_AMT','할증 운임 (제주·도서산간)','Surcharge Freight Amount (Remote Area)','운임표에서 복사한다.', null='Y', d=''),
   cd('FREIGHT_BEARER_CD','운임 부담 주체 코드','Freight Bearer Code','Y',
@@ -436,8 +488,8 @@ table(t='DLV_STATUS_HIST', ko='출고 요청·출고 상태 이력', en='Shipmen
 
 # =========================================================== 9. 운임표
 table(t='DLV_COURIER_RATE', ko='택배사 운임표 (택배사에 내는 계약 단가)', en='Courier Rate',
- desc='택배사 계약 운임 1개 조합(방향 × 서비스 유형 × 박스 규격 × 지역 구분)과 적용 기간 1행. 기본 운임과 할증 운임을 한 행에 둔다 (T-5 A, DC-17 A). 고객이 낸 배송비(주문 6-6 A)와는 별개다. 택배사 청구 대사는 정산이 이 단가로 한다.',
- basis='T-5 A, DC-11 A, DC-17 A, 선행 4',
+ desc='택배사 계약 운임 1개 조합(출고·회수 구분 × 서비스 유형 × 박스 규격 × 지역 구분)과 적용 기간 1행. 기본 운임과 할증 운임을 한 행에 둔다 (T-5 A, DC-17 A). 고객이 낸 배송비(주문 6-6 A)와는 별개다. 택배사 청구 대사는 정산이 이 단가로 한다.',
+ basis='T-5 A, DC-11 A, DC-17 A, 선행 4, DC-32 C',
  pk='대리 PK `SEQ_DLV_COURIER_RATE`', cache=20, ldel=True,
  delete='논리 삭제 (마스터, 선행 4). 패키지가 가리키면 지우지 않고 적용 종료일로 끝낸다', part='없음', keep='논리 삭제 뒤 1년 (선행 4). 패키지가 가리키는 행은 지우지 않는다',
  cols=[
@@ -446,7 +498,7 @@ table(t='DLV_COURIER_RATE', ko='택배사 운임표 (택배사에 내는 계약 
  ]),
  ('조건', [
   fk('EXTERNAL_VENDOR_ID','택배사 외부 업체 식별 번호','Courier External Vendor Identifier',VENDOR,'N','UK1'),
-  cd('DIRECTION_CD','배송 방향 코드 (출고 / 회수)','Delivery Direction Code (Outbound / Return)',ck='CK (값 목록), UK2'),
+  cd('SHIP_PICKUP_TYPE_CD','출고·회수 구분 코드','Shipment / Pickup Type Code',ck='CK (값 목록), UK2'),
   cd('DELIVERY_SERVICE_TYPE_CD','배송 서비스 유형 코드','Delivery Service Type Code',ck='CK (값 목록), UK3'),
   cd('BOX_SIZE_CD','박스 규격 코드','Box Size Code',ck='CK (값 목록), UK4',desc='상품 코드 그룹을 함께 쓴다.'),
   cd('REMOTE_AREA_CD','지역 구분 코드','Remote Area Type Code',ck='CK (값 목록), UK5',desc='주문 코드 그룹을 함께 쓴다. 해당 없음 행에는 할증 운임이 0이다.'),
@@ -460,7 +512,7 @@ table(t='DLV_COURIER_RATE', ko='택배사 운임표 (택배사에 내는 계약 
   ('APPLY_END_DT','적용 종료 일자','Apply End Date','DATE','Y','','','NULL이면 계속 적용. 같은 조합의 기간 겹침은 애플리케이션이 검사한다.'),
  ]),
  ],
- idx=['UK (`EXTERNAL_VENDOR_ID`, `DIRECTION_CD`, `DELIVERY_SERVICE_TYPE_CD`, `BOX_SIZE_CD`, `REMOTE_AREA_CD`, `APPLY_START_DT`)'],
+ idx=['UK (`EXTERNAL_VENDOR_ID`, `SHIP_PICKUP_TYPE_CD`, `DELIVERY_SERVICE_TYPE_CD`, `BOX_SIZE_CD`, `REMOTE_AREA_CD`, `APPLY_START_DT`)'],
  check=['`APPLY_END_DT >= APPLY_START_DT` (NULL이면 통과)', '`REMOTE_AREA_CD = NONE`이면 `SURCHARGE_FREIGHT_AMT = 0`'])
 
 # =========================================================== 10. 도서산간 기준표
@@ -536,21 +588,46 @@ TABLE_GROUPS = [
 def vals(*v): return [(a, b, c, d, i) for i, (a, b, c, d) in enumerate(v, 1)]
 EXC_DESC = ' · `ATTR2` '
 CODES = {
- 'DIRECTION_CD': vals(('OUTBOUND','출고 (창고 → 고객)','Outbound',''),('RETURN','회수 (고객 → 창고)','Return','반품·교환 회수 (2-1 B)')),
+ 'SHIP_PICKUP_TYPE_CD': vals(('SHIP','출고 (창고 → 고객)','Shipment','주문 출고, 교환·사고·반송 재발송'),('PICKUP','회수 (고객 → 창고)','Pickup','반품·교환 회수 (2-1 B). 지정 택배 방문 회수만 (DC-35 B)')),
  'REQUEST_REASON_CD': vals(
-   ('ORDER','주문 출고','Order Shipment','방향 출고. 주문 상품·주문 사은품 대상'),
-   ('EXCHANGE_RESHIP','교환 재발송','Exchange Reshipment','방향 출고. 클레임 상품 대상'),
-   ('ACCIDENT_RESHIP','사고 재발송','Accident Reshipment','방향 출고. 원인 사고 ID 필수'),
-   ('RETURN_PICKUP','반품 회수','Return Pickup','방향 회수'),
-   ('EXCHANGE_PICKUP','교환 회수','Exchange Pickup','방향 회수')),
+   ('ORDER','주문 출고','Order Shipment','구분 출고. 주문 상품·주문 사은품 대상'),
+   ('EXCHANGE_RESHIP','교환 재발송','Exchange Reshipment','구분 출고. 클레임 상품 대상'),
+   ('ACCIDENT_RESHIP','사고 재발송','Accident Reshipment','구분 출고. 원인 사고 ID 필수'),
+   ('RETURNED_RESHIP','반송 재발송','Returned Parcel Reshipment','구분 출고. 수령 거절·주소 불명으로 반송 완료된 패키지를 다시 보냄. 원인 패키지 ID 필수 (DC-33 A)'),
+   ('MISSING_RESHIP','출고 누락 재발송','Missing Item Reshipment','구분 출고. 창고가 박스에 빠뜨린 주문 상품·사은품을 다시 보냄. 원인 패키지 ID 필수. 택배사 사고가 아니다 (DC-37 A)'),
+   ('REPAIR_RESHIP','수선 재발송','Repair Reshipment','구분 출고. 수선을 마친 상품을 고객에게 보냄. 클레임 상품 대상. 수선 완료 때 만든다 (DC-39 B, DC-43 B)'),
+   ('NON_ORDER','비주문 출고','Non-Order Shipment','구분 출고. 협찬·임직원 샘플·보상품. 주문 없이 실물(SKU·비판매 품목)만 지정 (DC-40 A)'),
+   ('RETURN_PICKUP','반품 회수','Return Pickup','구분 회수'),
+   ('EXCHANGE_PICKUP','교환 회수','Exchange Pickup','구분 회수'),
+   ('REPAIR_PICKUP','수선 회수','Repair Pickup','구분 회수. 클레임 유형 "수선"을 따라감 (DC-39 B)')),
  'SHIPMENT_REQUEST_STATUS_CD': vals(
-   ('WAITING_AVAILABLE_DATE','출고 가능일 대기','Waiting for Available Date','예약 상품. 약정 공급일까지'),
-   ('READY','출고 대기 (회수면 회수 접수 전)','Ready',''),
-   ('WAREHOUSE_WORKING','창고 작업 중','Warehouse Working','피킹·검수·포장은 WMS (DC-2 A). 고객 취소와 경합하면 WMS 작업 취소를 먼저 요청'),
-   ('PARTIALLY_SHIPPED','일부 출고','Partially Shipped','분할 출고'),
-   ('SHIPPED','출고 완료 (회수면 회수 접수 완료)','Shipped','출고 + 결품 + 취소 수량 = 요청 수량'),
-   ('CANCELED','취소','Canceled','')),
+   ('WAITING_AVAILABLE_DATE','출고 가능일 대기','Waiting for Available Date','구분 출고. 예약 상품. 약정 공급일까지'),
+   ('WAITING_PICKUP_ARRIVAL','회수 도착 대기','Waiting for Pickup Arrival','구분 출고. 교환 재발송. 선행 회수 요청이 회수 완료가 될 때까지 (DC-34 A). 회수 상태와 헷갈리지 않게 `WAITING_PICKUP`에서 이름을 바꿈 (DC-58 A)'),
+   ('WAITING_STOCK','재고 입고 대기','Waiting for Stock','구분 출고. 재고 할당에 실패했지만 적용 기한 안에 입고될 예정이라 기다림. 기한이 임박하면 예외 수동 처리(기한 임박)로 올리고, 입고되지 않으면 결품으로 공급 곤란 통지 (DC-52 B). [확인 필요: 진입·해제 조건은 재고(INV) 설계 때]'),
+   ('READY','출고 대기','Ready','구분 출고. 창고에 작업 지시를 넘기기 전'),
+   ('WAREHOUSE_WORKING','창고 작업 중','Warehouse Working','구분 출고. 피킹·검수·포장은 WMS (DC-2 A). 고객 취소와 경합하면 WMS 작업 취소를 먼저 요청'),
+   ('PARTIALLY_SHIPPED','일부 출고','Partially Shipped','구분 출고. 분할 출고'),
+   ('SHIPPED','출고 완료','Shipped','구분 출고. 출고 + 결품 + 취소 수량 = 요청 수량이고 출고 수량 합계 >= 1. 하나도 나가지 않으면 출고 완료가 아니라 취소 (DC-50 A)'),
+   ('PICKUP_READY','회수 접수 대기','Pickup Ready','구분 회수. 클레임이 회수를 요청했고 아직 택배사 접수 전 (DC-58 A)'),
+   ('PICKUP_BOOKED','회수 접수 완료','Pickup Booked','구분 회수. 택배사에 접수됨. 기사 방문·집화·운송 중'),
+   ('PICKUP_FAILED','회수 실패 (재접수 필요)','Pickup Failed','구분 회수. 고객 부재 등. 재접수하면 회수 접수 완료로 돌아가고(새 출고·패키지, DC-22 A), 한도를 넘기면 예외 수동 처리(회수 재접수 한도 초과)'),
+   ('PICKUP_COMPLETED','회수 완료 (창고 도착)','Pickup Completed','구분 회수. 마지막 박스가 창고에 도착 (회수 패키지 배송 완료, DC-21 A). 끝 상태. 교환 재발송의 회수 도착 대기를 푼다'),
+   ('CANCELED','취소','Canceled','공통. 회수면 클레임 철회')),
  'DELIVERY_SERVICE_TYPE_CD': vals(('STANDARD','일반 배송','Standard',''),('GUARANTEED_ARRIVAL','도착 보장','Guaranteed Arrival','약정 도착일 필수. 조건은 `ATTR1`~`ATTR3`(주문 마감 시각, 약정 일수, 보상 방식) (DC-4 A)')),
+ 'NON_ORDER_TYPE_CD': vals(
+   ('SPONSORSHIP','협찬','Sponsorship','인플루언서 등 협찬품'),
+   ('EMPLOYEE_SAMPLE','임직원 샘플','Employee Sample',''),
+   ('COMPENSATION','보상품','Compensation Item','클레임 보상으로 보내는 물건. `CLAIM_ID` 필수 (CK)'),
+   ('OTHER','기타','Other','사유는 관리자 작업 로그')),
+ 'TARGET_TYPE_CD': vals(
+   ('ORDER_ITEM','주문 상품','Order Item','가상 컬럼 계산값 (DC-48 B)'),
+   ('ORDER_FREEBIE','주문 사은품','Order Freebie',''),
+   ('CLAIM_ITEM','클레임 상품','Claim Item','사은품 반환 행 포함 (DC-46 A)'),
+   ('NONE','대상 없음','None','비주문 출고 (DC-40 A)')),
+ 'AGREED_SUPPLY_BASIS_CD': vals(
+   ('PRE_ORDER','예약 상품','Pre-Order','출고 예정일 (상품 PC-42 B)'),
+   ('GIFT','선물 수락','Gift Acceptance','수락일 + 3영업일 (주문 8-4 A)'),
+   ('OTHER','기타','Other','')),
  'SHIPMENT_HOLD_REASON_CD': vals(
    ('PAYMENT_EXCEPTION','결제 예외','Payment Exception','결제 예외 수동 처리 대상 (결제 PYC-58)'),
    ('CANCEL_REQUESTED','취소 접수','Cancel Requested','고객 취소 요청 처리 중'),
@@ -560,7 +637,7 @@ CODES = {
    ('OTHER','기타','Other','변경 사유 필수')),
  'SHIPMENT_REQUEST_CANCEL_REASON_CD': vals(
    ('ORDER_CANCELED','주문 취소','Order Canceled',''),('CLAIM_WITHDRAWN','클레임 철회','Claim Withdrawn','회수 요청'),
-   ('OUT_OF_STOCK','결품','Out of Stock','공급 곤란 통지 (15조 2항)'),('OTHER','기타','Other','')),
+   ('OUT_OF_STOCK','결품','Out of Stock','공급 곤란 통지 (15조 2항). 요청 전량이 결품이면 이 사유로 요청을 취소한다 (DC-50 A)'),('OTHER','기타','Other','')),
  'LAST_PICKUP_FAIL_REASON_CD': vals(
    ('CUSTOMER_ABSENT','고객 부재','Customer Absent',''),('ITEM_NOT_READY','상품 미준비','Item Not Ready',''),
    ('ADDRESS_ERROR','주소 오류','Address Error',''),('CUSTOMER_REFUSED','고객 거부','Customer Refused',''),
@@ -568,27 +645,28 @@ CODES = {
  'REQUEST_MANUAL_CHECK_REASON_CD': vals(
    ('SHIP_DUE_EXCEEDED','출고 기한 초과','Ship Due Exceeded','적용 기한(15조 1항 3영업일 또는 약정일)을 넘김. 지연 안내와 공급 곤란 판단' + EXC_DESC + 'LEGAL_DEADLINE'),
    ('SHIP_DUE_APPROACHING','출고 기한 임박','Ship Due Approaching','정책값 시간 안에 기한이 옴' + EXC_DESC + 'LEGAL_DEADLINE'),
-   ('GUARANTEE_AT_RISK','도착 보장 위험','Guarantee at Risk','마감 시각까지 출고하지 못함' + EXC_DESC + 'CUSTOMER_PROMISE'),
+   ('GUARANTEE_AT_RISK','도착 보장 위험','Guarantee at Risk','도착 보장 출고 마감 일시까지 출고하지 못함 (DC-55 A)' + EXC_DESC + 'CUSTOMER_PROMISE'),
+   ('INTERNAL_TARGET_EXCEEDED','내부 목표 초과','Internal Target Exceeded','재발송·회수·비주문 출고가 내부 목표 출고 일자를 넘김 (DC-54 A). 법정 기한 건과 정렬 그룹을 나눈다' + EXC_DESC + 'CUSTOMER_PROMISE'),
    ('PICKUP_RETRY_LIMIT_EXCEEDED','회수 재접수 한도 초과','Pickup Retry Limit Exceeded','DC-22 A. 반품 환급 기한과 연결' + EXC_DESC + 'CUSTOMER_PROMISE'),
    ('COURIER_INTERFACE_FAILED','택배사 연동 실패','Courier Interface Failed','발번·접수 재시도 한도 초과' + EXC_DESC + 'EXTERNAL_SYNC'),
    ('OTHER','기타','Other','내용은 관리자 작업 로그. 늘면 새 값으로 올린다' + EXC_DESC + 'OTHER')),
  'SHIPMENT_STATUS_CD': vals(
-   ('SHIPPED','출고 (창고 출발)','Shipped','방향 출고'),
-   ('PICKUP_REQUESTED','회수 접수','Pickup Requested','방향 회수'),
-   ('PICKUP_FAILED','회수 실패','Pickup Failed','방향 회수. 재접수는 새 출고 (DC-22 A)'),
+   ('SHIPPED','출고 (창고 출발)','Shipped','구분 출고'),
+   ('PICKUP_REQUESTED','회수 접수','Pickup Requested','구분 회수'),
+   ('PICKUP_FAILED','회수 실패','Pickup Failed','구분 회수. 재접수는 새 출고 (DC-22 A)'),
    ('IN_TRANSIT','배송 중','In Transit',''),
    ('PARTIALLY_DELIVERED','일부 배송 완료','Partially Delivered','박스 여러 개 중 일부'),
    ('DELIVERED','배송 완료 (회수면 창고 도착)','Delivered',''),
-   ('RETURNING','반송 중','Returning','방향 출고. 수령 거절·주소 불명 (세부 2-8)'),
-   ('RETURNED','반송 완료','Returned','방향 출고')),
+   ('RETURNING','반송 중','Returning','구분 출고. 수령 거절·주소 불명 (세부 2-8)'),
+   ('RETURNED','반송 완료','Returned','구분 출고')),
  'DELIVERY_PLACE_CD': vals(('DOOR','문 앞','Front Door','회원 코드 그룹'),('SECURITY_OFFICE','경비실','Security Office',''),('PARCEL_LOCKER','택배함','Parcel Locker',''),('IN_PERSON','직접 수령','In Person',''),('OTHER','기타','Other','배송 요청 사항 필수')),
  'REMOTE_AREA_CD': vals(('NONE','해당 없음','None','주문 코드 그룹'),('JEJU','제주','Jeju',''),('ISLAND_MOUNTAIN','도서산간 (제주 외)','Island or Mountain Area','')),
  'PARCEL_STATUS_CD': vals(
    ('INVOICE_ISSUED','송장 발번','Tracking Number Issued',''),('PICKED_UP','집화','Picked Up',''),('IN_TRANSIT','이동 중','In Transit',''),
    ('OUT_FOR_DELIVERY','배송 출발','Out for Delivery',''),('DELIVERED','배송 완료','Delivered','회수면 창고 도착 = 반환받은 날 (DC-21 A)'),
    ('DELIVERY_FAILED','배송 실패 (부재 등)','Delivery Failed','재배송 이벤트가 오면 다시 진행'),
-   ('PICKUP_FAILED','회수 실패','Pickup Failed','회수 방향'),
-   ('RETURNING','반송 중','Returning','출고 방향'),('RETURNED','반송 완료','Returned','출고 방향'),
+   ('PICKUP_FAILED','회수 실패','Pickup Failed','구분 회수'),
+   ('RETURNING','반송 중','Returning','구분 출고'),('RETURNED','반송 완료','Returned','구분 출고'),
    ('LOST','분실','Lost','사고 행 생성'),('INVOICE_CANCELED','송장 취소','Tracking Number Canceled','재발번 전 행 (DC-8 A)')),
  'RECEIPT_METHOD_CD': vals(('SELF','본인 수령','Recipient',''),('PROXY','대리인 수령','Proxy','택배 표준약관 15조'),('SECURITY_OFFICE','경비실','Security Office',''),
    ('PARCEL_LOCKER','택배함','Parcel Locker',''),('DOOR','문 앞','Front Door','')),
@@ -603,7 +681,7 @@ CODES = {
    ('OTHER','기타','Other','' + EXC_DESC + 'OTHER')),
  'EVENT_SOURCE_CD': vals(('COURIER','택배사','Courier','웹훅·주기 조회 (DC-20 B)'),('ADMIN_CORRECTION','관리자 정정','Admin Correction','정정 대상·사유 필수 (세부 4-9)'),('SYSTEM','시스템','System','송장 발번·취소 등')),
  'ACCIDENT_TYPE_CD': vals(('TOTAL_LOSS','전부 멸실','Total Loss',''),('PARTIAL_LOSS','일부 멸실','Partial Loss','14일 통지 기한'),('DAMAGE','훼손','Damage','14일 통지 기한'),
-   ('DELAY','연착','Delay',''),('MISDELIVERY','오배송','Misdelivery','')),
+   ('DELAY','연착','Delay',''),('MISDELIVERY','오배송','Misdelivery','택배사가 다른 곳에 배달. 창고가 다른 상품을 넣은 오출고는 사고가 아니라 클레임 교환(판매자 귀책) (DC-38 A)')),
  'ACCIDENT_STATUS_CD': vals(('RECEIVED','접수','Received',''),('COURIER_NOTIFIED','택배사 통지','Courier Notified',''),('COMPENSATION_CLAIMED','배상 청구','Compensation Claimed',''),
    ('COMPENSATED','배상 완료','Compensated',''),('COMPENSATION_REJECTED','배상 거절','Compensation Rejected','거절 사유 필수'),('CLOSED','종결','Closed','배상 없이 끝냄')),
  'DETECTED_BY_CD': vals(('COURIER_NOTICE','택배사 통지','Courier Notice',''),('CUSTOMER_REPORT','고객 신고','Customer Report',''),('RETURN_INSPECTION','회수 검수','Return Inspection','')),
@@ -612,7 +690,8 @@ CODES = {
    ('TRACKING_WEBHOOK','추적 수신 (웹훅)','Tracking Webhook','DC-20 B')),
  'API_CALL_RESULT_CD': vals(('SUCCESS','성공','Success',''),('FAILURE','실패 응답','Failure',''),('TIMEOUT','시간 초과','Timeout',''),('NETWORK_ERROR','통신 오류','Network Error','')),
  'SIGNATURE_VERIFICATION_RESULT_CD': vals(('VALID','일치','Valid',''),('INVALID','불일치','Invalid','이벤트를 쓰지 않음'),('NOT_APPLICABLE','해당 없음','Not Applicable','택배사가 서명을 주지 않음 [확인 필요: 택배사 API]')),
- 'PII_RETENTION_REASON_CD': vals(('ORDER_TRANSACTION','거래 기록 5년 (주문 값 복사)','Order Transaction Record','전자상거래법 시행령 6조. 주문 값 복사 (DC-27 B)'),('MINOR_ORDER','미성년 주문 (주문 값 복사)','Minor Order','주문 10-2 A 계산식')),
+ 'PII_RETENTION_REASON_CD': vals(('ORDER_TRANSACTION','거래 기록 5년 (주문 값 복사)','Order Transaction Record','전자상거래법 시행령 6조. 주문 값 복사 (DC-27 B)'),('MINOR_ORDER','미성년 주문 (주문 값 복사)','Minor Order','주문 10-2 A 계산식'),
+   ('NON_ORDER_DELIVERY','비주문 출고 (배송 완료 + 1년)','Non-Order Shipment Delivery','판매 거래가 아니라 공급 기록 5년 의무가 없다는 해석. 택배사 책임 1년에 맞춤 (DC-41 A) [확인 필요: 법무]')),
 }
 # 다른 도메인의 코드 그룹을 그대로 쓰는 컬럼 (값 행 옆에 그룹을 적는다)
 REUSE = {'DELIVERY_PLACE_CD': 'DELIVERY_PLACE (회원)', 'REMOTE_AREA_CD': 'REMOTE_AREA (주문)', 'BOX_SIZE_CD': 'BOX_SIZE (상품)'}
@@ -628,11 +707,12 @@ POLICY = [
  ('신고 가액 기준 금액', '이 금액을 넘는 박스만 신고 가액을 채운다 (지금 50만 원)', 'DC-10 B'),
  ('회수 재접수 한도', '넘으면 출고 요청 예외 수동 처리 (`PICKUP_RETRY_LIMIT_EXCEEDED`)', 'DC-22 A'),
  ('출고 마감 시각', '이 시각까지 결제된 주문을 당일 출고 대상으로 본다', '세부 1-10'),
+ ('원인별 내부 목표 영업일 수', '`REQUEST_REASON_CD` 값(주문 제외)의 `ATTR1`. 요청일에 더해 `INTERNAL_SHIP_TARGET_DT`를 계산한다', 'DC-54 A'),
  ('출고 기한 임박 시간, 추적 멈춤 시간', '예외 수동 처리 사유를 켜는 기준', 'DC-25 A, 세부 4-10'),
  ('연동 로그 보관 개월', '12개월 (결제와 같음)', 'DC-19 A'),
 ]
 
-CONFIRMED_GROUPS = set()
+CONFIRMED_GROUPS = {('DLV_SHIPMENT_REQUEST', '식별'), ('DLV_SHIPMENT_REQUEST', '상태')}
 CONFIRMED_TABLES = set()
 # 택배사에서 오는 값 (API 응답·웹훅·운임 계약). 정의서에서 번호를 굵게 표시한다 (결제 `PG_SOURCED`와 같은 방식).
 EXTERNAL_SOURCED = {(t, c) for t, cs in [
@@ -651,7 +731,7 @@ CONFIRM = [
  ('웹훅 서명', '택배사가 추적 웹훅에 서명을 주는지.', '`DLV_COURIER_INTERFACE_LOG` · 택배사 API'),
  ('출고 번호 형식', '출고일 8자리 + `-` + 6자리 순번 제안. 순번을 시퀀스로 할지 일별로 할지.', '`DLV_SHIPMENT.SHIPMENT_NO`'),
  ('출고 없는 요청의 보존 기간', '출고 없이 취소된 요청(주문 취소, 결품)을 취소일 + 5년 둘지, 주문 파기 예정일을 따를지.', '`DLV_SHIPMENT_REQUEST`'),
- ('상태 전이 (세부 4-5)', '출고 요청·출고·패키지의 허용 전이를 DB(트리거 없이 불가)로 막지 않고 애플리케이션이 검사한다는 제안. 값 목록 CK와 방향별 값 CK만 DB에 둔다.', '상태 코드 3개'),
+ ('상태 전이 (세부 4-5)', '출고 요청·출고·패키지의 허용 전이를 DB(트리거 없이 불가)로 막지 않고 애플리케이션이 검사한다는 제안. 값 목록 CK와 구분별 값 CK만 DB에 둔다.', '상태 코드 3개'),
  ('시퀀스 CACHE', '고빈도(100) 제안: 출고 요청, 요청 상품, 출고, 패키지, 추적 이벤트, 상태 이력, 연동 로그. 나머지 20.', '전체'),
  ('다른 도메인 FK', '창고·비판매 품목 마스터(WMS), 클레임·클레임 상품(CLM)은 그 도메인 설계 뒤 이름과 FK 여부를 정한다. 클레임은 값 참조(5-1 B).', '`WAREHOUSE_ID`, `NON_SALE_ITEM_ID`, `CLAIM_ID`, `CLAIM_ITEM_ID`'),
  ('택배 집화 가능 여부', '영업일 달력(시스템 도메인)에 컬럼을 더한다 (DC-26 A). 달력 소속(`SYS` / `CMM`)은 주문 1-8 A에서 미정.', '도착 예정일 계산'),
