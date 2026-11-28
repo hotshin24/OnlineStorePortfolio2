@@ -125,7 +125,7 @@ for i, t in enumerate(T, 1):
     secs += f'<h2{"" if t["t"] in GFIRST else " class=t"}>{i}. {t["t"]}</h2>'
     secs += '<table class="info">' + f'<tr><td>논리명</td><td>{ln1(t["ko"], t["en"])}</td></tr>' + ''.join(f'<tr><td>{a}</td><td>{il(b)}</td></tr>' for a, b in [
         ('설명', t['desc']), ('근거 결정', '재고 결정 ' + t['basis']),
-        ('차수', tphase(t['t']) + (' (FK 제약만 2차: ' + ', '.join(f'`{c}`' for (tt, c) in PHASE_COL if tt == t['t']) + ')' if any(tt == t['t'] for tt, c in PHASE_COL) else '')), ('PK·시퀀스', f"{t['pk']} · CACHE {t['cache']}"), ('삭제 방식', t['delete']), ('파티션', t['part']), ('보유 기간', t['keep'])]) + '</table>'
+        ('차수', tphase(t['t']) + (' (FK 제약만 2차: ' + ', '.join(f'`{c}`' for (tt, c) in PHASE_COL if tt == t['t'] and 'FK 2차' in PHASE_COL[(tt, c)]) + ')' if any(tt == t['t'] and 'FK 2차' in v for (tt, c), v in PHASE_COL.items()) else '') + (' (2차 사유만 채우는 컬럼은 1차에 만들고 2차부터 사용: ' + str(sum(1 for (tt, c), v in PHASE_COL.items() if tt == t['t'] and '2차 사용' in v)) + '개, IC-121 A)' if any(tt == t['t'] and '2차 사용' in v for (tt, c), v in PHASE_COL.items()) else '')), ('PK·시퀀스', f"{t['pk']} · CACHE {t['cache']}"), ('삭제 방식', t['delete']), ('파티션', t['part']), ('보유 기간', t['keep'])]) + '</table>'
     secs += ('<table style="table-layout:fixed"><colgroup><col style="width:4%"><col style="width:15%"><col style="width:15%"><col style="width:8%"><col style="width:3%"><col style="width:4.5%"><col style="width:7.5%"><col style="width:31%"><col style="width:3%"><col style="width:3%"><col style="width:6%"></colgroup>'
              '<tr><th>No</th><th>물리명</th><th>논리명</th><th>타입</th><th>NULL</th><th>기본값</th><th>제약</th><th>설명</th><th>확정</th><th>차수</th><th>메모</th></tr>')
     prev = None
@@ -169,7 +169,7 @@ for i, t in enumerate(T, 1):
     secs += '</table>'
     if t['idx'] or t['check']:
         secs += '<h3>인덱스·제약 (제안)</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>차수</th><th>메모</th></tr>'
-        _c2 = [c for (tt, c) in PHASE_COL if tt == t['t']]
+        _c2 = [c for (tt, c), v in PHASE_COL.items() if tt == t['t'] and 'FK 2차' in v]
         for k, x in enumerate(t['idx'] + [f'CK (테이블 수준): {c}' for c in t['check']], 1):
             secs += f'<tr{" class=cf" if "[확인" in x else ""}><td class="n">{i}-X{k}</td><td>{il(x)}</td>' + ckcell(t['t'] in CONFIRMED_TABLES) + phcell(xphase(t['t'], x, _c2)) + '<td class="memo"></td></tr>'
         secs += '</table>'
