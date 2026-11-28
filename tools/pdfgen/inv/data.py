@@ -307,7 +307,7 @@ table(t='INV_STOCK_HOLD', ko='보류 건 (판매 상품을 잠시 팔지 않는 
 table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety Stock Change History',
  desc='판매 상품 현재고의 안전 재고, 수동 지정 여부, 수동 지정 종료일 중 하나라도 바뀔 때마다 1행 (IC-53 C, IC-58 A, IC-130 A). "왜 8이 됐나"를 사유, 적용 등급, 수동 지정 여부의 변화로 답한다 (IC-59 A). "이 변경 때문에 품절이 됐나"는 변경 시점 판매 가능 수량으로(IC-123 A), "한 번의 작업으로 바뀐 행"은 변경 작업 키로(IC-124 A) 답한다. 값·수동 지정 여부·종료일이 모두 그대로인 행은 남기지 않는다 (IC-125 A, IC-130 A). '
       '현재고 UPDATE와 같은 트랜잭션에서 넣고 고치지 않는다. 변경자는 시스템 컬럼(`CREATED_BY_TYPE_CD`: 관리자 `ADMIN`, 등급 배치 `BATCH`)이 남긴다. 리오더 기준은 남기지 않는다 (IC-58 A).',
- basis='5-1 B, IC-4 A, IC-19 A, IC-53 C, IC-58 A, IC-59 A, IC-60 A, IC-77 B, IC-123 A~IC-125 A, IC-126 C, IC-127 B, IC-128 A, IC-129 B, IC-130 A~IC-132 A, IC-133 A~IC-135 A, IC-136 B, IC-137 A',
+ basis='5-1 B, IC-4 A, IC-19 A, IC-53 C, IC-58 A, IC-59 A, IC-60 A, IC-77 B, IC-123 A~IC-125 A, IC-126 C, IC-127 B, IC-128 A, IC-129 B, IC-130 A~IC-132 A, IC-133 A~IC-135 A, IC-136 B, IC-137 A, IC-138 B, IC-140 B~IC-141 B, IC-142 A~IC-146 A, IC-147 B, IC-148 A',
  pk='대리 PK `SEQ_INV_SAFETY_STOCK_HIST`', cache=20,
  delete='삭제하지 않는다 (이력). 5년이 지난 파티션을 제거한다 (IC-60 A)',
  part='생성 일시(`CREATED_AT`) 월 INTERVAL 파티션 (IC-60 A)', keep='생성 + 5년 (IC-60 A, 일 스냅샷과 같은 기간)',
@@ -334,7 +334,7 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
   ('BEFORE_MANUAL_END_DT','이전 수동 지정 종료일','Before Manual Setting End Date','DATE','Y','','',
    '바뀌기 전 현재고의 안전 재고 수동 지정 종료일 (IC-130 A). 종료일이 없었거나 신규 행이면 NULL. 이전 수동 지정 여부가 N이면 NULL (CK, 현재고 CK와 같은 규칙).'),
   ('AFTER_MANUAL_END_DT','새 수동 지정 종료일','After Manual Setting End Date','DATE','Y','','',
-   '바뀐 뒤의 종료일 (IC-130 A). 새 수동 지정 여부가 N이면 NULL (CK). 지난 날짜는 넣을 수 없다(`>= TRUNC(CREATED_AT)`, 오늘은 허용, CK, IC-135 A). 현재고는 오늘 날짜를 CHECK에 쓸 수 없어 같은 트랜잭션의 이 행이 대신 막는다. 종료일만 바꿔도 1행이고 사유는 관리자 수정(메모 필수)이다. '
+   '바뀐 뒤의 종료일 (IC-130 A). 새 수동 지정 여부가 N이면 NULL (CK). 지난 날짜는 넣을 수 없다(`>= TRUNC(CREATED_AT)`, 오늘은 허용, CK, IC-135 A). 현재고는 오늘 날짜를 CHECK에 쓸 수 없어 같은 트랜잭션의 이 행이 대신 막는다. 관리자가 종료일만 직접 고쳐도 1행이고 사유는 관리자 수정(메모 필수)이다. 그 작업을 원복하면 작업 원복이다(예: 12/22 "12/20 연장 원복"은 1/15 → 12/31, 값 그대로, IC-133 A). '
    '예: 12/1 패딩 L 5 → 20, 종료일 12/31(이전 NULL, 새 12/31) → 12/20 종료일만 1/15로 연장(값 20 → 20, Y → Y, 12/31 → 1/15, 메모 "행사 연장") → 1/16 배치 수동 지정 만료 복귀(20 → 5, Y → N, 1/15 → NULL, IC-134 A).'),
  ]),
  ('근거', [
@@ -347,8 +347,9 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
       '넣는 순간 그 행에 적용되는 정책 기본값(등급 기본값, 등급 없으면 공통 기본값)을 복사한다 (IC-127 B). 공통코드는 이전 값이 남지 않아서다. 관리자 수정과 수동 지정 Y로 되돌린 작업 원복이 아닌 사유는 새 안전 재고 수량과 같다 (CK, IC-133 A). '
       '예: A등급 기본값 8일 때 관리자가 7 → 10으로 올리면 8이 남아 정책보다 2개 더 잡았음을 안다. 나중에 기본값을 12로 바꿔도 당시 판단이 남는다.', d=''),
   cd('ADMIN_CHANGE_REASON_CD','관리자 변경 사유 코드','Administrator Change Reason Code','Y',
-     desc='관리자가 왜 바꿨나를 고르는 업무 사유 (IC-136 B). 관리자 수정·작업 원복이면 NOT NULL, 다른 사유이면 NULL (CK). 메모는 그대로 필수다. '
-          '예: 12/1 기획전 대비 상향 → 기획전 대비, 12/3 생산 지연으로 상향 → 입고 지연 대비, 5를 50으로 잘못 넣은 것을 고침 → 입력 오류 정정, 이관 → 기타. 분기 말 "기획전 때문에 올린 건"을 바로 센다.'),
+     desc='관리자가 왜 바꿨나를 고르는 업무 사유 (IC-136 B). 관리자 수정·작업 원복·기본값 복귀이면 NOT NULL, 다른 사유이면 NULL (CK, IC-146 A). 메모는 관리자 수정·작업 원복에서만 필수다. 작업 원복 행은 원래 작업의 이유가 아니라 되돌리는 이유를 고른다 (IC-145 A). '
+          '예: 12/1 기획전 대비 상향 → 기획전 대비, 12/5 기획전 취소로 원복 → 운영 계획 철회, 12/3 생산 지연으로 상향 → 입고 차질 대비, 5를 50으로 잘못 넣은 것을 고침 → 입력 오류 정정, 이관 → 기타(집계 때 작업 키 `MIGRATION:`으로 뺀다, IC-147 B). 분기 말 "기획전 때문에 올린 건"을 바로 센다. '
+          '특정 실물을 빼 두는 품질 확인·촬영 대기는 안전 재고가 아니라 보류(보류 사유 품질 확인, 촬영 대기)로 처리한다 (IC-148 A).'),
   ('REVERTED_OPERATION_KEY_VAL','원복 대상 작업 키','Reverted Operation Key','VARCHAR2(50)','Y','','',
    '작업 원복이 되돌린 작업의 변경 작업 키 (IC-133 A). 작업 원복이면 NOT NULL, 아니면 NULL (CK). 인덱스는 두지 않는다. 대상은 관리자 작업(관리자 수정, 기본값 복귀)만이고 자동 작업은 되돌리지 않는다(애플리케이션 검사). '
    '되돌리는 값은 대상 행의 이전 수동 지정 여부로 정한다: Y였으면 이전 값과 이전 종료일, N이었으면 지금 기본값·N·종료일 NULL. 그 작업 뒤 다른 변경이 있거나 옛 종료일이 이미 지난 현재고는 건너뛴다. '
@@ -358,12 +359,12 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
  ],
  idx=['IX LOCAL (`STOCK_ID`, `CREATED_AT`) (현재고별 변경 경위 조회)'],
  check=['신규 행 기본값이면 이전 안전 재고·이전 수동 지정 여부·이전 종료일이 NULL. 아니면 이전 안전 재고·이전 수동 지정 여부 NOT NULL(이전 종료일은 종료일이 없었으면 NULL, IC-130 A)',
-        '등급 기본값 적용이면 이전·새 수동 지정 여부가 모두 N이고 `APPLIED_STOCK_GRADE_CD` NOT NULL',
-        '등급 없음 기본값이면 이전·새 수동 지정 여부가 모두 N이고 `APPLIED_STOCK_GRADE_CD` NULL (IC-77 B)',
+        '등급 기본값 적용이면 이전·새 수동 지정 여부가 모두 N이고 `APPLIED_STOCK_GRADE_CD` NOT NULL, `CREATED_BY_TYPE_CD = \'BATCH\'` (IC-138 B)',
+        '등급 없음 기본값이면 이전·새 수동 지정 여부가 모두 N이고 `APPLIED_STOCK_GRADE_CD` NULL, `CREATED_BY_TYPE_CD = \'BATCH\'` (IC-77 B, IC-138 B)',
         '관리자 수정이면 새 수동 지정 여부 Y와 `CHANGE_NOTE_CN` NOT NULL. 기본값 복귀이면 이전 Y, 새 N이고 `CREATED_BY_TYPE_CD = \'ADMIN\'` (관리자만, IC-134 A)',
         '수동 지정 만료 복귀이면 `CREATED_BY_TYPE_CD = \'BATCH\'`, 이전 Y, 새 N, `BEFORE_MANUAL_END_DT IS NOT NULL AND BEFORE_MANUAL_END_DT < TRUNC(CREATED_AT)` (종료일 전 자동 복귀를 막는다, IC-134 A)',
-        '작업 원복이면 `REVERTED_OPERATION_KEY_VAL`·`CHANGE_NOTE_CN` NOT NULL, 아니면 `REVERTED_OPERATION_KEY_VAL` NULL (IC-133 A)',
-        '관리자 수정·작업 원복이면 `ADMIN_CHANGE_REASON_CD` NOT NULL, 아니면 NULL (IC-136 B)',
+        '작업 원복이면 `REVERTED_OPERATION_KEY_VAL`·`CHANGE_NOTE_CN` NOT NULL이고 `CREATED_BY_TYPE_CD = \'ADMIN\'` (관리자만, IC-138 B), 아니면 `REVERTED_OPERATION_KEY_VAL` NULL (IC-133 A). 관리자 수정에는 행위자 CK를 걸지 않는다(이관 행이 `BATCH`, IC-137 A)',
+        '관리자 수정·작업 원복·기본값 복귀이면 `ADMIN_CHANGE_REASON_CD` NOT NULL, 아니면 NULL (IC-136 B, IC-146 A)',
         '`AFTER_MANUAL_END_DT IS NULL OR AFTER_MANUAL_END_DT >= TRUNC(CREATED_AT)` (지난 날짜 종료일 금지, 오늘은 허용, IC-135 A)',
         '안전 재고 수량 2개는 각각 >= 0 (이전 값이 NULL이면 통과)',
         '`BEFORE_SAFETY_STOCK_QTY IS NULL OR BEFORE_SAFETY_STOCK_QTY <> AFTER_SAFETY_STOCK_QTY OR BEFORE_MANUAL_YN <> AFTER_MANUAL_YN OR DECODE(BEFORE_MANUAL_END_DT, AFTER_MANUAL_END_DT, 0, 1) = 1` (값·수동 지정 여부·종료일이 모두 그대로인 행을 막는다. 종료일은 NULL이 될 수 있어 `<>` 대신 `DECODE`로 비교한다: NULL끼리는 같고 NULL과 날짜는 다르다. 신규 행은 이전 값이 NULL이라 통과, 기본값 복귀 5 → 5·Y → N, 값 고정 N → Y, 종료일만 연장은 통과, IC-125 A, IC-130 A)',
@@ -1010,21 +1011,26 @@ CODES = {
    ('CLOSED','종결','Closed','남은 보류 수량이 0 (IC-54 A)')),
  'SAFETY_STOCK_CHANGE_REASON_CD': vals(
    ('NEW_ROW_DEFAULT','신규 행 기본값','New Row Default','SKU 등록 때 현재고 행을 만들며 등급별(또는 공통) 기본값을 채움 (2-2 A, IC-4 A)'),
-   ('GRADE_DEFAULT','등급 기본값 적용','Grade Default Applied','월 등급 배치가 수동 지정 N인 행에 새 등급 기본값을 적용 (IC-19 A)'),
-   ('NO_GRADE_DEFAULT','등급 없음 기본값','No-Grade Default Applied','월 등급 배치에서 등급이 NULL(판매 이력 없음)이 된 수동 지정 N인 행에 공통 기본값을 적용. 적용 등급 NULL (IC-77 B)'),
+   ('GRADE_DEFAULT','등급 기본값 적용','Grade Default Applied','월 등급 배치(행위자 `BATCH`, CK)가 수동 지정 N인 행에 새 등급 기본값을 적용 (IC-19 A)'),
+   ('NO_GRADE_DEFAULT','등급 없음 기본값','No-Grade Default Applied','월 등급 배치(행위자 `BATCH`, CK)에서 등급이 NULL(판매 이력 없음)이 된 수동 지정 N인 행에 공통 기본값을 적용. 적용 등급 NULL (IC-77 B)'),
    ('POLICY_DEFAULT_CHANGE','기본값 변경 적용','Policy Default Change Applied','관리자가 공통코드의 등급별(또는 공통) 기본값을 바꾸면, 같은 작업이 그 등급이고 수동 지정 N인 행에 새 값을 적용. 실제로 바뀐 행만 남긴다 (IC-128 A)'),
-   ('ADMIN_EDIT','관리자 수정','Administrator Edit','관리자가 값이나 수동 지정 종료일을 고침(종료일만 바꿔도 해당, IC-130 A). 수동 지정 Y, 메모 필수'),
-   ('DEFAULT_RESTORE','기본값 복귀','Default Restored','관리자가 수동 지정을 Y에서 N으로 직접 되돌리고 등급(또는 공통) 기본값을 적용. 관리자만 (CK, IC-134 A)'),
+   ('ADMIN_EDIT','관리자 수정','Administrator Edit','관리자가 값이나 수동 지정 종료일을 직접 고침(종료일만 고쳐도 해당, 원복은 작업 원복, IC-130 A). 수동 지정 Y, 메모·관리자 변경 사유 필수 (IC-136 B). 특정 실물을 빼 두는 품질 확인·촬영 대기는 이 값이 아니라 보류로 (IC-148 A)'),
+   ('DEFAULT_RESTORE','기본값 복귀','Default Restored','관리자가 수동 지정을 Y에서 N으로 직접 되돌리고 등급(또는 공통) 기본값을 적용. 관리자만 (CK, IC-134 A). 관리자 변경 사유 필수, 메모는 선택 (IC-146 A)'),
    ('MANUAL_EXPIRED','수동 지정 만료 복귀','Manual Setting Expired','수동 지정 종료일이 지나 일 배치가 Y에서 N으로 되돌리고 기본값을 적용. 행위자 `BATCH`, 작업 키 `MANUAL_END_BATCH:…` (IC-129 B, IC-134 A)'),
-   ('OPERATION_REVERT','작업 원복','Operation Reverted','관리자가 지난 관리자 작업 하나를 되돌림. 원복 대상 작업 키, 메모, 관리자 변경 사유 필수. 그 작업 뒤 변경이 없는 현재고만 (IC-132 A, IC-133 A)')),
+   ('OPERATION_REVERT','작업 원복','Operation Reverted','관리자가 지난 관리자 작업 하나를 되돌림(행위자 `ADMIN`, CK, IC-138 B). 원복 대상 작업 키, 메모, 관리자 변경 사유 필수. 그 작업 뒤 변경이 없는 현재고만 (IC-132 A, IC-133 A)')),
  'ADMIN_CHANGE_REASON_CD': vals(
-   ('CS_RESERVE_ADJUSTMENT','고객 대응 확보분 조정','Customer Service Reserve Adjustment','교환·재발송·결품 대체에 쓸 확보분을 늘리거나 줄임 (5-1 B가 이 업무에 안전 재고를 쓰게 함)'),
-   ('PROMOTION_PREP','기획전 대비','Promotion Preparation','기획전 대비 상향, 행사 연장·단축에 따른 종료일 변경'),
+   ('CS_RESERVE_ADJUSTMENT','고객 대응 확보분 조정','Customer Service Reserve Adjustment','교환·재발송·결품 대체에 쓸 확보분을 늘리거나 줄임 (5-1 B가 이 업무에 안전 재고를 쓰게 함). 신상품 출시 초기의 사이즈 교환 대비 상향도 여기다(예: 공통 기본값 2인 새 패딩 L을 6으로, IC-141 B)'),
+   ('PROMOTION_PREP','기획전 대비','Promotion Preparation','기획전 대비 상향, 행사 연장·단축에 따른 종료일 변경. 기획전 취소로 되돌리는 것은 운영 계획 철회'),
+   ('STAGED_RELEASE','단계 오픈 물량','Staged Release','인기 상품을 나눠 팔 때 다음 오픈분을 묶어 둠. 오픈 시각에 관리자가 직접 내린다(종료일은 날짜뿐이라 시각을 정해 풀 수 없다). 예: 패딩 L 800장 중 300장을 2차 오픈용으로 2 → 302, 12/10 20:00에 2로 (IC-143 A)'),
+   ('MARKETING_RESERVE','마케팅 출고 예정분','Marketing Reserve','협찬·화보·임직원 샘플처럼 비주문 출고가 예정된 물량을 출고 요청 전에 미리 남김. 출고 요청을 만들면 바로 할당되므로(4-10 A) 그때 내린다. 예: 다음 주 협찬 30장으로 5 → 35 (IC-142 A)'),
    ('DEMAND_FORECAST_CHANGE','수요 예측 변경','Demand Forecast Change','시즌 전환이나 판매 추세 변화로 조정'),
-   ('REPLENISHMENT_DELAY','입고 지연 대비','Replenishment Delay','생산·입고 지연으로 다음 입고까지 임시 상향'),
+   ('REPLENISHMENT_DISRUPTION','입고 차질 대비','Replenishment Disruption','생산·입고 날짜가 밀리거나 입고 수량이 줄어 다음 입고까지 임시 상향. 지연인지 부족인지는 생산·입고 기록이 갖는다 (IC-140 B)'),
+   ('STOCK_DISCREPANCY_BUFFER','재고 불일치 대비','Stock Discrepancy Buffer','대사 차이나 현장 발견으로 장부 수량이 의심될 때, 재고 예외가 확인 중인 동안 일부를 묶어 초과 판매를 막음. 실사 조정이 끝나면 내린다. 어느 예외인지는 메모에 (IC-144 A)'),
    ('CLEARANCE_RELEASE','정리 판매 해제','Clearance Release','시즌 종료·단종을 앞두고 남은 물량을 일반 판매에 풀려고 하향'),
-   ('MANUAL_ENTRY_CORRECTION','입력 오류 정정','Manual Entry Correction','잘못 넣은 값을 바로잡음. 예: 5를 50으로 넣은 것을 고침'),
-   ('OTHER','기타','Other','위 사유에 맞지 않음(이관 포함). 메모에 이유를 적는다')),
+   ('PLAN_WITHDRAWAL','운영 계획 철회','Plan Withdrawal','올렸던 운영 계획(기획전, 협찬, 단계 오픈 등)이 취소되어 되돌림. 보통 작업 원복이나 기본값 복귀에 쓴다. 예: 12/5 기획전 취소로 12/1 상향을 원복 (IC-145 A)'),
+   ('SCOPE_SELECTION_ERROR','적용 대상 선택 오류','Scope Selection Error','일괄 작업의 대상 SKU를 잘못 골라 바로잡음. 예: 겨울 패딩에만 올릴 것을 아우터 500개 전체에 올림. 대상은 맞고 수량·종료일을 잘못 넣었으면 입력 오류 정정 (IC-145 A)'),
+   ('MANUAL_ENTRY_CORRECTION','입력 오류 정정','Manual Entry Correction','대상은 맞는데 수량이나 종료일을 잘못 넣은 것을 바로잡음. 예: 5를 50으로 넣은 것을 고침'),
+   ('OTHER','기타','Other','위 사유에 맞지 않음(이관 포함, 집계 때 작업 키 `MIGRATION:`으로 뺀다, IC-147 B). 메모에 이유를 적는다')),
  'HOLD_REASON_CD': vals(
    ('QUALITY_CHECK','품질 확인','Quality Check',''),
    ('PHOTO_SHOOT','촬영 대기','Waiting for Photo Shoot','상품 촬영용으로 빼 둔 실물'),
