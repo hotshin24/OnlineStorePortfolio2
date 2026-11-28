@@ -32,7 +32,7 @@ def code_id(col, code): return ''
 
 RV_CSS = 'tr.rv td{background:#fff4d6;font-size:8pt;border-top:1px solid #d9a521;border-bottom:2px solid #d9a521;color:#5a4300} tr.rv td:first-child{border-left:4px solid #d9a521} tr.rv td.p{padding-left:14px;font-weight:700}'
 CSS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ord', 'style.css'), encoding='utf-8').read()
-CSS += '\ntd.ph{text-align:center;font-size:7.5pt;color:#777;white-space:nowrap}td.ph.p1{color:#0b5;font-weight:700}td.ph.pq{color:#c60;font-weight:700}\n'
+CSS += '\ntd.ph{text-align:center;font-size:7pt;color:#777}td.ph.p1{color:#0b5;font-weight:700}td.ph.pq{color:#c60;font-weight:700}\n'
 def il(s):
     s = html.escape(str(s)); p = s.split('`')
     s = ''.join(f'<code>{x}</code>' if i % 2 else x for i, x in enumerate(p))
@@ -48,13 +48,9 @@ def phcell(p): return f'<td class="ph{" p1" if p.startswith("1차") else " pq" i
 for _k in PHASE_COL: assert any(t['t'] == _k[0] and any(c[0] == _k[1] for c in t['cols']) for t in T), _k
 for _k in PHASE_Q: assert any(a == _k for a, b, c in CONFIRM), _k
 def xphase(t, x, c2):
-    hit = [c for c in c2 if c in x]
-    if not hit or tphase(t) != '1차': return tphase(t)
-    import re as _re
-    cols = {c[0] for tt in T if tt['t'] == t for c in tt['cols']}
-    named = [n for n in _re.findall(r'`([A-Z_0-9]+)`', x) if n in cols]
-    if not x.startswith('CK') or all(n in c2 for n in named): return '2차'
-    return '1차*'
+    # 1차-6 A: FK 제약만 뒤 차수. 그 컬럼의 FK 인덱스 행은 '1차 (FK 2차)', CHECK는 1차에 만든다
+    if tphase(t) == '1차' and x.startswith('IX') and any(c in x for c in c2): return '1차 (FK 2차)'
+    return tphase(t)
 def ckcell(on): return f'<td class="ck on">{ON}</td>' if on else f'<td class="ck">{BOX}</td>'
 for _t, _g in CONFIRMED_GROUPS: assert any(t['t'] == _t and _g in t['grp_of'].values() for t in T), (_t, _g)
 assert CONFIRMED_TABLES <= {t['t'] for t in T}
@@ -88,7 +84,7 @@ _KO = {t['t']: t['ko'].split(' (')[0] for t in T}
 PBOX = ('<div class="box"><b>1차 범위 (2026-11-28 사용자 결정)</b><br>'
         '· 코드로 처음 구현할 범위부터 확정한다. 재고 1차 테이블: ' + ', '.join(f'{_KO[x]}' for x in PHASE if PHASE[x] == '1차') + ' (안전 재고 변경 이력과 월 마감은 1차-5 A로 더함).<br>'
         '· 1차에 먼저 결정할 순서: 현재고(확정) → ' + ' → '.join(f'{_KO[x]}' for x in PHASE_ORDER) + '. 나머지 테이블은 2차(보류, 입고 예정, 스냅샷, 예외·대사, 사은품·운영자재).<br>'
-        '· 1차는 기초 재고로 시작하고 입고 예정·생산 입고는 2차(1차-2 A), 고객 취소·반품은 2차(1차-1 A)다. 1차 테이블 안에서도 FK 대상이 2차 테이블인 컬럼과 2차 업무에서만 쓰는 컬럼은 2차로 표시했다(1차-4 A 기준의 제안).<br>'
+        '· 1차는 기초 재고로 시작하고 입고 예정·생산 입고는 2차(1차-2 A), 고객 취소·반품은 2차(1차-1 A)다. 1차 테이블 안에서 부모가 2차 테이블인 FK 컬럼은 "1차 (FK 2차)"다: 컬럼과 CHECK는 1차에 만들고 FK 제약은 부모를 만드는 차수에 건다(1차-6 A). 오픈 뒤 등록한 SKU는 1차 동안 기초 재고를 행마다 1회 받는다(1차-8 A).<br>'
         '· <b>차수</b> 칸은 <b>확정</b> 칸과 따로다. 차수 표시는 확정이 아니다.</div>')
 total = sum(len(full_cols(t)) for t in T)
 longest = sorted(T, key=lambda t: -len(t['t']))[:2]
@@ -129,7 +125,7 @@ for i, t in enumerate(T, 1):
     secs += f'<h2{"" if t["t"] in GFIRST else " class=t"}>{i}. {t["t"]}</h2>'
     secs += '<table class="info">' + f'<tr><td>논리명</td><td>{ln1(t["ko"], t["en"])}</td></tr>' + ''.join(f'<tr><td>{a}</td><td>{il(b)}</td></tr>' for a, b in [
         ('설명', t['desc']), ('근거 결정', '재고 결정 ' + t['basis']),
-        ('차수', tphase(t['t']) + (' (2차 컬럼: ' + ', '.join(f'`{c}`' for (tt, c) in PHASE_COL if tt == t['t']) + ')' if any(tt == t['t'] for tt, c in PHASE_COL) else '')), ('PK·시퀀스', f"{t['pk']} · CACHE {t['cache']}"), ('삭제 방식', t['delete']), ('파티션', t['part']), ('보유 기간', t['keep'])]) + '</table>'
+        ('차수', tphase(t['t']) + (' (FK 제약만 2차: ' + ', '.join(f'`{c}`' for (tt, c) in PHASE_COL if tt == t['t']) + ')' if any(tt == t['t'] for tt, c in PHASE_COL) else '')), ('PK·시퀀스', f"{t['pk']} · CACHE {t['cache']}"), ('삭제 방식', t['delete']), ('파티션', t['part']), ('보유 기간', t['keep'])]) + '</table>'
     secs += ('<table style="table-layout:fixed"><colgroup><col style="width:4%"><col style="width:15%"><col style="width:15%"><col style="width:8%"><col style="width:3%"><col style="width:4.5%"><col style="width:7.5%"><col style="width:31%"><col style="width:3%"><col style="width:3%"><col style="width:6%"></colgroup>'
              '<tr><th>No</th><th>물리명</th><th>논리명</th><th>타입</th><th>NULL</th><th>기본값</th><th>제약</th><th>설명</th><th>확정</th><th>차수</th><th>메모</th></tr>')
     prev = None
@@ -185,6 +181,6 @@ conf += '</table>'
 conf += '<h2 class="t">공통코드에 둘 정책값</h2><table><tr><th>No</th><th>항목</th><th>내용</th><th>근거</th></tr>' + ''.join(f'<tr><td class="n">P{k}</td><td>{il(a)}</td><td>{il(b)}</td><td>{il(c)}</td></tr>' for k, (a, b, c) in enumerate(POLICY, 1)) + '</table>'
 body = ('<h1>재고 도메인 컬럼 정의서 (제안)</h1>'
         f'<div class="meta">{META} · 테이블 {len(T)}개 · 컬럼 {tot_b+tot_s}개 (업무 {tot_b} + 공통 {tot_s}) · 컬럼은 모두 제안</div>'
-        + NOTE + PBOX.replace('<div class="box">', '<div class="box">', 1) + '<p style="font-size:8pt">차수 1차* = 1차에 만들고, 2차 컬럼을 더할 때 다시 만드는 CHECK.</p>' + toc + conf + secs)
+        + NOTE + PBOX.replace('<div class="box">', '<div class="box">', 1) + toc + conf + secs)
 open(os.path.join(OUT, 'columns.html'), 'w').write(page('재고 도메인 컬럼 정의서', '<div class="colspec">' + body + '</div>'))
 print(len(T), tot_b, tot_s, tot_b + tot_s)

@@ -1027,11 +1027,10 @@ CONFIRMED_TABLES = {'INV_STOCK'}
 # 1차 테이블 안의 컬럼 차수는 1차-4 A 기준을 적용한 제안이다(컬럼 검토에서 확정). 확정 칸과 따로 표시한다.
 PHASE = {'INV_STOCK': '1차', 'INV_STOCK_LEDGER': '1차', 'INV_STOCK_COMMITMENT': '1차', 'INV_STOCK_COMMITMENT_EVENT': '1차',
          'INV_SAFETY_STOCK_HIST': '1차', 'INV_MONTHLY_CLOSING': '1차'}  # 나머지는 2차 (안전 재고 이력·월 마감은 1차-5 A로 더함)
-# 1차 테이블에서 2차로 미루는 컬럼: FK 대상이 2차 테이블이거나, 2차 업무에서만 쓰고 여러 컬럼 CHECK에 들지 않는 컬럼
-PHASE_COL = {('INV_STOCK_LEDGER', 'INBOUND_PLAN_ID'): '2차', ('INV_STOCK_LEDGER', 'STOCK_HOLD_ID'): '2차',
-             ('INV_STOCK_LEDGER', 'STOCK_EXCEPTION_ID'): '2차', ('INV_STOCK_LEDGER', 'STOCKTAKE_ID'): '2차',
-             ('INV_STOCK_LEDGER', 'APPROVED_ADMIN_ID'): '2차', ('INV_STOCK_COMMITMENT', 'INBOUND_PLAN_ID'): '2차',
-             ('INV_STOCK_COMMITMENT_EVENT', 'FROM_INBOUND_PLAN_ID'): '2차', ('INV_STOCK_COMMITMENT_EVENT', 'TO_INBOUND_PLAN_ID'): '2차'}
+# 1차 테이블에서 부모가 2차 테이블인 FK 컬럼: 컬럼은 1차에 만들고 FK 제약은 부모를 만드는 차수에 ALTER로 건다 (1차-6 A)
+PHASE_COL = {('INV_STOCK_LEDGER', 'INBOUND_PLAN_ID'): '1차 (FK 2차)', ('INV_STOCK_LEDGER', 'STOCK_HOLD_ID'): '1차 (FK 2차)',
+             ('INV_STOCK_LEDGER', 'STOCK_EXCEPTION_ID'): '1차 (FK 2차)', ('INV_STOCK_COMMITMENT', 'INBOUND_PLAN_ID'): '1차 (FK 2차)',
+             ('INV_STOCK_COMMITMENT_EVENT', 'FROM_INBOUND_PLAN_ID'): '1차 (FK 2차)', ('INV_STOCK_COMMITMENT_EVENT', 'TO_INBOUND_PLAN_ID'): '1차 (FK 2차)'}
 # 1차 컬럼 검토 순서 (현재고는 확정)
 PHASE_ORDER = ['INV_STOCK_LEDGER', 'INV_MONTHLY_CLOSING', 'INV_STOCK_COMMITMENT', 'INV_STOCK_COMMITMENT_EVENT', 'INV_SAFETY_STOCK_HIST']
 # 다시 물을 것(CONFIRM)의 차수. 제목으로 찾는다. 없는 제목은 2차.
@@ -1047,7 +1046,7 @@ CONFIRM = [
  ('보류 건·안전 재고 이력 컬럼', 'IC-52 C~IC-60 A로 더한 2개 테이블의 컬럼은 결정한 구성을 바탕으로 한 제안이다 (보류 수량을 만든 뒤 바꾸지 않음, 담당 관리자, 메모 조건 등). 이름 2개도 후보.', '`INV_STOCK_HOLD`, `INV_SAFETY_STOCK_HIST`'),
  ('대사 실행 컬럼', 'IC-63 B~IC-69 A로 더한 `INV_RECONCILIATION_RUN`의 컬럼과 CHECK는 결정한 구성을 바탕으로 한 제안이다 (대사 유형은 재고 예외 유형 값을 재사용하고 대사 6개만 CK, 대상 종류 코드 4개, 실패 때 건수 NULL 허용). 이름도 후보.', '`INV_RECONCILIATION_RUN`'),
  ('예외 다시 찾기와 행 버전', '배치가 확인 중 예외를 다시 찾아 마지막 실행 ID·수량을 고칠 때도 `ROW_VER`를 1 늘린다는 제안. 그 사이 관리자가 같은 행을 처리하면 관리자 쪽이 다시 읽는다 (IC-66 C, IC-68 C).', '`INV_STOCK_EXCEPTION`'),
- ('기초 재고 사유', 'IC-79 A로 시스템 오픈 때 기초 재고는 원장의 전용 사유로 품목마다 1행 넣는다(입고 예정·재고 예외 불필요, 평소에는 애플리케이션이 막음). 사유 코드 이름과 값, 사은품·운영자재 원장에도 둘지는 각 원장 검토 때 정한다.', '`INV_STOCK_LEDGER`, `INV_FREEBIE_LEDGER`, `INV_SUPPLY_LEDGER`'),
+ ('기초 재고 사유', 'IC-79 A로 시스템 오픈 때 기초 재고는 원장의 전용 사유로 품목마다 1행 넣는다(입고 예정·재고 예외 불필요, 평소에는 애플리케이션이 막음). 1차 동안은 원장이 한 건도 없는 현재고 행에 행마다 1회 허용한다(1차-8 A). 사유별 원천 CHECK가 원천 ID 모두 NULL을 허용해야 하고, 재고 0으로 옮겨 오는 판매 이력 상품은 품절 시작 일시도 채워야 품절 CHECK를 통과한다(수불 원장 검토 때 가장 먼저). 사유 코드 이름과 값, 사은품·운영자재 원장에도 둘지는 각 원장 검토 때 정한다.', '`INV_STOCK_LEDGER`, `INV_FREEBIE_LEDGER`, `INV_SUPPLY_LEDGER`'),
  ('보류 건 갱신 순서', '보류 설정·해제는 현재고 행을 먼저 UPDATE하고 보류 건 행을 고친다는 제안(여러 품목 잠금 순서 4-12 A와 맞춤).', '`INV_STOCK_HOLD`'),
  ('실사 조정의 WMS 실사 ID', '원천은 재고 예외 ID(필수)이고 WMS 실사 ID는 선택으로 함께 남긴다는 제안 (1-3 A, 7-7 A).', '`INV_STOCK_LEDGER.STOCKTAKE_ID`'),
  ('확보 행 동시 갱신', '행 버전 없이 상태 조건부 UPDATE(`WHERE 상태 = :읽은 상태`)로 결제 완료와 만료 배치의 경합을 막는다는 제안. 현재고는 2-6 A로 행 버전이 없다.', '`INV_STOCK_COMMITMENT`'),
