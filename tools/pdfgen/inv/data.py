@@ -1146,9 +1146,9 @@ POLICY = [
 
 # 확정 칸은 컬럼 검토에서 사용자가 확정한 것만 넣는다. T-10 A의 선택(7개)은 결정 기록에 있다 (2026-11-28 사용자 지시)
 # INV_STOCK: 2026-11-28 IC-80 뒤 사용자가 "현재고 테이블 확정 체크 해"로 이름·컬럼 전체를 확정
-NAME_CONFIRMED = {'INV_STOCK', 'INV_STOCK_LEDGER'}  # 수불 원장: 2026-11-28 사용자 확정 지시
+NAME_CONFIRMED = {'INV_STOCK', 'INV_STOCK_LEDGER', 'INV_SAFETY_STOCK_HIST'}  # 수불 원장: 2026-11-28, 안전 재고 변경 이력: 2026-11-29 사용자 확정 지시
 CONFIRMED_GROUPS = set()
-CONFIRMED_TABLES = {'INV_STOCK', 'INV_STOCK_LEDGER'}
+CONFIRMED_TABLES = {'INV_STOCK', 'INV_STOCK_LEDGER', 'INV_SAFETY_STOCK_HIST'}
 # 확정 테이블에 나중에 더해 아직 확정하지 않은 컬럼과, 인덱스·제약 행을 고르는 표시 문자열 (IC-129 재확인 A)
 UNCONFIRMED_COLS = {('INV_STOCK', 'SAFETY_STOCK_MANUAL_END_DT')}
 UNCONFIRMED_X = {('INV_STOCK', 'IC-129 B')}

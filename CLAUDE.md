@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **주문 (ORD):** 결정 80개(10개 분야), 컬럼 검토 OC-1~OC-122 (OC-1~OC-9, OC-11~OC-14 13개는 답변 전). 테이블 10개(이름 후보), 컬럼 302개, 코드 그룹 24개(값 124개), `CODE_ID` 미발번. 확정: `ORD_CART` 전체, `ORD_ORDER`의 식별부터 법정 확인·고지까지.
 - **결제 (PAY):** 결정 76개(12개 분야), 컬럼 검토 PYC-1~PYC-86 (새 질문은 PYC-87부터). 테이블 21개(이름 후보), 컬럼 593개(업무 431 + 공통 162), 코드 그룹 67개(값 314개, 재사용 그룹 `REUSE` 3개는 세지 않음), `CODE_ID` 미발번. 확정: `PAY_PAYMENT`의 식별부터 PG·가맹점 그룹까지. 다음: `PAY_PAYMENT`의 나머지 12개 그룹과 20개 테이블. 컬럼 검토 때 다시 물을 것: `pay/data.py`의 `CONFIRM` 21개.
 - **배송 (DLV):** "패키지"는 "운송장"(`DLV_WAYBILL`, `DLV_WAYBILL_ITEM`, `DLV_WAYBILL_ACCIDENT`)으로 바꿨다 (DC-61~63, 결정 원문의 "패키지"·`PARCEL`은 당시 기록). 결정 77개(전제·축 7개, 테이블 T-1~T-7, 컬럼 DC-1~DC-63, 추천과 다른 결정 11개는 `docs/진행메모.md`). 테이블 11개(이름 후보), 컬럼 248개(업무 172 + 공통 76), 코드 그룹 27개(값 138개), `CODE_ID` 미발번. 확정: `DLV_SHIPMENT_REQUEST`의 식별·상태 그룹. 다음: `DLV_SHIPMENT_REQUEST`의 나머지 그룹과 10개 테이블. 컬럼 검토 때 다시 물을 것: `dlv/data.py`의 `CONFIRM` 12개.
-- **재고 (INV):** 결정 214개(축 결정 54개, 테이블 T-1~T-11, 컬럼 검토 IC-1~IC-149). 테이블 17개(7개는 T-10 A에서 고른 물리명, 10개는 후보), 컬럼 353개(업무 251 + 공통 102), 코드 그룹 22개(값 133개, 재사용 그룹 3개는 세지 않음), `CODE_ID` 미발번. 변경 안내 61개. 확정: `INV_STOCK`, 수불 원장 `INV_STOCK_LEDGER`(2026-11-28 사용자 확정, IC-82~IC-122 반영) 이름과 컬럼 전체. 단 현재고에 IC-129 B로 더한 `SAFETY_STOCK_MANUAL_END_DT`와 그 CK는 확정 전(`UNCONFIRMED_COLS`·`UNCONFIRMED_X`). 안전 재고 변경 이력 `INV_SAFETY_STOCK_HIST`는 IC-123~IC-149 반영(확정 전). 새 질문은 IC-150부터. 컬럼 검토 때 다시 물을 것: `inv/data.py`의 `CONFIRM` 21개.
+- **재고 (INV):** 결정 214개(축 결정 54개, 테이블 T-1~T-11, 컬럼 검토 IC-1~IC-149). 테이블 17개(7개는 T-10 A에서 고른 물리명, 10개는 후보), 컬럼 353개(업무 251 + 공통 102), 코드 그룹 22개(값 133개, 재사용 그룹 3개는 세지 않음), `CODE_ID` 미발번. 변경 안내 61개. 확정: `INV_STOCK`, 수불 원장 `INV_STOCK_LEDGER`(2026-11-28 사용자 확정, IC-82~IC-122 반영) 이름과 컬럼 전체. 단 현재고에 IC-129 B로 더한 `SAFETY_STOCK_MANUAL_END_DT`와 그 CK는 확정 전(`UNCONFIRMED_COLS`·`UNCONFIRMED_X`). 안전 재고 변경 이력 `INV_SAFETY_STOCK_HIST`(2026-11-29 사용자 확정, IC-123~IC-149 반영) 이름과 컬럼 전체도 확정. 새 질문은 IC-150부터. 다음: 1차 남은 재고 확보(`INV_STOCK_COMMITMENT`), 확보 처리 이력(`INV_STOCK_COMMITMENT_EVENT`), 월 마감(`INV_MONTHLY_CLOSING`). 컬럼 검토 때 다시 물을 것: `inv/data.py`의 `CONFIRM` 21개.
 - 그다음은 나머지 8개 도메인이다.
 - 도메인을 다시 열 때 먼저 꺼낼 것 (사용자 지시로 지금은 메모만, 상세는 `docs/진행메모.md`):
   - 상품: 단품·세트 구분(스타일 구성 유형, 세트 구성품별 소재·실측) 결정 (2026-11-28 메모, 질문안은 `docs/진행메모.md`).
@@ -48,14 +48,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   cmp $OUT/../code_ids_prev.json $OUT/code_ids.json && echo 코드ID_변화없음
   ```
 - 상품 공통코드(`prd/cmm.py`)는 회원 빌드의 `code_ids.json` 뒤에 CODE_ID를 매긴다. 회원 빌드를 먼저 한다.
-- ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 7개와 drawio 1개를 한 번에 만든다). 생성 날짜가 모든 파일에 찍혀 다른 도메인 파일도 날짜 줄이 바뀐다.
+- ERD: `python3 tools/pdfgen/erd/erd.py` (mmd 7개와 drawio 1개를 한 번에 만든다). 생성 날짜가 모든 파일에 찍혀 다른 도메인 파일도 날짜 줄이 바뀐다. FK·테이블이 바뀌지 않아 날짜 줄만 바뀌었으면(`git diff -U0`로 확인) 커밋하지 않고 HEAD로 되돌린다 (한글 파일 되돌리는 방법은 아래 "PDF 출력과 작업 환경").
 - 검증: `swift tools/pdfgen/util/pdf2txt.swift <pdf> <txt>`(출력 경로 필수)로 이전 PDF와 텍스트를 비교하고, `swift tools/pdfgen/util/pg.swift <pdf> [<쪽> <png>]`로 쪽수와 쪽 모양을 본다. 합친 PDF(`merge.swift` 결과)는 한글이 추출되지 않으니 합치기 전 PDF로 비교한다.
 - drawio 확인: `/Applications/draw.io.app/Contents/MacOS/draw.io -x -f png -p <쪽> -s 1 -o <png> docs/drawio/전체_ERD.drawio`로 쪽 이미지를 뽑아 까마귀발과 선 겹침을 본다 (쪽 번호는 1부터, 5 결제, 6 배송, 7 재고). mmd 텍스트로는 겹침을 알 수 없다.
 - drawio는 생성기 출력이 기준이다. draw.io 앱에서 저장하면 형식만 바뀌어 수천 줄 diff가 생기고, 앱에서 옮긴 위치는 다시 생성하면 사라진다. 남길 배치는 `POS`·`ROUTE`에 적는다.
 - 지시 규칙: `python3 tools/pdfgen/rules/rules.py <출력.html>` → `docs/pdf/지시규칙/DB설계_지시규칙_1-8.pdf`. 공통 규칙이 바뀌면 `docs/db/00_conventions.md`와 함께 고친다.
 - 배송 결정을 하나 더하면 숫자·범위(DC-1~DC-n)를 함께 고칠 곳: 이 파일의 진행 상황 줄, README 두 곳, `overview/gen.py`, `docs/진행메모.md`, `policy/dlv_content.py`의 `META`·`EFFECT`, `screen/admin_delivery.html` 쪽 메타, `dlv/data.py` 머리 주석과 해당 테이블 `basis`. 결정 수·컬럼 수·코드 값 수는 `render.py` 출력과 `CODES` 합계로 확인한다.
 - 재고 결정을 하나 더하면: 결정 원문을 `python3 tools/pdfgen/inv/add_decision.py <결정.txt> [<변경안내.txt>]`로 `inv/decision.py`에 더한다 (입력 형식은 스크립트 머리 주석). 함께 고칠 곳: 이 파일의 진행 상황 줄, README의 `inv/` 행, `overview/gen.py`(결정 수와 IC 범위 두 곳, 컬럼 수), `policy/inv_content.py`의 `META`·`EFFECT`(IC-1~IC-n 두 곳), `docs/진행메모.md` 재고 절(결정 수, 추천과 다른 결정, 변경 안내 목록, IC 기록 한 줄), `inv/decision.py` 머리 주석. 그 뒤 `python3 tools/pdfgen/inv/split.py <폴더>` → Chrome PDF → `docs/pdf/결정/재고결정/` (바뀐 결정만 옛 PDF를 NFC 접두어 `재고결정_<번호>_`로 지우고 다시 출력).
-- 컬럼을 고치면 함께 다시 돌릴 것: ERD, 테스트 데이터(`python3 tools/pdfgen/testdata/gen.py docs/테스트데이터`), 회원 C-n이 법률 결정과 같으면 법률검토(`bash docs/pdf/법률검토/_src/build.sh <작업폴더>`). 도메인 결정이나 진행 숫자가 바뀌면 전체 개요(`overview/gen.py`)와 축별 설계 패턴(`axes/`)도 고친다.
+- 컬럼을 고치면 함께 다시 돌릴 것: ERD, 테스트 데이터(`python3 tools/pdfgen/testdata/gen.py docs/테스트데이터`, 재고 엑셀은 만들지 않으므로 재고 컬럼만 고쳤으면 돌리지 않는다. 돌렸으면 다른 도메인 xlsx를 HEAD로 되돌린다), 회원 C-n이 법률 결정과 같으면 법률검토(`bash docs/pdf/법률검토/_src/build.sh <작업폴더>`). 도메인 결정이나 진행 숫자가 바뀌면 전체 개요(`overview/gen.py`)와 축별 설계 패턴(`axes/`)도 고친다.
 - 용어·물리명을 바꿀 때 (2026-11-27 배송 운송장 변경 방식): 현재 문서(단일 출처, 정책명세, 화면, 개요, 용어집, ERD)만 바꾸고, 결정 원문(결정 PDF, 패턴 검토본, 다른 도메인 결정 기록)은 당시 기록이라 그대로 두며 바뀐 사실은 새 결정 번호로 남긴다. 받침이 달라지면 조사를 고치고(패키지가 → 운송장이), 같은 글자가 든 상관없는 값(`PARCEL_LOCKER`)은 뺀다.
 
 ## 문서 생성 구조
@@ -98,7 +98,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **설계 결정은 모두 사용자가 내린다.**
   - 추천안은 참고용이다. 사용자가 고르기 전에는 확정이나 기본값으로 취급하지 않는다.
   - 사용자의 선택이 이미 정한 결정이나 규칙과 충돌하면 확정하기 전에 알리고 다시 고르게 한다.
-- **확정 칸은 사용자가 컬럼 검토에서 직접 확정한 것만 체크한다** (2026-11-28 사용자 지시). 결정 단계의 선택(예: 재고 T-10 A의 물리명)을 확정 칸으로 옮기지 않는다. 재고는 `inv/data.py`의 `NAME_CONFIRMED`·`CONFIRMED_TABLES`·`CONFIRMED_GROUPS`.
+- **확정 칸은 사용자가 컬럼 검토에서 직접 확정한 것만 체크한다** (2026-11-28 사용자 지시). 결정 단계의 선택(예: 재고 T-10 A의 물리명)을 확정 칸으로 옮기지 않는다. 재고는 `inv/data.py`의 `NAME_CONFIRMED`·`CONFIRMED_TABLES`·`CONFIRMED_GROUPS`. 확정 테이블에 나중에 더한 컬럼은 `UNCONFIRMED_COLS`, CHECK·인덱스 행은 `UNCONFIRMED_X`(행 문구에 든 표시 문자열, 예: `IC-129 B`)에 넣어 확정 칸을 비운다 (2026-11-28 IC-129 재확인 A). 사용자가 확정하라고 하면 목록에서 뺀다.
 - **도메인은 한 번에 하나씩, 사용자가 이끄는 순서대로 진행한다.**
   - 다른 도메인의 결정을 미리 묻거나 여러 도메인을 묶지 않는다.
 - 테이블 후보를 정리할 때와 정책명세를 쓸 때는 결정 원문(`*_decision/orig/`, 결정 PDF)과 하나씩 대조한다. 결제 도메인에서 대조 없이 정리해 환불 요청 테이블(1-3 A)과 컬럼 여러 개가 빠졌다 (2026-11-26).
@@ -342,9 +342,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   find . -name '._*' -not -path './.git/*' -exec rm -f {} + 2>/dev/null
   ```
 - 한글 파일 이름은 NFD로 저장되어 있다. 셸 글롭이나 `rm`이 맞지 않으면 Python에서 `unicodedata.normalize('NFC', …)`로 비교한다.
+  - `git checkout -- <한글 경로>`는 "unable to unlink"로 실패한다. Python에서 `os.listdir`로 NFC → 실제 이름 표를 만들고 `git show HEAD:<경로>` 출력을 그 파일에 쓴다.
+  - 커밋할 새 한글 PDF도 `os.listdir`로 실제 이름을 골라 `git add --`에 넘긴다.
 - 셸은 zsh라 `$F`에 담은 여러 경로가 나뉘지 않는다. 여러 파일은 Python이나 배열로 다룬다.
 - 셸에서 스크립트를 쓸 때는 heredoc을 `<<'EOF'`처럼 따옴표로 막는다. 문서 문자열에 백틱이 많아, 따옴표 없는 heredoc이면 셸이 명령으로 실행해 내용이 빠진다 (2026-11-23 실제 사례).
-- Python 3.9.6은 한글이 든 약 1000바이트가 넘는 소스 줄에서 "Non-UTF-8 code" 오류를 낸다. 긴 문자열은 나눠 쓰고 `awk '{if (length($0)>950) print NR}'`로 확인한다.
+- Python 3.9.6은 한글이 든 약 1000바이트가 넘는 소스 줄에서 "Non-UTF-8 code" 오류를 낸다. 긴 문자열은 나눠 쓰고 `LC_ALL=C awk '{if (length($0)>950) print FILENAME, FNR}' <파일들>`로 확인한다 (`NR`은 파일 여러 개에서 줄 번호가 누적되어 엉뚱한 줄을 가리킨다).
 
 ## Git
 
