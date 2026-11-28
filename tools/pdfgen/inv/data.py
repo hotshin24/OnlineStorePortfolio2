@@ -305,7 +305,7 @@ table(t='INV_STOCK_HOLD', ko='보류 건 (판매 상품을 잠시 팔지 않는 
 
 # =========================================================== 2-2. 안전 재고 변경 이력
 table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety Stock Change History',
- desc='판매 상품 현재고의 안전 재고, 수동 지정 여부, 수동 지정 종료일 중 하나라도 바뀔 때마다 1행 (IC-53 C, IC-58 A, IC-130 A). "왜 8이 됐나"를 사유, 적용 등급, 수동 지정 여부의 변화로 답한다 (IC-59 A). "이 변경 때문에 품절이 됐나"는 변경 시점 판매 가능 수량으로(IC-123 A), "한 번의 작업으로 바뀐 행"은 변경 작업 키로(IC-124 A) 답한다. 값도 수동 지정 여부도 그대로인 행은 남기지 않는다 (IC-125 A). '
+ desc='판매 상품 현재고의 안전 재고, 수동 지정 여부, 수동 지정 종료일 중 하나라도 바뀔 때마다 1행 (IC-53 C, IC-58 A, IC-130 A). "왜 8이 됐나"를 사유, 적용 등급, 수동 지정 여부의 변화로 답한다 (IC-59 A). "이 변경 때문에 품절이 됐나"는 변경 시점 판매 가능 수량으로(IC-123 A), "한 번의 작업으로 바뀐 행"은 변경 작업 키로(IC-124 A) 답한다. 값·수동 지정 여부·종료일이 모두 그대로인 행은 남기지 않는다 (IC-125 A, IC-130 A). '
       '현재고 UPDATE와 같은 트랜잭션에서 넣고 고치지 않는다. 변경자는 시스템 컬럼(`CREATED_BY_TYPE_CD`: 관리자 `ADMIN`, 등급 배치 `BATCH`)이 남긴다. 리오더 기준은 남기지 않는다 (IC-58 A).',
  basis='5-1 B, IC-4 A, IC-19 A, IC-53 C, IC-58 A, IC-59 A, IC-60 A, IC-77 B, IC-123 A~IC-125 A, IC-126 C, IC-127 B, IC-128 A, IC-129 B, IC-130 A~IC-132 A',
  pk='대리 PK `SEQ_INV_SAFETY_STOCK_HIST`', cache=20,
@@ -330,7 +330,7 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
  ]),
  ('수동 지정 여부·종료일', [
   ('BEFORE_MANUAL_YN','이전 수동 지정 여부','Before Manually Set Flag',YN,'Y','','CK (Y/N)','신규 행 기본값이면 NULL. 기본값 복귀는 Y (IC-19 A).'),
-  ('AFTER_MANUAL_YN','새 수동 지정 여부','After Manually Set Flag',YN,'N','','CK (Y/N)','관리자 수정이면 Y, 등급 기본값 적용·등급 없음 기본값·기본값 복귀·신규 행 기본값이면 N.'),
+  ('AFTER_MANUAL_YN','새 수동 지정 여부','After Manually Set Flag',YN,'N','','CK (Y/N)','관리자 수정이면 Y, 등급 기본값 적용·등급 없음 기본값·기본값 변경 적용·기본값 복귀·신규 행 기본값이면 N (IC-128 A).'),
   ('BEFORE_MANUAL_END_DT','이전 수동 지정 종료일','Before Manual Setting End Date','DATE','Y','','',
    '바뀌기 전 현재고의 안전 재고 수동 지정 종료일 (IC-130 A). 종료일이 없었거나 신규 행이면 NULL. 이전 수동 지정 여부가 N이면 NULL (CK, 현재고 CK와 같은 규칙).'),
   ('AFTER_MANUAL_END_DT','새 수동 지정 종료일','After Manual Setting End Date','DATE','Y','','',
