@@ -12,6 +12,7 @@
 변경안내.txt 형식:
   @@IC-17 =   다음 줄에 새 안내문 (끝은 "아래 본문은 당시 기록이다.")
   @@IC-24 +   다음 줄에 덧붙일 문장 (기존 안내의 "아래 본문은 당시 기록이다." 앞에 넣음)
+재확인 질문은 머리를 "@@IC-62 재확인"처럼 쓰면 C가 아니라 RECONFIRM[번호]에 더해진다(#target, #apply 없음).
 결정 날짜는 decision.py의 day()가 번호로 정하므로, 다른 날 결정이면 day()를 먼저 고친다.
 """
 import sys, os
@@ -23,7 +24,7 @@ def lit(s, ind):
     while s:
         parts.append(s[:180]); s = s[180:]
     return ('\n' + ' ' * ind).join(repr(p) for p in parts)
-recs = []
+recs = []; recon = []
 for blk in open(DEC, encoding='utf-8').read().split('@@')[1:]:
     lines = blk.split('\n'); no = lines[0].strip(); f = {}; opts = []; key = None; buf = []
     def flush():
@@ -39,6 +40,14 @@ for blk in open(DEC, encoding='utf-8').read().split('@@')[1:]:
             else: key = k; buf = [v] if v else []
         else: buf.append(ln)
     flush()
+    f['reason'] = f['reason'].replace('\n', ' ')
+    if no.endswith(' 재확인'):
+        o = [f" ({f['title']!r},", '  (' + lit(f['what'], 3) + '),', '  (' + lit(f['ex'], 3) + '), [']
+        for a_, m, p, c in opts:
+            o.append(f"  ({a_!r}, (" + lit(m, 3) + '),'); o.append('   ' + lit(p, 3) + ','); o.append('   ' + lit(c, 3) + '),')
+        o.append(f"  ], {f['rec']!r}, (" + lit(f['reason'], 3) + '),')
+        o.append(f"  {f['choice']!r}, {f['answer']!r}),")
+        recon.append((no.split()[0], '\n'.join(o))); continue
     f['apply'] = f['apply'].replace(' \n', ' ').replace('\n', ' ')
     f['reason'] = f['reason'].replace('\n', ' ')
     o = [f"({no!r}, {f['title']!r}, {f['target']!r},", ' (' + lit(f['what'], 2) + '),', ' (' + lit(f['ex'], 2) + '), [']
@@ -49,7 +58,10 @@ for blk in open(DEC, encoding='utf-8').read().split('@@')[1:]:
     recs.append('\n'.join(o))
 s = open(P, encoding='utf-8').read()
 k = '\n]\nCHANGED = {\n'; assert s.count(k) == 1
-s = s.replace(k, '\n' + '\n'.join(recs) + k)
+if recs: s = s.replace(k, '\n' + '\n'.join(recs) + k)
+for no_, txt in recon:
+    k2 = '\n}  # RECONFIRM 끝\n'; assert s.count(k2) == 1
+    s = s.replace(k2, f'\n {no_!r}: [\n' + txt + '\n ],' + k2)
 # CHANGED
 a = s.index('CHANGED = {\n'); b = s.index('\n}\n', a) + 3
 ns = {}; exec(s[a:b], ns); ch = ns['CHANGED']
@@ -66,4 +78,4 @@ for kk, v in ch.items():
 out.append('}\n')
 s = s[:a] + '\n'.join(out) + s[b:]
 open(P, 'w', encoding='utf-8').write(s)
-print(len(recs), len(ch))
+print(len(recs), len(recon), len(ch))

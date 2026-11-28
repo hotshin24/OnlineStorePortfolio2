@@ -1023,6 +1023,21 @@ POLICY = [
 NAME_CONFIRMED = {'INV_STOCK'}
 CONFIRMED_GROUPS = set()
 CONFIRMED_TABLES = {'INV_STOCK'}
+# 차수 (2026-11-28 1차 범위, 진행메모 "1차 범위"). 테이블 차수는 사용자 결정(1차-1~4 A)에서 나온 것이고,
+# 1차 테이블 안의 컬럼 차수는 1차-4 A 기준을 적용한 제안이다(컬럼 검토에서 확정). 확정 칸과 따로 표시한다.
+PHASE = {'INV_STOCK': '1차', 'INV_STOCK_LEDGER': '1차', 'INV_STOCK_COMMITMENT': '1차', 'INV_STOCK_COMMITMENT_EVENT': '1차',
+         'INV_SAFETY_STOCK_HIST': '1차', 'INV_MONTHLY_CLOSING': '1차'}  # 나머지는 2차 (안전 재고 이력·월 마감은 1차-5 A로 더함)
+# 1차 테이블에서 2차로 미루는 컬럼: FK 대상이 2차 테이블이거나, 2차 업무에서만 쓰고 여러 컬럼 CHECK에 들지 않는 컬럼
+PHASE_COL = {('INV_STOCK_LEDGER', 'INBOUND_PLAN_ID'): '2차', ('INV_STOCK_LEDGER', 'STOCK_HOLD_ID'): '2차',
+             ('INV_STOCK_LEDGER', 'STOCK_EXCEPTION_ID'): '2차', ('INV_STOCK_LEDGER', 'STOCKTAKE_ID'): '2차',
+             ('INV_STOCK_LEDGER', 'APPROVED_ADMIN_ID'): '2차', ('INV_STOCK_COMMITMENT', 'INBOUND_PLAN_ID'): '2차',
+             ('INV_STOCK_COMMITMENT_EVENT', 'FROM_INBOUND_PLAN_ID'): '2차', ('INV_STOCK_COMMITMENT_EVENT', 'TO_INBOUND_PLAN_ID'): '2차'}
+# 1차 컬럼 검토 순서 (현재고는 확정)
+PHASE_ORDER = ['INV_STOCK_LEDGER', 'INV_MONTHLY_CLOSING', 'INV_STOCK_COMMITMENT', 'INV_STOCK_COMMITMENT_EVENT', 'INV_SAFETY_STOCK_HIST']
+# 다시 물을 것(CONFIRM)의 차수. 제목으로 찾는다. 없는 제목은 2차.
+PHASE_Q = {'다른 도메인 이름': '1차', '원천 없는 사유': '1차', '보류 건·안전 재고 이력 컬럼': '1차', '기초 재고 사유': '1차',
+           '확보 행 동시 갱신': '1차', '확보 처리 이력 파티션': '1차', '진행 중 확보 UK 범위': '1차', '예약 만료 시각': '1차',
+           '수량 타입': '1차', '원장 UK와 파티션 제거': '1차', '운영 DB 에디션': '1차'}
 # 다른 도메인 문서에서 오는 값. 재고는 외부 업체 값이 없다.
 EXTERNAL_SOURCED = set()
 
