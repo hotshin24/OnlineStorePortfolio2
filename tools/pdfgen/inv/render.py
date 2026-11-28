@@ -2,6 +2,7 @@
 # 사용: python3 render.py <출력폴더>
 import sys, os, re, html, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from data import UNCONFIRMED_COLS, UNCONFIRMED_X
 from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, REUSE_NO_ROWS, SAME_NAME_FOLD, CONFIRMED_GROUPS, CONFIRMED_TABLES, EXTERNAL_SOURCED as PG_SOURCED, POLICY, NAME_CONFIRMED, PHASE, PHASE_COL, PHASE_ORDER, PHASE_Q, CODE_PHASE
 JSON_CODES = {}
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -134,7 +135,7 @@ for i, t in enumerate(T, 1):
         if g != prev:
             secs += f'<tr class="grp"><td colspan="11">{il(g)}</td></tr>'; prev = g
         vals = CODES.get(p, []) if ('값 목록' in ck) else []
-        on_ = t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)
+        on_ = (t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)) and (t['t'], p) not in UNCONFIRMED_COLS
         POS[(t['t'], p)] = f'{i}-{k}'
         reuse_row = ''
         same = None
@@ -155,7 +156,7 @@ for i, t in enumerate(T, 1):
                          f'<td colspan="6">공통코드 그룹 <code>{REUSE[p]}</code> (값 {nv}개) · 값 행은 <b>{where}</b> <code>{rc}</code> 아래에 있다. '
                          f'값을 더하면 두 컬럼의 값 목록 CK를 함께 고친다.</td>' + ckcell(on_) + phcell(cphase(t['t'], p)) + '<td class="memo"></td></tr>')
         if vals: ds = (ds + ' ' if ds else '') + ('값 목록은 아래 행 (그룹 `' + REUSE[p] + '` 재사용).' if p in REUSE else 'JSON 안의 코드 값 목록은 아래 행.' if p in JSON_CODES else '값 목록은 아래 행.')
-        on = t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)
+        on = (t['t'] in CONFIRMED_TABLES or (kind == 'b' and (t['t'], g) in CONFIRMED_GROUPS)) and (t['t'], p) not in UNCONFIRMED_COLS
         ph = cphase(t['t'], p) if kind == 'b' else tphase(t['t'])
         cls = ' class="sys"' if kind == 's' else (' class="cf"' if '[확인' in ds + ck + en else '')
         no = f'<b style="font-weight:800;color:#111">{i}-{k}</b>' if kind == 'b' and (t['t'], p) in PG_SOURCED else f'{i}-{k}'
@@ -171,7 +172,7 @@ for i, t in enumerate(T, 1):
         secs += '<h3>인덱스·제약 (제안)</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>차수</th><th>메모</th></tr>'
         _c2 = [c for (tt, c), v in PHASE_COL.items() if tt == t['t'] and 'FK 2차' in v]
         for k, x in enumerate(t['idx'] + [f'CK (테이블 수준): {c}' for c in t['check']], 1):
-            secs += f'<tr{" class=cf" if "[확인" in x else ""}><td class="n">{i}-X{k}</td><td>{il(x)}</td>' + ckcell(t['t'] in CONFIRMED_TABLES) + phcell(xphase(t['t'], x, _c2)) + '<td class="memo"></td></tr>'
+            secs += f'<tr{" class=cf" if "[확인" in x else ""}><td class="n">{i}-X{k}</td><td>{il(x)}</td>' + ckcell(t['t'] in CONFIRMED_TABLES and not any(tt == t['t'] and m in x for tt, m in UNCONFIRMED_X)) + phcell(xphase(t['t'], x, _c2)) + '<td class="memo"></td></tr>'
         secs += '</table>'
 toc += f'</table><p><b>합계: 업무 컬럼 {tot_b} + 공통 컬럼 {tot_s} = {tot_b+tot_s}개</b></p>'
 conf = '<h2 class="t">확인이 필요한 사항 (결정 필요)</h2><p>차수 칸이 1차인 항목을 1차 컬럼 검토 때 먼저 묻는다.</p><table><tr><th>No</th><th>항목</th><th>내용</th><th>대상</th><th>확정</th><th>차수</th><th>메모</th></tr>'

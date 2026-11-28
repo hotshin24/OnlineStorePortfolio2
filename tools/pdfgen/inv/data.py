@@ -105,9 +105,13 @@ table(t='INV_STOCK', ko='현재고 (창고별 판매 상품 수량)', en='Stock 
  ]),
  ('재고 관리 기준', [
   qty('SAFETY_STOCK_QTY','안전 재고 수량','Safety Stock Quantity',
-      '일반 주문이 쓰지 못하고 남겨 두는 수량 (5-1 B). 새 행은 공통코드 정책값(등급별 기본값, IC-4 A)으로 채운다. 관리자가 고치면 수동 지정 여부가 Y가 되고, N이면 등급이 바뀔 때 새 기본값으로 바뀐다 (IC-19 A). CHECK(판매 가능 >= 0)에는 넣지 않아 재발송은 안전 재고까지 쓴다. 이 값이나 수동 지정 여부가 바뀌면 같은 트랜잭션에서 안전 재고 변경 이력에 1행을 넣는다 (IC-53 C).'),
+      '일반 주문이 쓰지 못하고 남겨 두는 수량 (5-1 B). 새 행은 공통코드 정책값(등급별 기본값, IC-4 A)으로 채운다. 관리자가 고치면 수동 지정 여부가 Y가 되고, N이면 등급이 바뀔 때 새 기본값으로 바뀐다 (IC-19 A). CHECK(판매 가능 >= 0)에는 넣지 않아 재발송은 안전 재고까지 쓴다. 이 값이나 수동 지정 여부가 바뀌면 같은 트랜잭션에서 안전 재고 변경 이력에 1행을 넣는다 (IC-53 C). 이력의 변경 시점 판매 가능 수량은 같은 UPDATE의 `RETURNING AVAILABLE_QTY`로 받는다 (IC-123 A).'),
   yn('SAFETY_STOCK_MANUAL_YN','안전 재고 수동 지정 여부','Safety Stock Manually Set Flag','N',
-     '관리자가 안전 재고를 고치면 Y (IC-19 A). N이면 월 등급 배치가 등급이 바뀐 행의 안전 재고를 새 등급 기본값으로 바꾼다. 예: A(10)에서 C로 떨어지면 N인 행은 C 기본값 2로 바뀐다. 기본값으로 되돌리면 N으로 돌린다.'),
+     '관리자가 안전 재고를 고치면 Y (IC-19 A). N이면 월 등급 배치가 등급이 바뀐 행의 안전 재고를 새 등급 기본값으로 바꾼다. 예: A(10)에서 C로 떨어지면 N인 행은 C 기본값 2로 바뀐다. 기본값으로 되돌리면 N으로 돌린다. '
+     '공통코드 기본값을 바꾸면 N인 행에도 같은 작업으로 새 기본값을 적용한다 (IC-128 A).'),
+  ('SAFETY_STOCK_MANUAL_END_DT','안전 재고 수동 지정 종료일','Safety Stock Manual Setting End Date','DATE','Y','','',
+   '행사처럼 기간을 정해 안전 재고를 올릴 때 관리자가 넣는다 (IC-129 B). 이 날이 지나면(종료일 < 오늘) 일 배치가 기본값 복귀를 넣고(이력 사유 기본값 복귀, 행위자 `BATCH`) 수동 지정 N, 종료일 NULL로 돌린다. '
+   '수동 지정 N이면 NULL (CK). 예: 12/1 패딩 L을 5 → 20으로 올리며 종료일 12/31을 넣으면 1/1 배치가 5로 되돌린다. NULL이면 사람이 되돌릴 때까지 유지. 2026-11-28 IC-129 B로 확정 테이블에 더한 컬럼이라 확정 칸은 비워 둔다.'),
   ('REORDER_POINT_QTY','리오더 기준 수량','Reorder Point Quantity',QTY,'Y','','CK (>= 0)',
    'NULL이면 감시하지 않는다(시즌 한정 상품 등). 판매 가능 + Σ GREATEST(예정일이 오늘 + 입고 기간 안인 진행 중 입고 예정의 예정 − 검수 양품 − 검수 불량 − 확보, 0) <= 이 값이면 배치가 재고 예외 `LOW_STOCK`(신호 9)을 만든다 (IC-3 A, IC-8 A, IC-20 B). '
    '입고 기간은 공통코드 정책값(판매 상품, 사은품·운영자재). 예: 판매 가능 2, 기준 10, 60일 뒤 입고 100, 입고 기간 30일이면 2 <= 10이라 경보. '
@@ -135,7 +139,8 @@ table(t='INV_STOCK', ko='현재고 (창고별 판매 상품 수량)', en='Stock 
  check=[        '`AVAILABLE_QTY >= 0` (3-3 A). 수량 컬럼 7개는 각각 >= 0 (2-6 A). 가상 컬럼 3개는 세지 않는다',
         '`FIRST_SELLABLE_AT IS NOT NULL AND GENERAL_ORDERABLE_QTY = 0`이면 `SOLD_OUT_AT` NOT NULL, 아니면 NULL (IC-1 A, IC-17 A, IC-71 A). `FIRST_SELLABLE_AT`이 NULL이면 조건이 거짓이라 `SOLD_OUT_AT`은 NULL이어야 한다. '
         '이 CK를 건다: 수량·안전 재고를 바꾸는 모든 UPDATE가 같은 문장에서 `SOLD_OUT_AT`, `FIRST_SELLABLE_AT`, `STOCK_QUANTITY_CHANGED_AT`을 고친다. 어디서 모아 고칠지는 백엔드 설계 때 정한다 (IC-73 A, 넘김 사항)',
-        '`GENERAL_ORDERABLE_QTY > 0`이면 `FIRST_SELLABLE_AT` NOT NULL (한 번 채우면 비우지 않음, IC-71 A)'])
+        '`GENERAL_ORDERABLE_QTY > 0`이면 `FIRST_SELLABLE_AT` NOT NULL (한 번 채우면 비우지 않음, IC-71 A)',
+        '`SAFETY_STOCK_MANUAL_YN = \'Y\' OR SAFETY_STOCK_MANUAL_END_DT IS NULL` (수동 지정 N이면 종료일 NULL, IC-129 B)'])
 
 # =========================================================== 2. 수불 원장
 table(t='INV_STOCK_LEDGER', ko='수불 원장 (실물 수량 변화 1건)', en='Stock Ledger',
@@ -299,9 +304,9 @@ table(t='INV_STOCK_HOLD', ko='보류 건 (판매 상품을 잠시 팔지 않는 
 
 # =========================================================== 2-2. 안전 재고 변경 이력
 table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety Stock Change History',
- desc='판매 상품 현재고의 안전 재고나 그 수동 지정 여부가 바뀔 때마다 1행 (IC-53 C, IC-58 A). "왜 8이 됐나"를 사유, 적용 등급, 수동 지정 여부의 변화로 답한다 (IC-59 A). '
+ desc='판매 상품 현재고의 안전 재고나 그 수동 지정 여부가 바뀔 때마다 1행 (IC-53 C, IC-58 A). "왜 8이 됐나"를 사유, 적용 등급, 수동 지정 여부의 변화로 답한다 (IC-59 A). "이 변경 때문에 품절이 됐나"는 변경 시점 판매 가능 수량으로(IC-123 A), "한 번의 작업으로 바뀐 행"은 변경 작업 키로(IC-124 A) 답한다. 값도 수동 지정 여부도 그대로인 행은 남기지 않는다 (IC-125 A). '
       '현재고 UPDATE와 같은 트랜잭션에서 넣고 고치지 않는다. 변경자는 시스템 컬럼(`CREATED_BY_TYPE_CD`: 관리자 `ADMIN`, 등급 배치 `BATCH`)이 남긴다. 리오더 기준은 남기지 않는다 (IC-58 A).',
- basis='5-1 B, IC-4 A, IC-19 A, IC-53 C, IC-58 A, IC-59 A, IC-60 A, IC-77 B',
+ basis='5-1 B, IC-4 A, IC-19 A, IC-53 C, IC-58 A, IC-59 A, IC-60 A, IC-77 B, IC-123 A~IC-125 A, IC-126 C, IC-127 B, IC-128 A, IC-129 B',
  pk='대리 PK `SEQ_INV_SAFETY_STOCK_HIST`', cache=20,
  delete='삭제하지 않는다 (이력). 5년이 지난 파티션을 제거한다 (IC-60 A)',
  part='생성 일시(`CREATED_AT`) 월 INTERVAL 파티션 (IC-60 A)', keep='생성 + 5년 (IC-60 A, 일 스냅샷과 같은 기간)',
@@ -310,11 +315,17 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
   ('SAFETY_STOCK_HIST_ID','안전 재고 변경 이력 고유 식별 번호','Safety Stock Change History Unique Identifier',ID,'N','','PK',''),
   fk('STOCK_ID','현재고 식별 번호','Stock on Hand Identifier','INV_STOCK'),
   cd('SAFETY_STOCK_CHANGE_REASON_CD','안전 재고 변경 사유 코드','Safety Stock Change Reason Code',
-     desc='신규 행 기본값, 등급 기본값 적용, 등급 없음 기본값, 관리자 수정, 기본값 복귀 5개 (IC-59 A, IC-77 B).'),
+     desc='신규 행 기본값, 등급 기본값 적용, 등급 없음 기본값, 기본값 변경 적용, 관리자 수정, 기본값 복귀 6개 (IC-59 A, IC-77 B, IC-128 A).'),
+  ('CHANGE_OPERATION_KEY_VAL','변경 작업 키','Change Operation Key','VARCHAR2(50)','N','','',
+   '한 번의 작업이 만든 행은 같은 값이다 (IC-124 A). 관리자 요청(단건, 일괄 수정, 기본값 변경)은 화면이 요청마다 발급하는 UUID(36자, 원장 요청 키와 같은 방식). 등급 배치는 `GRADE_BATCH:{실행 연월}:{실행 순번}`, 수동 지정 종료 배치는 `MANUAL_END_BATCH:{실행 일자}:{실행 순번}`, 신규 행 기본값은 `NEW_ROW:{SKU ID}`. '
+   '예: 12/1 겨울 행사 대비 300건 일괄 상향은 모두 같은 UUID라, 같은 시간대의 단건 수정과 갈리고 그 300건만 되돌릴 수 있다. 조회는 기간(월 파티션) + 이 값으로 하고 인덱스는 두지 않는다. 배치 키 형식은 배치 실행 이력(`BAT`)을 설계할 때 실행 ID로 바꿀 수 있다.'),
  ]),
  ('안전 재고 값', [
   qty('BEFORE_SAFETY_STOCK_QTY','이전 안전 재고 수량','Before Safety Stock Quantity','신규 행 기본값이면 NULL, 아니면 NOT NULL (CK).', d='', null='Y'),
   qty('AFTER_SAFETY_STOCK_QTY','새 안전 재고 수량','After Safety Stock Quantity','바뀐 뒤의 값. 예: 5 → 8의 8.', d=''),
+  qty('AVAILABLE_QTY_AT_CHANGE','변경 시점 판매 가능 수량','Available Quantity at Change',
+      '현재고 UPDATE의 `RETURNING AVAILABLE_QTY`로 받아 같은 트랜잭션에서 넣는다 (IC-123 A). 신규 행 기본값이면 0. 변경 전후 일반 주문 가능 수량은 GREATEST(이 값 − 이전·새 안전 재고, 0)이다. '
+      '예: 판매 가능 8에서 안전 재고 2 → 10이면 일반 주문 가능 6 → 0이라, 이 변경이 품절을 만들었다고 행 하나로 안다. 품절 시작 일시는 다시 입고되면 지워지므로 여기 남긴다.', d=''),
  ]),
  ('수동 지정 여부', [
   ('BEFORE_MANUAL_YN','이전 수동 지정 여부','Before Manually Set Flag',YN,'Y','','CK (Y/N)','신규 행 기본값이면 NULL. 기본값 복귀는 Y (IC-19 A).'),
@@ -322,7 +333,13 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
  ]),
  ('근거', [
   cd('APPLIED_STOCK_GRADE_CD','적용 재고 등급 코드','Applied Stock Grade Code','Y',n=10,
-     desc='등급 기본값 적용이면 NOT NULL (CK). 기본값 복귀와 신규 행 기본값은 그때 등급이 있으면 채운다. 예: B → A로 올라 A 기본값 8을 적용.'),
+     desc='등급 기본값 적용이면 NOT NULL (CK). 기본값 복귀, 신규 행 기본값, 기본값 변경 적용은 그때 등급이 있으면 채운다(등급 없음이면 NULL). 예: B → A로 올라 A 기본값 8을 적용.'),
+  cd('BEFORE_STOCK_GRADE_CD','이전 재고 등급 코드','Before Stock Grade Code','Y',n=10,
+     desc='등급 기본값 적용·등급 없음 기본값이면 현재고를 고치기 전 등급(판매 이력 없음이었으면 NULL). 다른 사유이면 NULL (CK, IC-126 C). 예: B → A면 B, C → 판매 이력 없음이면 C. '
+          '안전 재고가 바뀐 행에만 남아 등급 이력으로는 불완전하다. 등급 추세는 2차 재고 스냅샷에 등급을 넣을지 그 테이블 검토 때 본다(진행메모).'),
+  qty('POLICY_DEFAULT_SAFETY_STOCK_QTY','변경 당시 정책 기본 안전 재고 수량','Policy Default Safety Stock Quantity at Change',
+      '넣는 순간 그 행에 적용되는 정책 기본값(등급 기본값, 등급 없으면 공통 기본값)을 복사한다 (IC-127 B). 공통코드는 이전 값이 남지 않아서다. 관리자 수정이 아닌 사유는 새 안전 재고 수량과 같다 (CK). '
+      '예: A등급 기본값 8일 때 관리자가 7 → 10으로 올리면 8이 남아 정책보다 2개 더 잡았음을 안다. 나중에 기본값을 12로 바꿔도 당시 판단이 남는다.', d=''),
   ('CHANGE_NOTE_CN','변경 메모','Change Note','VARCHAR2(500)','Y','','','관리자 수정이면 NOT NULL (CK, IC-59 A). 예: "겨울 행사 대비 상향".'),
  ]),
  ],
@@ -331,7 +348,12 @@ table(t='INV_SAFETY_STOCK_HIST', ko='안전 재고 변경 이력', en='Safety St
         '등급 기본값 적용이면 이전·새 수동 지정 여부가 모두 N이고 `APPLIED_STOCK_GRADE_CD` NOT NULL',
         '등급 없음 기본값이면 이전·새 수동 지정 여부가 모두 N이고 `APPLIED_STOCK_GRADE_CD` NULL (IC-77 B)',
         '관리자 수정이면 새 수동 지정 여부 Y와 `CHANGE_NOTE_CN` NOT NULL. 기본값 복귀이면 이전 Y, 새 N',
-        '안전 재고 수량 2개는 각각 >= 0 (이전 값이 NULL이면 통과)'])
+        '안전 재고 수량 2개는 각각 >= 0 (이전 값이 NULL이면 통과)',
+        '`BEFORE_SAFETY_STOCK_QTY IS NULL OR BEFORE_SAFETY_STOCK_QTY <> AFTER_SAFETY_STOCK_QTY OR BEFORE_MANUAL_YN <> AFTER_MANUAL_YN` (값도 수동 지정 여부도 그대로인 행을 막는다. 신규 행은 이전 값이 NULL이라 통과, 기본값 복귀 5 → 5·Y → N과 값 고정 N → Y는 통과, IC-125 A)',
+        '신규 행 기본값이면 `AFTER_MANUAL_YN = \'N\'` (IC-125 A)',
+        '기본값 변경 적용이면 이전·새 수동 지정 여부가 모두 N (IC-128 A)',
+        '관리자 수정이 아니면 `POLICY_DEFAULT_SAFETY_STOCK_QTY = AFTER_SAFETY_STOCK_QTY` (IC-127 B)',
+        '등급 기본값 적용·등급 없음 기본값이 아니면 `BEFORE_STOCK_GRADE_CD` NULL (IC-126 C)'])
 
 # =========================================================== 3. 재고 확보
 table(t='INV_STOCK_COMMITMENT', ko='재고 확보 (주문·출고 요청이 잡은 수량)', en='Stock Commitment',
@@ -971,8 +993,9 @@ CODES = {
    ('NEW_ROW_DEFAULT','신규 행 기본값','New Row Default','SKU 등록 때 현재고 행을 만들며 등급별(또는 공통) 기본값을 채움 (2-2 A, IC-4 A)'),
    ('GRADE_DEFAULT','등급 기본값 적용','Grade Default Applied','월 등급 배치가 수동 지정 N인 행에 새 등급 기본값을 적용 (IC-19 A)'),
    ('NO_GRADE_DEFAULT','등급 없음 기본값','No-Grade Default Applied','월 등급 배치에서 등급이 NULL(판매 이력 없음)이 된 수동 지정 N인 행에 공통 기본값을 적용. 적용 등급 NULL (IC-77 B)'),
+   ('POLICY_DEFAULT_CHANGE','기본값 변경 적용','Policy Default Change Applied','관리자가 공통코드의 등급별(또는 공통) 기본값을 바꾸면, 같은 작업이 그 등급이고 수동 지정 N인 행에 새 값을 적용. 실제로 바뀐 행만 남긴다 (IC-128 A)'),
    ('ADMIN_EDIT','관리자 수정','Administrator Edit','관리자가 값을 고침. 수동 지정 Y, 메모 필수'),
-   ('DEFAULT_RESTORE','기본값 복귀','Default Restored','관리자가 수동 지정을 Y에서 N으로 되돌리고 등급 기본값을 적용')),
+   ('DEFAULT_RESTORE','기본값 복귀','Default Restored','수동 지정을 Y에서 N으로 되돌리고 등급 기본값을 적용. 관리자가 누르거나, 수동 지정 종료일이 지나 일 배치가 넣는다 (IC-129 B)')),
  'HOLD_REASON_CD': vals(
    ('QUALITY_CHECK','품질 확인','Quality Check',''),
    ('PHOTO_SHOOT','촬영 대기','Waiting for Photo Shoot','상품 촬영용으로 빼 둔 실물'),
@@ -1065,9 +1088,10 @@ CODES = {
 }
 # 같은 등급 값을 쓰는 컬럼은 값 행을 다시 펼치지 않고 원래 컬럼을 가리킨다 (결제 PYC-86 A 방식)
 CODES['APPLIED_STOCK_GRADE_CD'] = CODES['STOCK_GRADE_CD']
+CODES['BEFORE_STOCK_GRADE_CD'] = CODES['STOCK_GRADE_CD']
 CODES['RECONCILIATION_TYPE_CD'] = CODES['STOCK_EXCEPTION_TYPE_CD']  # 대사 6개만 CK로 씀
-REUSE = {'APPLIED_STOCK_GRADE_CD': 'STOCK_GRADE', 'RECONCILIATION_TYPE_CD': 'STOCK_EXCEPTION_TYPE'}
-REUSE_NO_ROWS = {'APPLIED_STOCK_GRADE_CD': ('INV_STOCK', 'STOCK_GRADE_CD'), 'RECONCILIATION_TYPE_CD': ('INV_STOCK_EXCEPTION', 'STOCK_EXCEPTION_TYPE_CD')}
+REUSE = {'APPLIED_STOCK_GRADE_CD': 'STOCK_GRADE', 'BEFORE_STOCK_GRADE_CD': 'STOCK_GRADE', 'RECONCILIATION_TYPE_CD': 'STOCK_EXCEPTION_TYPE'}
+REUSE_NO_ROWS = {'APPLIED_STOCK_GRADE_CD': ('INV_STOCK', 'STOCK_GRADE_CD'), 'BEFORE_STOCK_GRADE_CD': ('INV_STOCK', 'STOCK_GRADE_CD'), 'RECONCILIATION_TYPE_CD': ('INV_STOCK_EXCEPTION', 'STOCK_EXCEPTION_TYPE_CD')}
 SAME_NAME_FOLD = True
 
 # 공통코드에 둘 정책값 (컬럼이 아니라 `CMM_CODE` 값·`ATTR`)
@@ -1089,6 +1113,9 @@ POLICY = [
 NAME_CONFIRMED = {'INV_STOCK', 'INV_STOCK_LEDGER'}  # 수불 원장: 2026-11-28 사용자 확정 지시
 CONFIRMED_GROUPS = set()
 CONFIRMED_TABLES = {'INV_STOCK', 'INV_STOCK_LEDGER'}
+# 확정 테이블에 나중에 더해 아직 확정하지 않은 컬럼과, 인덱스·제약 행을 고르는 표시 문자열 (IC-129 재확인 A)
+UNCONFIRMED_COLS = {('INV_STOCK', 'SAFETY_STOCK_MANUAL_END_DT')}
+UNCONFIRMED_X = {('INV_STOCK', 'IC-129 B')}
 # 차수 (2026-11-28 1차 범위, 진행메모 "1차 범위"). 테이블 차수는 사용자 결정(1차-1~4 A)에서 나온 것이고,
 # 1차 테이블 안의 컬럼 차수는 1차-4 A 기준을 적용한 제안이다(컬럼 검토에서 확정). 확정 칸과 따로 표시한다.
 PHASE = {'INV_STOCK': '1차', 'INV_STOCK_LEDGER': '1차', 'INV_STOCK_COMMITMENT': '1차', 'INV_STOCK_COMMITMENT_EVENT': '1차',
