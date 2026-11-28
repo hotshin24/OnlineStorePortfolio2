@@ -1,7 +1,7 @@
 ---
 title: 주문 도메인 (ORD) 관계 요약
 ---
-%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/ord/erd_ord.py (2026-11-27). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/ord/erd_ord.py (2026-11-28). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보
 %% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, ||--o| 1:1(공유 PK), |o..o{ FK 미정 참조(다른 도메인 테이블이 정해지면 FK). 선 이름은 컬럼
 %% 다른 도메인 상자: 회원(확정 이름), 상품(후보), 클레임·창고·프로모션·전시(후보)
 erDiagram
@@ -52,7 +52,7 @@ erDiagram
     }
     PRM_PROMOTION["PRM_PROMOTION (프로모션 도메인, 이름 후보)"] {
     }
-    WMS_NON_SALE_ITEM["WMS_NON_SALE_ITEM (창고 도메인, 이름 후보)"] {
+    WMS_FREEBIE_ITEM["WMS_FREEBIE_ITEM (창고 도메인, 이름 후보)"] {
     }
     %% ---- 관계
     MBR_MEMBER |o--o{ ORD_CART : "MEMBER_ID"
@@ -74,7 +74,7 @@ erDiagram
     %% ---- FK 미정 참조
     PRD_DISPLAY_CONTENT_HIST |o..o{ ORD_ORDER_ITEM : "DISPLAY_CONTENT_HIST_ID (FK 미정)"
     CLM_CLAIM |o..o{ ORD_ORDER_ITEM_STATUS_HIST : "CLAIM_ID (FK 미정)"
-    WMS_NON_SALE_ITEM |o..o{ ORD_ORDER_FREEBIE : "NON_SALE_ITEM_ID (FK 미정)"
+    WMS_FREEBIE_ITEM |o..o{ ORD_ORDER_FREEBIE : "FREEBIE_ITEM_ID (FK 미정)"
     PRM_PROMOTION |o..o{ ORD_ORDER_FREEBIE : "PROMOTION_ID (FK 미정)"
     PRM_PROMOTION |o..o{ ORD_ORDER_ITEM_DISCOUNT : "PROMOTION_ID (FK 미정)"
     PRM_MEMBER_COUPON |o..o{ ORD_ORDER_ITEM_DISCOUNT : "MEMBER_COUPON_ID (FK 미정)"

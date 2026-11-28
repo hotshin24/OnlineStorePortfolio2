@@ -11,7 +11,7 @@ def main(out):
     done = sum(1 for c in ic if c[8])
     diff = [c[0] for c in ic if c[8] and c[8] != c[6]]
     b = [f'<h1>재고 도메인 컬럼 검토 결정 (IC-1~IC-{len(ic)})</h1>',
-         '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-27 대화로 결정 · '
+         '<div class="meta">자체 브랜드 패션 온라인몰 DB 설계 · Oracle 21c XE · 2026-11-27~28 대화로 결정 · '
          f'재고 축 결정 54개와 테이블 결정 T-1~T-11, 컬럼 정의서(제안) 기준 · {done}개 결정, {len(ic) - done}개 답변 전'
          + (f' · 추천과 다른 결정 {", ".join(diff)}' if diff else '') + '</div>',
          '<div class="box">재고 테이블·컬럼을 설계하며 정할 사항을 질문으로 정리했다. 질문과 선택지, 추천 이유는 당시 대화 원문 그대로이고, '

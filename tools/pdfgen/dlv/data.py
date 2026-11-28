@@ -209,7 +209,7 @@ table(t='DLV_SHIPMENT_REQUEST_ITEM', ko='출고 요청 상품 (요청 안의 대
  ]),
  ('실물', [
   fk('SKU_ID','실물 SKU 식별 번호','Physical SKU Identifier','PRD_SKU','Y','','판매 상품. 실물 둘 중 정확히 하나 (CK). 상품 마스터라 FK를 건다.'),
-  ('NON_SALE_ITEM_ID','실물 비판매 품목 식별 번호','Physical Non-Sale Item Identifier',ID,'Y','','FK 예정 → `WMS_NON_SALE_ITEM` (후보)',
+  ('FREEBIE_ITEM_ID','실물 사은품 식별 번호','Physical Free Gift Item Identifier',ID,'Y','','FK 예정 → `WMS_FREEBIE_ITEM` (후보)',
    '사은품 등 (상품 M-12 C). 품목 마스터는 WMS 도메인에서 만들고 그때 FK를 건다.'),
  ]),
  ('수량', [
@@ -223,7 +223,7 @@ table(t='DLV_SHIPMENT_REQUEST_ITEM', ko='출고 요청 상품 (요청 안의 대
  idx=['FK `FK_DLV_SHIPMENT_REQUEST_ITEM_REQUEST_REASON` (`SHIPMENT_REQUEST_ID`, `REQUEST_REASON_CD`) → `DLV_SHIPMENT_REQUEST` UK (부모 값과 같게 보장, DC-5 A 후속 A)',
       'FK `FK_DLV_SHIPMENT_REQUEST_ITEM_ORIGINAL` (`ORIGINAL_WAYBILL_ID`, `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`) → `DLV_WAYBILL_ITEM` PK (DC-47 B)', 'IX `SHIPMENT_REQUEST_ID` (FK), `SKU_ID` (FK), `ORDER_ITEM_ID`, `ORDER_FREEBIE_ID`, `CLAIM_ITEM_ID` (값 참조), (`ORIGINAL_WAYBILL_ID`, `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`) (FK)'],
  check=['대상 3개(`ORDER_ITEM_ID`, `ORDER_FREEBIE_ID`, `CLAIM_ITEM_ID`): 원인이 비주문 출고이면 셋 다 NULL, 다른 원인이면 정확히 하나만 NOT NULL (선행 6, DC-40 A)',
-        '실물 2개(`SKU_ID`, `NON_SALE_ITEM_ID`) 중 정확히 하나만 NOT NULL. `ORDER_FREEBIE_ID`가 NOT NULL이면 `NON_SALE_ITEM_ID` NOT NULL',
+        '실물 2개(`SKU_ID`, `FREEBIE_ITEM_ID`) 중 정확히 하나만 NOT NULL. `ORDER_FREEBIE_ID`가 NOT NULL이면 `FREEBIE_ITEM_ID` NOT NULL',
         '`SHIPPED_QTY + OUT_OF_STOCK_QTY + CANCELED_QTY <= REQUEST_QTY`',
         '원인 × 대상 구분 `TARGET_TYPE_CD` (DC-5 A 후속 A, DC-48 B): 주문·출고 누락 재발송 = `ORDER_ITEM`·`ORDER_FREEBIE` / 반품·교환·수선 회수, 교환·수선 재발송 = `CLAIM_ITEM` / 비주문 출고 = `NONE` / 사고·반송 재발송 = `NONE`이 아님 (원래 행과 같은 구분인지는 애플리케이션이 `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`로 검사)',
         '`ORIGINAL_WAYBILL_ID`, `ORIGINAL_SHIPMENT_REQUEST_ITEM_ID`: 둘 다 NULL이거나 둘 다 NOT NULL. 원인이 사고·반송·출고 누락 재발송이면 NOT NULL, 다른 원인이면 NULL (DC-47 B)'])
@@ -733,6 +733,6 @@ CONFIRM = [
  ('출고 없는 요청의 보존 기간', '출고 없이 취소된 요청(주문 취소, 결품)을 취소일 + 5년 둘지, 주문 파기 예정일을 따를지.', '`DLV_SHIPMENT_REQUEST`'),
  ('상태 전이 (세부 4-5)', '출고 요청·출고·운송장의 허용 전이를 DB(트리거 없이 불가)로 막지 않고 애플리케이션이 검사한다는 제안. 값 목록 CK와 구분별 값 CK만 DB에 둔다.', '상태 코드 3개'),
  ('시퀀스 CACHE', '고빈도(100) 제안: 출고 요청, 요청 상품, 출고, 운송장, 추적 이벤트, 상태 이력, 연동 로그. 나머지 20.', '전체'),
- ('다른 도메인 FK', '창고·비판매 품목 마스터(WMS), 클레임·클레임 상품(CLM)은 그 도메인 설계 뒤 이름과 FK 여부를 정한다. 클레임은 값 참조(5-1 B).', '`WAREHOUSE_ID`, `NON_SALE_ITEM_ID`, `CLAIM_ID`, `CLAIM_ITEM_ID`'),
+ ('다른 도메인 FK', '창고·비판매 품목 마스터(WMS), 클레임·클레임 상품(CLM)은 그 도메인 설계 뒤 이름과 FK 여부를 정한다. 클레임은 값 참조(5-1 B).', '`WAREHOUSE_ID`, `FREEBIE_ITEM_ID`, `CLAIM_ID`, `CLAIM_ITEM_ID`'),
  ('택배 집화 가능 여부', '영업일 달력(시스템 도메인)에 컬럼을 더한다 (DC-26 A). 달력 소속(`SYS` / `CMM`)은 주문 1-8 A에서 미정.', '도착 예정일 계산'),
 ]

@@ -1,7 +1,7 @@
 ---
 title: 재고 도메인 (INV) 관계 요약
 ---
-%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/inv/erd_inv.py (2026-11-27). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 T-10 A로 확정. FK 없이 두는 참조(다른 도메인 ID 2-4 A, 재고 예외의 확보 ID T-1 A, 정정의 원래 원장 ID T-6 B)는 그리지 않았다
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/inv/erd_inv.py (2026-11-28). 컬럼 없이 테이블과 관계만 그렸다. 테이블 물리명 7개는 T-10 A에서 고른 안이고 나머지 10개는 후보다. 확정은 현재고 1개. FK 없이 두는 참조(다른 도메인 ID 2-4 A, 재고 예외의 확보 ID T-1 A, 정정의 원래 원장 ID T-6 B)는 그리지 않았다
 %% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, |o..o{ FK 예정 참조(WMS 테이블이 정해지면 FK). 선 이름은 컬럼
 %% 다른 도메인 상자: 상품·창고 (창고는 후보)
 erDiagram
@@ -10,12 +10,29 @@ erDiagram
     }
     INV_STOCK_LEDGER["INV_STOCK_LEDGER 수불 원장"] {
     }
+    INV_STOCK_HOLD["INV_STOCK_HOLD 보류 건"] {
+    }
+    INV_SAFETY_STOCK_HIST["INV_SAFETY_STOCK_HIST 안전 재고 변경 이력"] {
+    }
     %% ---- 확보·입고 예정
     INV_STOCK_COMMITMENT["INV_STOCK_COMMITMENT 재고 확보"] {
     }
     INV_STOCK_COMMITMENT_EVENT["INV_STOCK_COMMITMENT_EVENT 재고 확보 처리 이력"] {
     }
     INV_INBOUND_PLAN["INV_INBOUND_PLAN 입고 예정"] {
+    }
+    %% ---- 사은품·운영자재
+    INV_FREEBIE_STOCK["INV_FREEBIE_STOCK 사은품 현재고"] {
+    }
+    INV_FREEBIE_LEDGER["INV_FREEBIE_LEDGER 사은품 원장"] {
+    }
+    INV_FREEBIE_MONTHLY_SNAPSHOT["INV_FREEBIE_MONTHLY_SNAPSHOT 사은품 월말 스냅샷"] {
+    }
+    INV_SUPPLY_STOCK["INV_SUPPLY_STOCK 운영자재 현재고"] {
+    }
+    INV_SUPPLY_LEDGER["INV_SUPPLY_LEDGER 운영자재 원장"] {
+    }
+    INV_SUPPLY_MONTHLY_SNAPSHOT["INV_SUPPLY_MONTHLY_SNAPSHOT 운영자재 월말 스냅샷"] {
     }
     %% ---- 마감·대사
     INV_STOCK_SNAPSHOT["INV_STOCK_SNAPSHOT 재고 스냅샷"] {
@@ -24,27 +41,49 @@ erDiagram
     }
     INV_STOCK_EXCEPTION["INV_STOCK_EXCEPTION 재고 예외"] {
     }
+    INV_RECONCILIATION_RUN["INV_RECONCILIATION_RUN 재고 대사 실행"] {
+    }
     %% ---- 다른 도메인
     PRD_SKU["PRD_SKU (상품 도메인)"] {
     }
-    WMS_NON_SALE_ITEM["WMS_NON_SALE_ITEM (창고 도메인, 이름 후보)"] {
+    WMS_FREEBIE_ITEM["WMS_FREEBIE_ITEM (창고 도메인, 이름 후보)"] {
+    }
+    WMS_SUPPLY_ITEM["WMS_SUPPLY_ITEM (창고 도메인, 이름 후보)"] {
     }
     WMS_WAREHOUSE["WMS_WAREHOUSE (창고 도메인, 이름 후보)"] {
     }
     %% ---- 관계
-    PRD_SKU |o--o{ INV_STOCK : "SKU_ID"
+    PRD_SKU ||--o{ INV_STOCK : "SKU_ID"
     INV_STOCK ||--o{ INV_STOCK_LEDGER : "STOCK_ID"
+    INV_STOCK_HOLD |o--o{ INV_STOCK_LEDGER : "STOCK_HOLD_ID"
     INV_STOCK_EXCEPTION |o--o{ INV_STOCK_LEDGER : "STOCK_EXCEPTION_ID"
     INV_INBOUND_PLAN |o--o{ INV_STOCK_LEDGER : "INBOUND_PLAN_ID"
+    INV_STOCK ||--o{ INV_STOCK_HOLD : "STOCK_ID"
+    INV_STOCK ||--o{ INV_SAFETY_STOCK_HIST : "STOCK_ID"
     INV_STOCK ||--o{ INV_STOCK_COMMITMENT : "STOCK_ID"
     INV_INBOUND_PLAN |o--o{ INV_STOCK_COMMITMENT : "INBOUND_PLAN_ID"
     INV_STOCK_COMMITMENT ||--o{ INV_STOCK_COMMITMENT_EVENT : "STOCK_COMMITMENT_ID"
     INV_INBOUND_PLAN |o--o{ INV_STOCK_COMMITMENT_EVENT : "FROM_INBOUND_PLAN_ID"
     INV_INBOUND_PLAN |o--o{ INV_STOCK_COMMITMENT_EVENT : "TO_INBOUND_PLAN_ID"
-    INV_STOCK ||--o{ INV_INBOUND_PLAN : "STOCK_ID"
+    INV_STOCK |o--o{ INV_INBOUND_PLAN : "STOCK_ID"
+    INV_FREEBIE_STOCK |o--o{ INV_INBOUND_PLAN : "FREEBIE_STOCK_ID"
+    INV_SUPPLY_STOCK |o--o{ INV_INBOUND_PLAN : "SUPPLY_STOCK_ID"
     INV_STOCK ||--o{ INV_STOCK_SNAPSHOT : "STOCK_ID"
     INV_STOCK |o--o{ INV_STOCK_EXCEPTION : "STOCK_ID"
+    INV_FREEBIE_STOCK |o--o{ INV_STOCK_EXCEPTION : "FREEBIE_STOCK_ID"
+    INV_SUPPLY_STOCK |o--o{ INV_STOCK_EXCEPTION : "SUPPLY_STOCK_ID"
     INV_INBOUND_PLAN |o--o{ INV_STOCK_EXCEPTION : "INBOUND_PLAN_ID"
+    INV_RECONCILIATION_RUN |o--o{ INV_STOCK_EXCEPTION : "FIRST_RECONCILIATION_RUN_ID"
+    INV_RECONCILIATION_RUN |o--o{ INV_STOCK_EXCEPTION : "LAST_RECONCILIATION_RUN_ID"
+    INV_FREEBIE_STOCK ||--o{ INV_FREEBIE_LEDGER : "FREEBIE_STOCK_ID"
+    INV_STOCK_EXCEPTION |o--o{ INV_FREEBIE_LEDGER : "STOCK_EXCEPTION_ID"
+    INV_INBOUND_PLAN |o--o{ INV_FREEBIE_LEDGER : "INBOUND_PLAN_ID"
+    INV_FREEBIE_STOCK ||--o{ INV_FREEBIE_MONTHLY_SNAPSHOT : "FREEBIE_STOCK_ID"
+    INV_SUPPLY_STOCK ||--o{ INV_SUPPLY_LEDGER : "SUPPLY_STOCK_ID"
+    INV_STOCK_EXCEPTION |o--o{ INV_SUPPLY_LEDGER : "STOCK_EXCEPTION_ID"
+    INV_INBOUND_PLAN |o--o{ INV_SUPPLY_LEDGER : "INBOUND_PLAN_ID"
+    INV_SUPPLY_STOCK ||--o{ INV_SUPPLY_MONTHLY_SNAPSHOT : "SUPPLY_STOCK_ID"
     %% ---- FK 예정 참조
     WMS_WAREHOUSE |o..o{ INV_STOCK : "WAREHOUSE_ID (FK 예정)"
-    WMS_NON_SALE_ITEM |o..o{ INV_STOCK : "NON_SALE_ITEM_ID (FK 예정)"
+    WMS_FREEBIE_ITEM |o..o{ INV_FREEBIE_STOCK : "FREEBIE_ITEM_ID (FK 예정)"
+    WMS_SUPPLY_ITEM |o..o{ INV_SUPPLY_STOCK : "SUPPLY_ITEM_ID (FK 예정)"

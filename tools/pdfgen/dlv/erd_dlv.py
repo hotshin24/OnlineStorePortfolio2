@@ -28,7 +28,7 @@ for t in O.T:
         pks = [x for x in _cols(t) if re.search(r'\bPK\d*\b', x[6])]
         if p: RELS.append((t['t'], c[0], p, c[4] == 'N', len(pks) == 1 and pks[0][0] == c[0]))
 # FK 미정 참조 (다른 도메인 테이블이 정해지면 FK): (자식, 컬럼, 대상 후보)
-REF = [('DLV_SHIPMENT_REQUEST', 'WAREHOUSE_ID', 'WMS_WAREHOUSE'), ('DLV_SHIPMENT', 'WAREHOUSE_ID', 'WMS_WAREHOUSE'), ('DLV_SHIPMENT_REQUEST_ITEM', 'NON_SALE_ITEM_ID', 'WMS_NON_SALE_ITEM')]
+REF = [('DLV_SHIPMENT_REQUEST', 'WAREHOUSE_ID', 'WMS_WAREHOUSE'), ('DLV_SHIPMENT', 'WAREHOUSE_ID', 'WMS_WAREHOUSE'), ('DLV_SHIPMENT_REQUEST_ITEM', 'FREEBIE_ITEM_ID', 'WMS_FREEBIE_ITEM')]
 for ch, col, p in REF:
     assert any(c[0] == col for c in _cols(BY[ch])), (ch, col)
 EXT = sorted({r[2] for r in RELS if r[2] not in BY} | {r[2] for r in REF})
@@ -67,7 +67,7 @@ GRP_COLOR = ['#dae8fc|#6c8ebf', '#d5e8d4|#82b366', '#fff2cc|#d6b656', '#f8cecc|#
 Y0 = 200
 POS = {k: (x, y + Y0, w, h) for k, (x, y, w, h) in {
     # 다른 도메인 (왼쪽·오른쪽)
-    'WMS_WAREHOUSE': (-260, 316, SW, SH), 'PRD_SKU': (-260, 520, SW, SH), 'WMS_NON_SALE_ITEM': (-260, 680, SW, SH),
+    'WMS_WAREHOUSE': (-260, 316, SW, SH), 'PRD_SKU': (-260, 520, SW, SH), 'WMS_FREEBIE_ITEM': (-260, 680, SW, SH),
     'SYS_EXTERNAL_VENDOR': (2540, 316, SW, SH),
     # 위 줄: 요청 → 실행 (출고 요청, 출고), 이력은 둘 위 가운데
     'DLV_STATUS_HIST': (860, 120, SW, SH), 'DLV_SHIPMENT_REQUEST': (300, 300, 360, 90), 'DLV_SHIPMENT': (1440, 316, SW, SH),

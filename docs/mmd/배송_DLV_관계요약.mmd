@@ -1,7 +1,7 @@
 ---
 title: 배송 도메인 (DLV) 관계 요약
 ---
-%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/dlv/erd_dlv.py (2026-11-27). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보. FK 없이 값만 두는 참조(주문·클레임 ID, 5-1 B, 로그의 출고 요청·운송장 ID, 추적 이벤트의 정정 대상)는 그리지 않았다
+%% 생성: tools/pdfgen/erd/erd.py → tools/pdfgen/dlv/erd_dlv.py (2026-11-28). 컬럼 없이 테이블과 관계만 그렸다. 테이블 이름은 모두 후보. FK 없이 값만 두는 참조(주문·클레임 ID, 5-1 B, 로그의 출고 요청·운송장 ID, 추적 이벤트의 정정 대상)는 그리지 않았다
 %% 표기: ||--o{ 필수 1:N, |o--o{ 선택(NULL 허용 FK) 1:N, |o..o{ FK 예정 참조(WMS 테이블이 정해지면 FK). 선 이름은 컬럼
 %% 다른 도메인 상자: 상품·시스템·창고 (모두 후보)
 erDiagram
@@ -37,7 +37,7 @@ erDiagram
     }
     SYS_EXTERNAL_VENDOR["SYS_EXTERNAL_VENDOR (시스템 도메인, 이름 후보)"] {
     }
-    WMS_NON_SALE_ITEM["WMS_NON_SALE_ITEM (창고 도메인, 이름 후보)"] {
+    WMS_FREEBIE_ITEM["WMS_FREEBIE_ITEM (창고 도메인, 이름 후보)"] {
     }
     WMS_WAREHOUSE["WMS_WAREHOUSE (창고 도메인, 이름 후보)"] {
     }
@@ -63,4 +63,4 @@ erDiagram
     %% ---- FK 예정 참조
     WMS_WAREHOUSE |o..o{ DLV_SHIPMENT_REQUEST : "WAREHOUSE_ID (FK 예정)"
     WMS_WAREHOUSE |o..o{ DLV_SHIPMENT : "WAREHOUSE_ID (FK 예정)"
-    WMS_NON_SALE_ITEM |o..o{ DLV_SHIPMENT_REQUEST_ITEM : "NON_SALE_ITEM_ID (FK 예정)"
+    WMS_FREEBIE_ITEM |o..o{ DLV_SHIPMENT_REQUEST_ITEM : "FREEBIE_ITEM_ID (FK 예정)"
