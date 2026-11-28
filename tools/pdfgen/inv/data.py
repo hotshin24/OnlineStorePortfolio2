@@ -139,7 +139,7 @@ table(t='INV_STOCK_LEDGER', ko='수불 원장 (실물 수량 변화 1건)', en='
       '잘못 넣은 행은 같은 사유의 반대 행으로 정정한다 (T-6 B, 선행 4). 원천 문서는 원천마다 컬럼을 두고 사유에 맞는 하나만 채운다 (2-4 A). 수불부와 회계 구분은 사유별 합계로 낸다 (7-8 A). '
       '1차 재고는 기초 재고 사유로 들어온다 (IC-79 A, 1차-8 A, IC-82 A). 실제 사건 시각 컬럼은 두지 않는다: 날짜 귀속은 업무 일자가, '
       '검수 대기 적체 판정은 처리 시각(`CREATED_AT`)이 맡고, 실제 시각은 원천 테이블에서 읽는다 (IC-2 B, IC-90 B).',
- basis='1-3 A, 1-5 A, 1-7 A, 2-1 A, 2-3 C~2-5 A, 2-7 A, 3-6 A, 3-8 A, 6-3 B, 6-5 A, 7-1 A~7-4 A, 7-7 A, 7-8 A, 8-2 C, 8-6 C, 8-8 후속 B, T-5 A, T-6 B, T-10 A, IC-5 A, IC-6 A, IC-46 A, IC-82 A~IC-89 A, IC-90 B, IC-91 A~IC-93 A',
+ basis='1-3 A, 1-5 A, 1-7 A, 2-1 A, 2-3 C~2-5 A, 2-7 A, 3-6 A, 3-8 A, 6-3 B, 6-5 A, 7-1 A~7-4 A, 7-7 A, 7-8 A, 8-2 C, 8-6 C, 8-8 후속 B, T-5 A, T-6 B, T-10 A, IC-5 A, IC-6 A, IC-46 A, IC-82 A~IC-89 A, IC-90 B, IC-91 A~IC-93 A, IC-94 A~IC-99 A',
  pk='대리 PK `SEQ_INV_STOCK_LEDGER`', cache=100,
  delete='삭제하지 않는다 (원장, 선행 4). 정정은 반대 행으로 한다 (T-6 B). 5년이 지난 파티션을 제거한다 (8-6 C)',
  part='업무 일자(`BUSINESS_DT`) 월 INTERVAL 파티션 (8-6 C). 원장을 FK로 가리키는 테이블이 없어 파티션 제거가 막히지 않는다 (정정의 원래 원장 ID는 `ref()`, T-6 B). '
@@ -151,7 +151,7 @@ table(t='INV_STOCK_LEDGER', ko='수불 원장 (실물 수량 변화 1건)', en='
   fk('STOCK_ID','현재고 식별 번호','Stock on Hand Identifier','INV_STOCK','N','',
      '창고와 품목은 현재고 행에서 읽는다 (1-6 A). 수불 조회는 현재고와 조인 한 번이다.'),
   cd('STOCK_LEDGER_REASON_CD','수불 사유 코드','Stock Ledger Reason Code',
-     desc='사용 16개 + 자리만 남긴 창고 이동 2개 (7-1 A, 1-7 A, 기초 재고는 IC-82 A). 포장재 사용·수선 사용은 운영자재 원장으로 옮겼다 (IC-46 A). 사유마다 채울 원천 컬럼과 버킷별 증감 방향을 테이블 수준 CK로 묶는다. 회계 구분은 코드의 `ATTR1` (7-8 A).'),
+     desc='사용 19개 + 자리만 남긴 창고 이동 2개 (7-1 A, 1-7 A, 기초 재고 IC-82 A, 반송 입고·검수 IC-94 A, 불량 해제 IC-98 A). 값마다 1차에 쓸 수 있는지 차수 칸에 표시한다(원천이 1차에 없는 사유는 2차, IC-96 A). 포장재 사용·수선 사용은 운영자재 원장으로 옮겼다 (IC-46 A). 사유마다 채울 원천 컬럼과 버킷별 증감 방향을 테이블 수준 CK로 묶는다. 회계 구분은 코드의 `ATTR1` (7-8 A).'),
   ref('REVERSED_STOCK_LEDGER_ID','정정 대상 원래 원장 식별 번호','Reversed Original Stock Ledger Identifier',
       desc='NOT NULL이면 정정 행이다. 원래 행과 같은 사유를 쓰고 증감은 모두 반대다 (T-6 B). 한 행은 한 번만 정정한다 (UK, 전역 인덱스, IC-92 A). 원장 파티션 제거를 막지 않도록 FK 없이 둔다. '
            '원래 행과 같은 현재고·사유인지는 애플리케이션이 검사한다. 마감한 달의 행을 정정하면 정정 행의 업무 일자는 열린 달이나 재개한 달이다 (8-2 C). '
@@ -162,32 +162,32 @@ table(t='INV_STOCK_LEDGER', ko='수불 원장 (실물 수량 변화 1건)', en='
    '원래 행이 이미 정정됐는지, 같은 현재고·사유인지는 애플리케이션이 검사한다. 원천 컬럼은 원래 행과 같다. 정정 행과 같은 트랜잭션에서 넣고 현재고에는 두 행의 순증감을 한 번 반영한다 (IC-89 A). '
    '원장 파티션 제거를 막지 않도록 FK 없이 둔다.'),
   ('LEDGER_KEY_VAL','원장 중복 방지 키','Stock Ledger Idempotency Key Value','VARCHAR2(100)','N','','UK',
-   '사유별 형식: `SHIP:{출고 ID}:{현재고 ID}`, `INBOUND:{입고 ID}:{현재고 ID}`, `REVERSAL:{원래 원장 ID}`, `REPOST:{원래 원장 ID}`(재기록, IC-88 A), `OPENING:{현재고 ID}`(기초 재고, IC-82 A) 등 (2-5 A). '
+   '사유별 형식: `SHIP:{출고 ID}:{현재고 ID}`, `INBOUND:{입고 ID}:{현재고 ID}`, `REVERSAL:{원래 원장 ID}`, `REPOST:{원래 원장 ID}`(재기록, IC-88 A), `OPENING:{현재고 ID}`(기초 재고, IC-82 A), `RETURNED:{운송장 ID}:{현재고 ID}`(반송 입고, IC-94 A) 등 (2-5 A). '
    '같은 키로 두 번 넣으면 UK 위반으로 처리 전체가 되돌아간다. 파티션 테이블의 UK라 전역 인덱스이고, 파티션 제거 때 `UPDATE GLOBAL INDEXES`를 쓴다 (IC-92 A).'),
   ('BUSINESS_DT','업무 일자','Business Date','DATE','N','','파티션 키',
    '수불부·특정 날짜 수량·내부 대사 ①이 쓰는 날짜 (8-2 C). 처리 일시(`CREATED_AT`)보다 늦을 수 없다 (CK). 열린 달(또는 승인받아 재개한 달)만 넣을 수 있고 애플리케이션이 월 마감 테이블로 검사한다.'),
  ]),
  ('실물 증감', [
   dqty('NORMAL_DELTA_QTY','정상 수량 증감','Normal Quantity Delta','부호 있음. 사유별 방향은 CK (예: 판매 출고는 <= 0).'),
-  dqty('INSPECTION_PENDING_DELTA_QTY','검수 대기 수량 증감','Inspection Pending Quantity Delta','생산 입고·반품 입고는 +, 입고 검수·반품 검수는 − (6-3 B, 7-2 A).'),
-  dqty('DEFECTIVE_DELTA_QTY','불량 수량 증감','Defective Quantity Delta','검수·불량 전환은 +, 수선 복귀·처분은 − (7-4 A).'),
+  dqty('INSPECTION_PENDING_DELTA_QTY','검수 대기 수량 증감','Inspection Pending Quantity Delta','생산 입고·반품 입고·반송 입고는 +, 입고 검수·반품 검수·반송 검수는 − (6-3 B, 7-2 A, IC-94 A).'),
+  dqty('DEFECTIVE_DELTA_QTY','불량 수량 증감','Defective Quantity Delta','검수·불량 전환은 +, 수선 복귀·불량 해제·처분은 − (7-4 A, IC-98 A). 처분은 정상 또는 불량 중 하나만 − (IC-97 A).'),
   dqty('HOLD_DELTA_QTY','보류 수량 증감','Hold Quantity Delta','보류 설정은 +, 보류 해제는 − (3-6 A).'),
   ('PHYSICAL_TOTAL_DELTA_QTY','실물 합계 증감 (가상 컬럼)','Physical Total Quantity Delta (Virtual)','NUMBER(8)','N','','가상 컬럼',
    '`GENERATED ALWAYS AS (NORMAL_DELTA_QTY + INSPECTION_PENDING_DELTA_QTY + DEFECTIVE_DELTA_QTY + HOLD_DELTA_QTY) VIRTUAL` (IC-87 A). 현재고 `PHYSICAL_TOTAL_QTY`의 짝이고, 증감 4개가 각각 `NUMBER(7)`이라 8자리다. '
-   '상태 이동 사유(입고 검수, 반품 검수, 보류 설정, 보류 해제, 불량 전환, 수선 복귀)는 0이어야 한다 (CK). 예: 입고 검수에서 검수 대기 −95, 정상 +93, 불량 +1이면 −1이라 막힌다. '
+   '상태 이동 사유(입고 검수, 반품 검수, 반송 검수, 보류 설정, 보류 해제, 불량 전환, 불량 해제, 수선 복귀)는 0이어야 한다 (CK). 예: 입고 검수에서 검수 대기 −95, 정상 +93, 불량 +1이면 −1이라 막힌다. '
    '내부 대사 ④, 스냅샷 월 누계, 수불부의 사유별 실물 합계가 이 값을 쓴다.'),
  ]),
  ('원천·관련 문서', [
   ref('SHIPMENT_ID','원천 배송 출고 식별 번호','Source Delivery Shipment Identifier',
       desc='판매 출고·재발송 출고·비주문 출고 (1-5 A). 배송 출고 행을 만드는 트랜잭션에서 넣는다. 출고 원인은 배송 출고 요청의 원인 코드에서 옮겨 사유를 고른다 (7-1 A).'),
-  ref('WAYBILL_ID','원천 회수 운송장 식별 번호','Source Pickup Waybill Identifier',
-      desc='반품 입고 (7-2 A). 회수 운송장 배송 완료(창고 도착) 처리와 같은 트랜잭션. 결정 원문의 "배송 패키지 ID"는 배송 DC-61 A로 운송장이 됐다.'),
+  ref('WAYBILL_ID','원천 운송장 식별 번호 (회수 또는 반송된 출고)','Source Waybill Identifier (Pickup or Returned Shipment)',
+      desc='반품 입고는 회수 운송장(배송 완료 = 창고 도착 처리와 같은 트랜잭션, 7-2 A), 반송 입고는 수령 거절·주소 불명으로 반송 완료(`RETURNED`)된 출고 운송장(반송 완료 처리와 같은 트랜잭션, IC-94 A). 어느 운송장인지는 사유로 정해진다. 결정 원문의 "배송 패키지 ID"는 배송 DC-61 A로 운송장이 됐다.'),
   ref('CLAIM_INSPECTION_ID','원천 클레임 검수 결과 식별 번호','Source Claim Inspection Result Identifier',
       desc='반품 검수 (7-2 A). 클레임 설계 뒤 이름 확정.'),
   ref('RECEIPT_ID','원천 WMS 입고 식별 번호','Source WMS Receipt Identifier',
       desc='생산 입고 (도착, 6-3 B). WMS 설계 뒤 이름 확정. 계획은 아래 `INBOUND_PLAN_ID`에 따로 남는다 (T-5 A).'),
   ref('RECEIPT_INSPECTION_ID','원천 WMS 입고 검수 식별 번호','Source WMS Receipt Inspection Identifier',
-      desc='입고 검수 (6-3 B). WMS 설계 뒤 이름 확정.'),
+      desc='입고 검수 (6-3 B)와 반송 검수 (IC-94 A, 반송 박스도 WMS 입고 검수로 기록하는 것은 WMS 넘김 사항). WMS 설계 뒤 이름 확정.'),
   ref('DISPOSAL_WORK_ID','원천 WMS 처분 작업 식별 번호','Source WMS Disposal Work Identifier',
       desc='수선 복귀, 폐기, 업체 반품, 일괄 매각 (7-4 A). 화물 출고는 배송을 거치지 않는다. 폐기 증빙 첨부는 WMS 넘김 사항. WMS 설계 뒤 이름 확정.'),
   fk('STOCK_HOLD_ID','원천 보류 건 식별 번호','Source Stock Hold Case Identifier','INV_STOCK_HOLD','Y','',
@@ -206,7 +206,7 @@ table(t='INV_STOCK_LEDGER', ko='수불 원장 (실물 수량 변화 1건)', en='
   ref('APPROVED_ADMIN_ID','조정 승인 관리자 식별 번호','Adjustment Approving Administrator Identifier',
       desc='실사 조정 차이가 기준 수량(공통코드 정책값)을 넘으면 필수 (7-7 A). CHECK로 정책값을 읽을 수 없어 애플리케이션이 검사한다. ' + ADM),
   ('REASON_NOTE_CN','사유 설명','Reason Note','VARCHAR2(500)','Y','','',
-   '관리자가 처리하는 사유(보류 설정, 보류 해제, 불량 전환)와 정정 행이면 NOT NULL (CK, IC-5 A, IC-16 A). 보류 사유 "기타"의 메모는 보류 건으로 옮겼다 (IC-55 A). 정정 행에는 정정 이유를 적는다(예: "수량 입력 오류, 송장 기준 95개"). 다른 사유는 선택. 예: "고객 불만 3건으로 보풀 확인", "B-11 선반에서 오염 발견". '
+   '관리자가 처리하는 사유(보류 설정, 보류 해제, 불량 전환, 불량 해제)와 정정 행이면 NOT NULL (CK, IC-5 A, IC-16 A, IC-98 A). 보류 사유 "기타"의 메모는 보류 건으로 옮겼다 (IC-55 A). 정정 행에는 정정 이유를 적는다(예: "수량 입력 오류, 송장 기준 95개"). 다른 사유는 선택. 예: "고객 불만 3건으로 보풀 확인", "B-11 선반에서 오염 발견". '
    '실사 조정은 재고 예외의 처리 내용이 같은 역할이라 필수가 아니다. 길이는 바이트 기준(한글 약 160자)이고 단위는 공통 규칙(주문 OC-115)을 따른다.'),
  ]),
  ],
@@ -215,12 +215,13 @@ table(t='INV_STOCK_LEDGER', ko='수불 원장 (실물 수량 변화 1건)', en='
       'IX 전역 원천 컬럼 6개 (값 참조, 원천에서 원장을 찾는 조회와 매일 검증. 업무 일자를 모르는 조회라 전역, IC-92 A)',
       'UK `LEDGER_KEY_VAL`, UK `REVERSED_STOCK_LEDGER_ID` (전역 인덱스)'],
  check=['사유별 원천: 원천 컬럼 8개(`SHIPMENT_ID`~`STOCK_EXCEPTION_ID`) 중 사유에 맞는 하나만 NOT NULL, 나머지는 NULL (2-4 A). 보류 설정·보류 해제는 `STOCK_HOLD_ID`, 불량 전환은 보류 증감 ≠ 0이면 `STOCK_HOLD_ID`이고 = 0(정상에서의 전환, 원천 없음, 행위자는 `CREATED_BY`)이면 모두 NULL '
-        '(IC-55 A, IC-85 A, IC-86 A). 기초 재고는 모두 NULL (IC-82 A). 정정 행과 재기록 행은 원래 행과 같은 원천 컬럼을 채운다 (IC-88 A)',
-        '사유별 증감 방향: 사유마다 + / − / 0인 버킷을 고정한다. `REVERSED_STOCK_LEDGER_ID`가 NOT NULL이면 방향을 모두 반대로 본다 (T-6 B). 기초 재고는 정상·불량 >= 0, 검수 대기·보류 = 0 (IC-82 A)',
+        '(IC-55 A, IC-85 A, IC-86 A). 기초 재고와 불량 해제는 모두 NULL (IC-82 A, IC-98 A). 반송 입고는 `WAYBILL_ID`, 반송 검수는 `RECEIPT_INSPECTION_ID` (IC-94 A). 정정 행과 재기록 행은 원래 행과 같은 원천 컬럼을 채운다 (IC-88 A)',
+        '사유별 증감 방향: 사유마다 + / − / 0인 버킷을 고정한다. `REVERSED_STOCK_LEDGER_ID`가 NOT NULL이면 방향을 모두 반대로 본다 (T-6 B). 기초 재고는 정상·불량 >= 0, 검수 대기·보류 = 0 (IC-82 A). 처분 3사유(폐기, 업체 반품, 일괄 매각)는 정상 또는 불량 중 하나만 −, 나머지 0 (IC-97 A, 7-4 A 변경). '
+        '반송 입고는 검수 대기 +, 반송 검수는 검수 대기 −·정상 +·불량 + (IC-94 A). 불량 해제는 불량 −·정상 + (IC-98 A)',
         '증감 4개가 모두 0인 행은 막는다',
-        '상태 이동 사유(입고 검수, 반품 검수, 보류 설정, 보류 해제, 불량 전환, 수선 복귀)는 `PHYSICAL_TOTAL_DELTA_QTY` = 0. 정정 행도 합이 0이라 같은 식으로 통과한다 (IC-87 A)',
+        '상태 이동 사유(입고 검수, 반품 검수, 반송 검수, 보류 설정, 보류 해제, 불량 전환, 불량 해제, 수선 복귀)는 `PHYSICAL_TOTAL_DELTA_QTY` = 0. 정정 행도 합이 0이라 같은 식으로 통과한다 (IC-87 A, IC-94 A, IC-98 A)',
         '사유가 생산 입고 또는 입고 검수이면 `INBOUND_PLAN_ID` NOT NULL, 아니면 NULL (T-5 A, IC-6 A)',
-        '보류 설정·보류 해제·불량 전환이거나 정정 행(`REVERSED_STOCK_LEDGER_ID` NOT NULL)이면 `REASON_NOTE_CN` NOT NULL (IC-5 A, IC-16 A, IC-55 A)',
+        '보류 설정·보류 해제·불량 전환·불량 해제이거나 정정 행(`REVERSED_STOCK_LEDGER_ID` NOT NULL)이면 `REASON_NOTE_CN` NOT NULL (IC-5 A, IC-16 A, IC-55 A, IC-98 A)',
         '`ADJUSTMENT_DETAIL_REASON_CD`는 실사 조정일 때만 NOT NULL. `STOCKTAKE_ID`는 실사 조정이 아니면 NULL (IC-91 A)',
         '`BUSINESS_DT <= TRUNC(CREATED_AT)` (8-2 C)',
         '창고 이동 출고·입고는 자리만 남긴 값이라 CK의 허용 사유에서 뺀다 (1-7 A, 창고를 늘릴 때 연다)'])
@@ -503,7 +504,7 @@ table(t='INV_STOCK_SNAPSHOT', ko='재고 스냅샷 (판매 상품 일별·월말
  ]),
  ('월 누계 수불', [
   qty('MTD_INBOUND_QTY','월 누계 입고 수량','Month-to-Date Inbound Quantity',
-      '그 달 1일부터 스냅샷 일자까지 생산 입고·반품 입고·기초 재고 합계 (IC-7 A, IC-84 A). 기초 재고는 1차에 입고 대신 쓰는 경로라 입고로 센다. 월말 행에서는 그 달 전체 합계라 10년 보존되는 월 수불부가 된다. 정정 행은 원래 사유에 넣어 순액이다.'),
+      '그 달 1일부터 스냅샷 일자까지 생산 입고·반품 입고·반송 입고·기초 재고 합계 (IC-7 A, IC-84 A, IC-94 A). 기초 재고는 1차에 입고 대신 쓰는 경로라 입고로 센다. 월말 행에서는 그 달 전체 합계라 10년 보존되는 월 수불부가 된다. 정정 행은 원래 사유에 넣어 순액이다.'),
   qty('MTD_OUTBOUND_QTY','월 누계 출고 수량','Month-to-Date Outbound Quantity','판매·재발송·비주문 출고로 나간 수 (양수로 적음, IC-7 A).'),
   qty('MTD_DISPOSAL_QTY','월 누계 처분 수량','Month-to-Date Disposal Quantity','폐기·업체 반품·일괄 매각으로 나간 수 (양수로 적음, IC-7 A).'),
   ('MTD_ADJUST_QTY','월 누계 조정 수량','Month-to-Date Adjustment Quantity',QTY,'N','0','',
@@ -887,16 +888,19 @@ CODES = {
    ('INBOUND_INSPECTION','입고 검수','Inbound Inspection','입고. 검수 대기 −, 정상 +, 불량 +. 원천 WMS 입고 검수, 관련 입고 예정 필수 (6-3 B, IC-6 A). `ATTR1` 해당 없음'),
    ('RETURN_INBOUND','반품 입고','Return Inbound','입고. 검수 대기 +. 원천 회수 운송장 (7-2 A). `ATTR1` 해당 없음'),
    ('RETURN_INSPECTION','반품 검수','Return Inspection','입고. 검수 대기 −, 정상 +, 불량 +. 원천 클레임 검수 결과 (7-2 A). `ATTR1` 해당 없음'),
+   ('RETURNED_INBOUND','반송 입고','Returned Parcel Inbound','입고. 검수 대기 +. 원천 반송 완료(`RETURNED`)된 출고 운송장, 반송 완료 처리와 같은 트랜잭션. 키 `RETURNED:{운송장 ID}:{현재고 ID}`. 수령 거절·주소 불명 반송은 회수가 아니라 출고의 상태다(배송 세부 2-8). `ATTR1` 해당 없음 (IC-94 A)'),
+   ('RETURNED_INSPECTION','반송 검수','Returned Parcel Inspection','입고. 검수 대기 −, 정상 +, 불량 + (실물 합계 증감 0). 원천 WMS 입고 검수. `ATTR1` 해당 없음 (IC-94 A)'),
    ('SALES_SHIPMENT','판매 출고','Sales Shipment','출고. 정상 −. 원천 배송 출고 (1-5 A). `ATTR1` 매출원가'),
    ('RESHIP_SHIPMENT','재발송 출고','Reshipment','출고. 정상 −. 원천 배송 출고. 교환·사고·반송·누락·수선 재발송. `ATTR1` 클레임 귀책에 따름 (7-8 A)'),
    ('NON_ORDER_SHIPMENT','비주문 출고','Non-Order Shipment','출고. 정상 −. 원천 배송 출고. 회계 구분은 배송 `NON_ORDER_TYPE_CD`의 `ATTR` (7-8 A)'),
    ('HOLD_SET','보류 설정','Hold Set','상태 이동. 정상 −, 보류 +. 원천 보류 건(사유는 보류 건에, IC-52 C, IC-55 A). `ATTR1` 해당 없음'),
    ('HOLD_RELEASE','보류 해제','Hold Release','상태 이동. 보류 −, 정상 +. 원천 보류 건, 정상 해제 누계를 함께 고침 (IC-54 A, IC-55 A). `ATTR1` 해당 없음'),
    ('DEFECT_TRANSFER','불량 전환','Defect Transfer','상태 이동. 정상(또는 보류) −, 불량 +. 선반에서 불량을 발견. 보류에서면 원천 보류 건(불량 전환 누계를 함께 고침), 정상에서면 원천 없음 (IC-55 A). `ATTR1` 해당 없음'),
+   ('DEFECT_RELEASE','불량 해제','Defect Release','상태 이동. 불량 −, 정상 + (실물 합계 증감 0). 수선 없이 재검수로 불량 판정을 되돌림(예: 조명 탓에 오염으로 오인). 원천 없음, 사유 설명 필수, 행위자는 `CREATED_BY`. 입력 실수는 정정(T-6 B)으로 한다. `ATTR1` 해당 없음 (IC-98 A)'),
    ('REPAIR_RETURN','수선 복귀','Repair Return','상태 이동. 불량 −, 정상 +. 원천 WMS 처분 작업 (7-4 A). `ATTR1` 해당 없음'),
-   ('DISPOSAL','폐기','Disposal','처분. 불량 −. 원천 WMS 처분 작업. `ATTR1` 폐기손실 [확인 필요: 재고 폐기 손금 증빙]'),
-   ('VENDOR_RETURN','업체 반품','Vendor Return','처분. 불량 −. 원천 WMS 처분 작업. `ATTR1` 해당 없음 (매입 차감은 SCM·회계)'),
-   ('BULK_SALE','일괄 매각','Bulk Sale','처분. 불량 −. 원천 WMS 처분 작업. `ATTR1` 매출원가'),
+   ('DISPOSAL','폐기','Disposal','처분. 정상 또는 불량 중 하나만 − (IC-97 A, 팔리지 않은 정상품 포함). 원천 WMS 처분 작업. `ATTR1` 폐기손실 [확인 필요: 재고 폐기 손금 증빙]'),
+   ('VENDOR_RETURN','업체 반품','Vendor Return','처분. 정상 또는 불량 중 하나만 − (IC-97 A, 과잉 입고분 공장 반품 포함). 원천 WMS 처분 작업. `ATTR1` 해당 없음 (매입 차감은 SCM·회계)'),
+   ('BULK_SALE','일괄 매각','Bulk Sale','처분. 정상 또는 불량 중 하나만 − (IC-97 A, C등급 이월 정상품 포함). 원천 WMS 처분 작업. `ATTR1` 매출원가'),
    ('STOCKTAKE_ADJUSTMENT','실사 조정','Stocktake Adjustment','그 밖. 버킷별 ±. 원천 재고 예외, 세부 사유 필수 (7-7 A). `ATTR1` 감모손실'),
    ('OPENING_STOCK','기초 재고','Opening Stock','그 밖. 정상 +, 불량 +(각 0 이상), 검수 대기·보류 0. 원천 8개와 입고 예정 모두 NULL. 시스템 오픈 때 품목마다 1행(IC-79 A), '
     '1차 동안은 원장이 한 건도 없는 현재고 행에 행마다 1회(1차-8 A, 현재고 행을 잠근 뒤 애플리케이션이 검사). 키 `OPENING:{현재고 ID}`. 재고 0인 품목은 원장 없이 현재고만 만들고, '
@@ -978,7 +982,7 @@ CODES = {
    ('INTERNAL_RECON_MONTHLY','내부 대사 ④ 월 수불','Internal Reconciliation (Monthly Movement)','대사. 대상 현재고. 비교 구분 실물 합계. 전월말 실물 + 월 누계 입고 − 출고 − 처분 + 조정 = 당월말 실물 (월 마감 때, IC-7 A)'),
    ('FIELD_DISCOVERY','현장 발견','Field Discovery','대상 판매 상품·사은품·운영자재 현재고 (IC-48 A). 대사 없이 창고에서 발견한 차이를 직접 등록 (7-7 A)'),
    ('EXPIRED_RESERVATION','만료 지난 예약','Expired Reservation Remaining','신호 1. 대상 확보. 만료 배치 실패'),
-   ('INSPECTION_BACKLOG','검수 대기 적체','Inspection Backlog','신호 2. 대상 현재고. 기준 일수보다 오래된 생산·반품 입고분이 아직 검수 대기 (원장 입고 행의 처리 시각으로 판정, IC-2 B, IC-90 B)'),
+   ('INSPECTION_BACKLOG','검수 대기 적체','Inspection Backlog','신호 2. 대상 현재고. 기준 일수보다 오래된 생산·반품·반송 입고분이 아직 검수 대기 (원장 입고 행의 처리 시각으로 판정, IC-2 B, IC-90 B)'),
    ('OVERDUE_INBOUND_PLAN','예정일 지난 미입고','Overdue Inbound Plan','신호 4. 대상 입고 예정'),
    ('LONG_HOLD','오래된 보류','Long Hold','신호 6. 대상 현재고. 진행 중 보류 건의 해제 예정일이 지났거나, 해제 예정일이 없고 시작 일시 + 기준 일수가 지남 (IC-56 A)'),
    ('RESTOCK_DEMAND','재입고 수요','Restock Demand','신호 7. 대상 현재고. 살 수 있는 수가 0인데 재입고 신청이 기준 수 이상 (생산 판단 참고)'),
@@ -1048,6 +1052,12 @@ PHASE_COL = {('INV_STOCK_LEDGER', 'INBOUND_PLAN_ID'): '1차 (FK 2차)', ('INV_ST
 # 1차 컬럼 검토 순서 (현재고는 확정)
 PHASE_ORDER = ['INV_STOCK_LEDGER', 'INV_MONTHLY_CLOSING', 'INV_STOCK_COMMITMENT', 'INV_STOCK_COMMITMENT_EVENT', 'INV_SAFETY_STOCK_HIST']
 # 다시 물을 것(CONFIRM)의 차수. 제목으로 찾는다. 없는 제목은 2차.
+# 수불 사유 값별 차수 (IC-96 A): 원천이 1차에 없는 사유(WMS, 클레임, 입고 예정, 보류 건, 재고 예외)는 2차
+CODE_PHASE = {('STOCK_LEDGER_REASON_CD', v): '2차' for v in ('PRODUCTION_INBOUND', 'INBOUND_INSPECTION', 'RETURN_INBOUND', 'RETURN_INSPECTION',
+              'RETURNED_INBOUND', 'RETURNED_INSPECTION', 'HOLD_SET', 'HOLD_RELEASE', 'REPAIR_RETURN', 'DISPOSAL', 'VENDOR_RETURN',
+              'BULK_SALE', 'STOCKTAKE_ADJUSTMENT')}
+CODE_PHASE.update({('STOCK_LEDGER_REASON_CD', 'DEFECT_TRANSFER'): '1차 (보류에서는 2차)', ('STOCK_LEDGER_REASON_CD', 'TRANSFER_OUT'): '자리만',
+                   ('STOCK_LEDGER_REASON_CD', 'TRANSFER_IN'): '자리만'})
 PHASE_Q = {'다른 도메인 이름': '1차', '보류 건·안전 재고 이력 컬럼': '1차',
            '확보 행 동시 갱신': '1차', '확보 처리 이력 파티션': '1차', '진행 중 확보 UK 범위': '1차', '예약 만료 시각': '1차',
            '수량 타입': '1차', '운영 DB 에디션': '1차'}

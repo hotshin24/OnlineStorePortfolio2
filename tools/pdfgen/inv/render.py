@@ -2,7 +2,7 @@
 # 사용: python3 render.py <출력폴더>
 import sys, os, re, html, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, REUSE_NO_ROWS, SAME_NAME_FOLD, CONFIRMED_GROUPS, CONFIRMED_TABLES, EXTERNAL_SOURCED as PG_SOURCED, POLICY, NAME_CONFIRMED, PHASE, PHASE_COL, PHASE_ORDER, PHASE_Q
+from data import T, CODES, CONFIRM, TS, TABLE_GROUPS, REUSE, REUSE_NO_ROWS, SAME_NAME_FOLD, CONFIRMED_GROUPS, CONFIRMED_TABLES, EXTERNAL_SOURCED as PG_SOURCED, POLICY, NAME_CONFIRMED, PHASE, PHASE_COL, PHASE_ORDER, PHASE_Q, CODE_PHASE
 JSON_CODES = {}
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from decision import C as _DC
@@ -165,7 +165,7 @@ for i, t in enumerate(T, 1):
         for vi, v in enumerate(vals, 1):
             _c = 'cv' + (' first' if vi == 1 else '') + (' last' if vi == len(vals) else '')
             secs += (f'<tr class="{_c}"><td class="n">{i}-{k}-{vi}</td><td class="p">└ {pn(v[0])}</td><td>{ln1(v[1], v[2])}</td>'
-                     f'<td colspan="5">정렬 {v[4]}' + (f' · {il(v[3])}' if v[3] else '') + '</td>' + ckcell(on) + phcell(ph) + f'<td class="memo"><span class="ty">{code_id(p, v[0])}</span></td></tr>')
+                     f'<td colspan="5">정렬 {v[4]}' + (f' · {il(v[3])}' if v[3] else '') + '</td>' + ckcell(on) + phcell(CODE_PHASE.get((p, v[0]), ph)) + f'<td class="memo"><span class="ty">{code_id(p, v[0])}</span></td></tr>')
     secs += '</table>'
     if t['idx'] or t['check']:
         secs += '<h3>인덱스·제약 (제안)</h3><table><tr><th>No</th><th>내용</th><th>확정</th><th>차수</th><th>메모</th></tr>'
