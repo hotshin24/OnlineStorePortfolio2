@@ -1086,9 +1086,9 @@ POLICY = [
 
 # 확정 칸은 컬럼 검토에서 사용자가 확정한 것만 넣는다. T-10 A의 선택(7개)은 결정 기록에 있다 (2026-11-28 사용자 지시)
 # INV_STOCK: 2026-11-28 IC-80 뒤 사용자가 "현재고 테이블 확정 체크 해"로 이름·컬럼 전체를 확정
-NAME_CONFIRMED = {'INV_STOCK'}
+NAME_CONFIRMED = {'INV_STOCK', 'INV_STOCK_LEDGER'}  # 수불 원장: 2026-11-28 사용자 확정 지시
 CONFIRMED_GROUPS = set()
-CONFIRMED_TABLES = {'INV_STOCK'}
+CONFIRMED_TABLES = {'INV_STOCK', 'INV_STOCK_LEDGER'}
 # 차수 (2026-11-28 1차 범위, 진행메모 "1차 범위"). 테이블 차수는 사용자 결정(1차-1~4 A)에서 나온 것이고,
 # 1차 테이블 안의 컬럼 차수는 1차-4 A 기준을 적용한 제안이다(컬럼 검토에서 확정). 확정 칸과 따로 표시한다.
 PHASE = {'INV_STOCK': '1차', 'INV_STOCK_LEDGER': '1차', 'INV_STOCK_COMMITMENT': '1차', 'INV_STOCK_COMMITMENT_EVENT': '1차',
