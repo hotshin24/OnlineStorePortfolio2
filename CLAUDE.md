@@ -356,7 +356,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 인증은 `gh auth git-credential`로 한다.
   - 전역 git 설정은 다른 계정이라 쓰지 않는다.
 - 사용자가 요청할 때만 커밋한다.
-- `/export`로 저장한 대화 기록 `.txt`는 커밋하지 않았다. 사용자 확인 없이 올리지 않는다.
+- `/export`로 저장한 대화 기록 `.txt`는 `대화기록/`에 두고 커밋하지 않는다(`.gitignore`에 등록, 2026-11-29 사용자 지시). `/export`는 저장소 루트에 저장되므로, 루트에 새 export 파일(`YYYY-MM-DD-HHMMSS-….txt`)이 생기면 그 폴더로 옮긴다. 사용자 확인 없이 올리지 않는다.
 - `docs/pdf/법률/`, `docs/pdf/법률검토/`는 절대 커밋하지 않는다 (사용자 지시). 이 폴더와 txt가 추적되지 않은 채 있으므로 스테이징은 `git add -u`로 한다 (새 파일은 경로를 지정해 따로 추가).
 - 푸시: `git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin main`
 - 커밋 메시지는 한국어로 쓰고 끝에 `Co-Authored-By` 줄을 붙인다.
